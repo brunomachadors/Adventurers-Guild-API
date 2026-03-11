@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+.swagger-container {
+  all: initial;
+}
+
+.swagger-container * {
+  all: revert;
+}
+
+.docs-swagger-page {
+  background: white;
+}
+
+.docs-swagger-page .swagger-ui {
+  font-family: sans-serif;
+}

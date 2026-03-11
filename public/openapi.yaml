@@ -1,0 +1,44 @@
+openapi: 3.0.3
+info:
+  title: Adventures API
+  version: 1.0.0
+  description: A fantasy-themed API for backend testing practice.
+
+servers:
+  - url: http://localhost:3000
+    description: Local environment
+  - url: https://adventures.vercel.app
+    description: Production environment
+
+paths:
+  /api/attributes:
+    get:
+      summary: List all attributes
+      description: Returns the six core RPG attributes.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    shortName:
+                      type: string
+                    description:
+                      type: string
+              example:
+                - id: 1
+                  name: Strength
+                  shortName: STR
+                  description: Measures physical power and brute-force capability.
+                - id: 2
+                  name: Dexterity
+                  shortName: DEX
+                  description: Measures agility, reflexes, and coordination.
