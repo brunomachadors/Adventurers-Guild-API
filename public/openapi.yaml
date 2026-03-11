@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Adventurers Guild API
-  version: 1.0.0
+  version: 1.1.0
   description: A fantasy-themed API for backend testing practice.
 
 servers:
@@ -26,55 +26,22 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Attribute'
-              example:
-                - id: 1
-                  name: Strength
-                  shortName: STR
-                  description: Measures physical power, carrying capacity, and effectiveness in brute-force actions such as lifting, pushing, and melee attacks.
-                  skills:
-                    - Athletics
-                - id: 2
-                  name: Dexterity
-                  shortName: DEX
-                  description: Measures agility, reflexes, balance, and coordination. It affects actions that require speed, precision, and stealth.
-                  skills:
-                    - Acrobatics
-                    - Sleight of Hand
-                    - Stealth
-                - id: 3
-                  name: Constitution
-                  shortName: CON
-                  description: Measures endurance, resilience, and physical toughness. It is commonly associated with health, stamina, and resistance to harm.
-                  skills: []
-                - id: 4
-                  name: Intelligence
-                  shortName: INT
-                  description: Measures reasoning, memory, knowledge, and analytical ability. It is linked to learning, investigation, and logical thinking.
-                  skills:
-                    - Arcana
-                    - History
-                    - Investigation
-                    - Nature
-                    - Religion
-                - id: 5
-                  name: Wisdom
-                  shortName: WIS
-                  description: Measures perception, intuition, awareness, and good judgment. It reflects how well a character understands the world around them.
-                  skills:
-                    - Animal Handling
-                    - Insight
-                    - Medicine
-                    - Perception
-                    - Survival
-                - id: 6
-                  name: Charisma
-                  shortName: CHA
-                  description: Measures presence, confidence, influence, and social impact. It affects persuasion, leadership, and interpersonal interactions.
-                  skills:
-                    - Deception
-                    - Intimidation
-                    - Performance
-                    - Persuasion
+
+  /api/skills:
+    get:
+      summary: List all skills
+      description: Returns the full list of available skills and their related attribute.
+      tags:
+        - Skills
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Skill'
 
 components:
   schemas:
@@ -108,8 +75,31 @@ components:
           example: Measures physical power, carrying capacity, and effectiveness in brute-force actions such as lifting, pushing, and melee attacks.
         skills:
           type: array
-          description: List of skills associated with the attribute.
           items:
             type: string
           example:
             - Athletics
+
+    Skill:
+      type: object
+      required:
+        - id
+        - name
+        - attribute
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Athletics
+        attribute:
+          type: string
+          enum:
+            - STR
+            - DEX
+            - CON
+            - INT
+            - WIS
+            - CHA
+          example: STR

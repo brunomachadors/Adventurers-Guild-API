@@ -1,4 +1,4 @@
-import { Attribute } from "../types/attribute";
+import { Attribute } from '../types/attribute';
 
 export const attributes: Attribute[] = [
   {
@@ -7,9 +7,7 @@ export const attributes: Attribute[] = [
     shortName: 'STR',
     description:
       'Measures physical power, carrying capacity, and effectiveness in brute-force actions such as lifting, pushing, and melee attacks.',
-    skills: [
-      'Athletics'
-    ]
+    skills: ['Athletics'],
   },
   {
     id: 2,
@@ -17,11 +15,7 @@ export const attributes: Attribute[] = [
     shortName: 'DEX',
     description:
       'Measures agility, reflexes, balance, and coordination. It affects actions that require speed, precision, and stealth.',
-    skills: [
-      'Acrobatics',
-      'Sleight of Hand',
-      'Stealth'
-    ]
+    skills: ['Acrobatics', 'Sleight of Hand', 'Stealth'],
   },
   {
     id: 3,
@@ -29,7 +23,7 @@ export const attributes: Attribute[] = [
     shortName: 'CON',
     description:
       'Measures endurance, resilience, and physical toughness. It is commonly associated with health, stamina, and resistance to harm.',
-    skills: []
+    skills: [],
   },
   {
     id: 4,
@@ -37,13 +31,7 @@ export const attributes: Attribute[] = [
     shortName: 'INT',
     description:
       'Measures reasoning, memory, knowledge, and analytical ability. It is linked to learning, investigation, and logical thinking.',
-    skills: [
-      'Arcana',
-      'History',
-      'Investigation',
-      'Nature',
-      'Religion'
-    ]
+    skills: ['Arcana', 'History', 'Investigation', 'Nature', 'Religion'],
   },
   {
     id: 5,
@@ -56,8 +44,8 @@ export const attributes: Attribute[] = [
       'Insight',
       'Medicine',
       'Perception',
-      'Survival'
-    ]
+      'Survival',
+    ],
   },
   {
     id: 6,
@@ -65,11 +53,6 @@ export const attributes: Attribute[] = [
     shortName: 'CHA',
     description:
       'Measures presence, confidence, influence, and social impact. It affects persuasion, leadership, and interpersonal interactions.',
-    skills: [
-      'Deception',
-      'Intimidation',
-      'Performance',
-      'Persuasion'
-    ]
-  }
+    skills: ['Deception', 'Intimidation', 'Performance', 'Persuasion'],
+  },
 ];
