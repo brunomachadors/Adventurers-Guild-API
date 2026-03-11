@@ -6,9 +6,9 @@ info:
 
 servers:
   - url: http://localhost:3000
-    description: Local environment
-  - url: https://adventures.vercel.app
-    description: Production environment
+    description: Local development
+  - url: https://adventurers-guild-api.vercel.app
+    description: Production
 
 paths:
   /api/attributes:
