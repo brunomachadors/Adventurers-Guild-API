@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Adventurers Guild API
-  version: 1.0.0
+  version: 1.2.0
   description: A fantasy-themed API for backend testing practice.
 
 servers:
@@ -10,13 +10,19 @@ servers:
   - url: https://adventurers-guild-api.vercel.app
     description: Production
 
+tags:
+  - name: Attributes
+    description: RPG core attributes
+  - name: Skills
+    description: RPG skills and skill details
+
 paths:
   /api/attributes:
     get:
-      summary: List all attributes
-      description: Returns the six core RPG attributes with their descriptions and related skills.
       tags:
         - Attributes
+      summary: List all attributes
+      description: Returns the six core RPG attributes with their descriptions and related skills.
       responses:
         '200':
           description: Successful response
@@ -76,6 +82,95 @@ paths:
                     - Performance
                     - Persuasion
 
+  /api/skills:
+    get:
+      tags:
+        - Skills
+      summary: List all skills
+      description: Returns a simplified list of all skills with basic information only.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SkillListItem'
+              example:
+                - id: 1
+                  name: Athletics
+                - id: 2
+                  name: Acrobatics
+                - id: 3
+                  name: Sleight of Hand
+                - id: 4
+                  name: Stealth
+
+  /api/skills/{identifier}:
+    get:
+      tags:
+        - Skills
+      summary: Get skill by id or name
+      description: Returns detailed information about a skill using either its numeric id or its name slug, such as stealth or animal-handling.
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          description: Skill identifier. Can be a numeric id or a skill name slug.
+          schema:
+            type: string
+          examples:
+            byId:
+              summary: Search by id
+              value: '1'
+            byName:
+              summary: Search by slug
+              value: stealth
+            byComplexName:
+              summary: Search by multi-word slug
+              value: animal-handling
+      responses:
+        '200':
+          description: Skill found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillDetail'
+              examples:
+                byId:
+                  summary: Example response for Athletics
+                  value:
+                    id: 1
+                    name: Athletics
+                    attribute: STR
+                    description: Represents physical capability in actions such as climbing, jumping, swimming, or forcing objects through strength.
+                    exampleOfUse: Used when a character tries to climb a castle wall or force open a heavy gate.
+                    commonClasses:
+                      - Fighter
+                      - Barbarian
+                      - Paladin
+                byName:
+                  summary: Example response for Stealth
+                  value:
+                    id: 4
+                    name: Stealth
+                    attribute: DEX
+                    description: Represents the ability to move silently, remain unseen, and avoid detection.
+                    exampleOfUse: Used when a character sneaks past guards or hides in the shadows.
+                    commonClasses:
+                      - Rogue
+                      - Ranger
+                      - Monk
+        '404':
+          description: Skill not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Skill not found
+
 components:
   schemas:
     Attribute:
@@ -108,8 +203,70 @@ components:
           example: Measures physical power, carrying capacity, and effectiveness in brute-force actions such as lifting, pushing, and melee attacks.
         skills:
           type: array
-          description: List of skills associated with the attribute.
           items:
             type: string
           example:
             - Athletics
+
+    SkillListItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Athletics
+
+    SkillDetail:
+      type: object
+      required:
+        - id
+        - name
+        - attribute
+        - description
+        - exampleOfUse
+        - commonClasses
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Athletics
+        attribute:
+          type: string
+          enum:
+            - STR
+            - DEX
+            - CON
+            - INT
+            - WIS
+            - CHA
+          example: STR
+        description:
+          type: string
+          example: Represents physical capability in actions such as climbing, jumping, swimming, or forcing objects through strength.
+        exampleOfUse:
+          type: string
+          example: Used when a character tries to climb a castle wall or force open a heavy gate.
+        commonClasses:
+          type: array
+          items:
+            type: string
+          example:
+            - Fighter
+            - Barbarian
+            - Paladin
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: Skill not found

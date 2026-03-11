@@ -1,5 +1,6 @@
+import { AttributeShortName } from './attribute';
 
-export type Skill =
+export type SkillName =
   | 'Athletics'
   | 'Acrobatics'
   | 'Sleight of Hand'
@@ -18,3 +19,17 @@ export type Skill =
   | 'Intimidation'
   | 'Performance'
   | 'Persuasion';
+
+export interface SkillListItem {
+  id: number;
+  name: SkillName;
+}
+
+export interface SkillDetail {
+  id: number;
+  name: SkillName;
+  attribute: AttributeShortName;
+  description: string;
+  exampleOfUse: string;
+  commonClasses: string[];
+}
