@@ -20,8 +20,16 @@ export type SkillName =
   | 'Performance'
   | 'Persuasion';
 
-export interface Skill {
+export interface SkillListItem {
+  id: number;
+  name: SkillName;
+}
+
+export interface SkillDetail {
   id: number;
   name: SkillName;
   attribute: AttributeShortName;
+  description: string;
+  exampleOfUse: string;
+  commonClasses: string[];
 }
