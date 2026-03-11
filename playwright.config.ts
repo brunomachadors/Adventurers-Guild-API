@@ -21,4 +21,10 @@ export default defineConfig({
       name: 'backend-testing',
     },
   ],
+
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+  },
 });
