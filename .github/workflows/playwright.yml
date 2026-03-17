@@ -27,8 +27,8 @@ jobs:
       - name: Start application
         run: npm run start &
 
-      - name: Wait for application
-        run: npx wait-on http://localhost:3000
+      - name: Give application time to boot
+        run: sleep 10
 
       - name: Run Playwright tests
         run: npx playwright test --reporter=line
