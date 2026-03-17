@@ -1,132 +1,65 @@
-import { test, expect } from '@playwright/test';
+import { test } from './fixtures/api.fixture';
+import { SkillDetail, SkillListItem } from '@/app/types/skill';
+import {
+  expectedDetailedSkills,
+  expectedSkillsList,
+} from './data/skills.expected';
 
-test.describe('Skills API', () => {
-  test('should return all skills with simplified structure', async ({
-    request,
-  }) => {
-    const response = await request.get('/api/skills');
+test.describe('Skills API - List', () => {
+  test('Validate Schema', async ({ skillsClient, skillAssert }) => {
+    const response = await skillsClient.getSkills();
 
-    expect(response.status()).toBe(200);
-    expect(response.ok()).toBeTruthy();
+    await skillAssert.success(response);
 
-    const body = await response.json();
+    const body: SkillListItem[] = await response.json();
 
-    expect(Array.isArray(body)).toBe(true);
-    expect(body.length).toBeGreaterThan(0);
-
-    for (const skill of body) {
-      expect(skill).toHaveProperty('id');
-      expect(skill).toHaveProperty('name');
-
-      expect(typeof skill.id).toBe('number');
-      expect(typeof skill.name).toBe('string');
-
-      expect(skill).not.toHaveProperty('description');
-      expect(skill).not.toHaveProperty('attribute');
-      expect(skill).not.toHaveProperty('exampleOfUse');
-      expect(skill).not.toHaveProperty('commonClasses');
-    }
+    await skillAssert.validateSchema(body);
   });
 
-  test('should include Stealth in the skills list', async ({ request }) => {
-    const response = await request.get('/api/skills');
-    const body = await response.json();
+  for (const expectedSkill of expectedSkillsList) {
+    test(`Validate Skill ${expectedSkill.name}`, async ({
+      skillsClient,
+      skillAssert,
+    }) => {
+      const response = await skillsClient.getSkills();
 
-    const skillNames = body.map((skill: { name: string }) => skill.name);
+      await skillAssert.success(response);
 
-    expect(skillNames).toContain('Stealth');
-  });
+      const body: SkillListItem[] = await response.json();
 
-  test('should return skill details when searching by id', async ({
-    request,
-  }) => {
-    const response = await request.get('/api/skills/1');
-
-    expect(response.status()).toBe(200);
-    expect(response.ok()).toBeTruthy();
-
-    const body = await response.json();
-
-    expect(body.id).toBe(1);
-    expect(body.name).toBe('Athletics');
-    expect(body.attribute).toBe('STR');
-    expect(typeof body.description).toBe('string');
-    expect(body.description.length).toBeGreaterThan(10);
-    expect(typeof body.exampleOfUse).toBe('string');
-    expect(body.exampleOfUse.length).toBeGreaterThan(10);
-    expect(Array.isArray(body.commonClasses)).toBe(true);
-    expect(body.commonClasses.length).toBeGreaterThan(0);
-  });
-
-  test('should return skill details when searching by slug name', async ({
-    request,
-  }) => {
-    const response = await request.get('/api/skills/stealth');
-
-    expect(response.status()).toBe(200);
-    expect(response.ok()).toBeTruthy();
-
-    const body = await response.json();
-
-    expect(body.name).toBe('Stealth');
-    expect(body.attribute).toBe('DEX');
-    expect(typeof body.description).toBe('string');
-    expect(typeof body.exampleOfUse).toBe('string');
-    expect(Array.isArray(body.commonClasses)).toBe(true);
-  });
-
-  test('should return skill details when searching by multi-word slug', async ({
-    request,
-  }) => {
-    const response = await request.get('/api/skills/animal-handling');
-
-    expect(response.status()).toBe(200);
-    expect(response.ok()).toBeTruthy();
-
-    const body = await response.json();
-
-    expect(body.name).toBe('Animal Handling');
-    expect(body.attribute).toBe('WIS');
-  });
-
-  test('should return 404 for an unknown skill id', async ({ request }) => {
-    const response = await request.get('/api/skills/999');
-
-    expect(response.status()).toBe(404);
-
-    const body = await response.json();
-    expect(body).toEqual({
-      error: 'Skill not found',
+      await skillAssert.validateSkillInList(body, expectedSkill);
     });
-  });
+  }
+});
 
-  test('should return 404 for an unknown skill name', async ({ request }) => {
-    const response = await request.get('/api/skills/unknown-skill');
+test.describe('Skills API - Detail', () => {
+  for (const [identifier, expectedSkill] of Object.entries(
+    expectedDetailedSkills,
+  )) {
+    test(`Validate Skill Detail by id - ${expectedSkill.name}`, async ({
+      skillsClient,
+      skillAssert,
+    }) => {
+      const response = await skillsClient.getSkillDetail(expectedSkill.id);
 
-    expect(response.status()).toBe(404);
+      await skillAssert.success(response);
 
-    const body = await response.json();
-    expect(body).toEqual({
-      error: 'Skill not found',
+      const body: SkillDetail = await response.json();
+
+      await skillAssert.validateSkillDetail(body, expectedSkill);
     });
-  });
 
-  test('should keep consistency between skills list and skill detail', async ({
-    request,
-  }) => {
-    const listResponse = await request.get('/api/skills');
-    const listBody = await listResponse.json();
+    test(`Validate Skill Detail by name - ${expectedSkill.name}`, async ({
+      skillsClient,
+      skillAssert,
+    }) => {
+      const response = await skillsClient.getSkillDetail(identifier);
 
-    const stealthFromList = listBody.find(
-      (skill: { name: string }) => skill.name === 'Stealth',
-    );
+      await skillAssert.success(response);
 
-    expect(stealthFromList).toBeDefined();
+      const body: SkillDetail = await response.json();
 
-    const detailResponse = await request.get('/api/skills/stealth');
-    const detailBody = await detailResponse.json();
-
-    expect(detailBody.id).toBe(stealthFromList.id);
-    expect(detailBody.name).toBe(stealthFromList.name);
-  });
+      await skillAssert.validateSkillDetail(body, expectedSkill);
+    });
+  }
 });
