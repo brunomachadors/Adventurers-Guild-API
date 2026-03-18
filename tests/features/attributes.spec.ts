@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
-import { AttributesClient } from './clients/attributes.client';
-import { Assert } from './helpers/attribute.assertions';
-import { expectedAttributes } from './data/attributes.expected';
+import { AttributesClient } from '../clients/attributes.client';
+import { Assert } from '../helpers/attribute.assertions';
+import { expectedAttributes } from '../data/attributes.expected';
 import { Attribute } from '@/app/types/attribute';
 
 test('Validate attributes schema', async ({ request }) => {
