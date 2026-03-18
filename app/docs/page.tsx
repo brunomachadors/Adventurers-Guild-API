@@ -1,16 +1,25 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import 'swagger-ui-react/swagger-ui.css';
-
-const SwaggerUI = dynamic(() => import('swagger-ui-react'), {
-  ssr: false,
-});
+import { RedocStandalone } from 'redoc';
 
 export default function DocsPage() {
   return (
-    <main>
-      <SwaggerUI url="/openapi.yaml" />
+    <main style={{ padding: '24px' }}>
+      <RedocStandalone
+        specUrl="/openapi.yaml"
+        options={{
+          theme: {
+            typography: {
+              fontSize: '14px',
+              lineHeight: '1.5em',
+              fontFamily: 'Inter, Arial, sans-serif',
+              headings: {
+                fontFamily: 'Inter, Arial, sans-serif',
+              },
+            },
+          },
+        }}
+      />
     </main>
   );
 }
