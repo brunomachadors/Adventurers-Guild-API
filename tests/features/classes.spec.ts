@@ -9,13 +9,9 @@ test.describe('Classes API', { tag: ['@classes'] }, () => {
   test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
     const classesClient = new ClassesClient(request);
     const classAssert = new ClassAssert();
-
     const response = await classesClient.getClasses();
-
     await classAssert.success(response);
-
     const body: ClassListItem[] = await response.json();
-
     await classAssert.validateSchema(body);
   });
 
@@ -26,13 +22,9 @@ test.describe('Classes API', { tag: ['@classes'] }, () => {
       async ({ request }) => {
         const classesClient = new ClassesClient(request);
         const classAssert = new ClassAssert();
-
         const response = await classesClient.getClasses();
-
         await classAssert.success(response);
-
         const body: ClassListItem[] = await response.json();
-
         await classAssert.validateClassInList(body, expectedClass);
       },
     );

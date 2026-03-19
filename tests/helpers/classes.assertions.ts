@@ -29,11 +29,9 @@ export class ClassAssert {
 
   findClassById(classList: ClassListItem[], expectedId: number): ClassListItem {
     const classItem = classList.find((item) => item.id === expectedId);
-
     if (!classItem) {
       throw new Error(`Class with id ${expectedId} not found`);
     }
-
     return classItem;
   }
 

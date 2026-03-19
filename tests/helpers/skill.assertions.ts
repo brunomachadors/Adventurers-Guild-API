@@ -102,7 +102,6 @@ export class SkillAssert {
     expectedSkill: SkillListItem,
   ) {
     const skill = this.findSkillById(skillList, expectedSkill.id);
-
     await this.validateId(skill.id, expectedSkill.id);
     await this.validateName(skill.name, expectedSkill.name);
   }
