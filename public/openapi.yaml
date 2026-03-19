@@ -1,8 +1,23 @@
 openapi: 3.0.3
+
 info:
   title: Adventurers Guild API
   version: 1.2.0
-  description: A fantasy-themed API for backend testing practice.
+  description: |
+    A fantasy-themed API designed for learning **backend testing** and **API automation**.
+
+    This project is part of a testing-focused RPG domain and currently includes:
+
+    - **Attributes** → core RPG attributes such as STR, DEX, and WIS
+    - **Skills** → simplified list and detailed lookup by id or slug
+    - **Classes** → simplified list of playable RPG classes
+
+    This API is ideal for practicing:
+    - API schema validation
+    - response assertions
+    - path parameter validation
+    - automated tests with Playwright
+    - OpenAPI-based documentation
 
 servers:
   - url: http://localhost:3000
@@ -12,17 +27,28 @@ servers:
 
 tags:
   - name: Attributes
-    description: RPG core attributes
+    description: Core RPG attributes such as Strength, Dexterity, and Wisdom.
   - name: Skills
-    description: RPG skills and skill details
+    description: Skills related to RPG attributes, including detail lookups.
+  - name: Classes
+    description: Playable RPG character classes.
+
+x-tagGroups:
+  - name: Core Resources
+    tags:
+      - Attributes
+      - Skills
+      - Classes
 
 paths:
   /api/attributes:
     get:
       tags:
         - Attributes
+      operationId: getAttributes
       summary: List all attributes
-      description: Returns the six core RPG attributes with their descriptions and related skills.
+      description: |
+        Returns the six core RPG attributes with their descriptions and related skills.
       responses:
         '200':
           description: Successful response
@@ -86,8 +112,14 @@ paths:
     get:
       tags:
         - Skills
+      operationId: getSkills
       summary: List all skills
-      description: Returns a simplified list of all skills with basic information only.
+      description: |
+        Returns a simplified list of all available skills.
+
+        This endpoint is intentionally lightweight and only exposes:
+        - `id`
+        - `name`
       responses:
         '200':
           description: Successful response
@@ -111,13 +143,20 @@ paths:
     get:
       tags:
         - Skills
+      operationId: getSkillByIdentifier
       summary: Get skill by id or name
-      description: Returns detailed information about a skill using either its numeric id or its name slug, such as stealth or animal-handling.
+      description: |
+        Returns detailed information about a skill.
+
+        The `identifier` path parameter supports:
+        - numeric id → `/api/skills/1`
+        - slug name → `/api/skills/stealth`
+        - multi-word slug → `/api/skills/animal-handling`
       parameters:
         - name: identifier
           in: path
           required: true
-          description: Skill identifier. Can be a numeric id or a skill name slug.
+          description: Skill identifier. Can be a numeric id or a slug name.
           schema:
             type: string
           examples:
@@ -171,6 +210,43 @@ paths:
               example:
                 error: Skill not found
 
+  /api/classes:
+    get:
+      tags:
+        - Classes
+      operationId: getClasses
+      summary: List all classes
+      description: |
+        Returns a simplified list of RPG classes.
+
+        This endpoint currently exposes:
+        - `id`
+        - `name`
+
+        Future versions may include detailed lookup endpoints for class information.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClassListItem'
+              example:
+                - id: 1
+                  name: Fighter
+                - id: 2
+                  name: Wizard
+                - id: 3
+                  name: Rogue
+                - id: 4
+                  name: Cleric
+                - id: 5
+                  name: Ranger
+                - id: 6
+                  name: Paladin
+
 components:
   schemas:
     Attribute:
@@ -203,6 +279,7 @@ components:
           example: Measures physical power, carrying capacity, and effectiveness in brute-force actions such as lifting, pushing, and melee attacks.
         skills:
           type: array
+          description: List of skills related to the attribute.
           items:
             type: string
           example:
@@ -261,6 +338,19 @@ components:
             - Fighter
             - Barbarian
             - Paladin
+
+    ClassListItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Fighter
 
     ErrorResponse:
       type: object
