@@ -1,11 +1,11 @@
 import { SkillName } from './skill';
 
-export type AttributeShortName = 'STR' | 'DEX' | 'CON' | 'INT' | 'WIS' | 'CHA';
+export type Attributeshortname = 'STR' | 'DEX' | 'CON' | 'INT' | 'WIS' | 'CHA';
 
 export interface Attribute {
   id: number;
   name: string;
-  shortName: AttributeShortName;
+  shortname: Attributeshortname;
   description: string;
   skills: SkillName[];
 }

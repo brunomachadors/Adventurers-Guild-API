@@ -1,4 +1,4 @@
-import { AttributeShortName } from './attribute';
+import { Attributeshortname } from './attribute';
 import { SkillName } from './skill';
 
 export type ClassRole = 'melee' | 'caster' | 'support' | 'stealth' | 'hybrid';
@@ -11,7 +11,7 @@ export interface ClassListItem {
 export interface ClassDetail {
   id: number;
   name: string;
-  primaryAttributes: AttributeShortName[];
+  primaryAttributes: Attributeshortname[];
   recommendedSkills: SkillName[];
   hitDie: number;
   role: ClassRole;

@@ -102,7 +102,7 @@ Example response:
   {
     "id": 1,
     "name": "Strength",
-    "shortName": "STR",
+    "shortname": "STR",
     "description": "Measures physical power and brute-force capability."
   }
 ]

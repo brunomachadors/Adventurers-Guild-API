@@ -1,5 +1,5 @@
-import { skills } from '@/app/data/skills';
 import { NextResponse } from 'next/server';
+import { getSql } from '@/app/lib/db';
 
 interface RouteContext {
   params: Promise<{
@@ -19,31 +19,55 @@ export async function GET(_: Request, { params }: RouteContext) {
   const { identifier } = await params;
   const parsedId = Number(identifier);
 
+  const sql = getSql();
+
+  let skillRows;
+
   if (!Number.isNaN(parsedId)) {
-    const skillById = skills.find((skill) => skill.id === parsedId);
+    skillRows = await sql`
+      SELECT id, name, attribute, description, exampleofuse
+      FROM skills
+      WHERE id = ${parsedId}
+    `;
+  } else {
+    const allSkills = await sql`
+      SELECT id, name, attribute, description, exampleofuse
+      FROM skills
+    `;
 
-    if (!skillById) {
-      return NextResponse.json({ error: 'Skill not found' }, { status: 404 });
-    }
+    const normalizedIdentifier = normalizeSkillName(identifier);
 
-    return NextResponse.json(skillById, { status: 200 });
+    skillRows = allSkills.filter((skill) => {
+      const normalizedName = normalizeSkillName(skill.name);
+      const slugifiedName = slugifySkillName(skill.name);
+
+      return (
+        normalizedName === normalizedIdentifier ||
+        slugifiedName === normalizedIdentifier
+      );
+    });
   }
 
-  const normalizedIdentifier = normalizeSkillName(identifier);
-
-  const skillByName = skills.find((skill) => {
-    const normalizedName = normalizeSkillName(skill.name);
-    const slugifiedName = slugifySkillName(skill.name);
-
-    return (
-      normalizedName === normalizedIdentifier ||
-      slugifiedName === normalizedIdentifier
-    );
-  });
-
-  if (!skillByName) {
+  if (!skillRows || skillRows.length === 0) {
     return NextResponse.json({ error: 'Skill not found' }, { status: 404 });
   }
 
-  return NextResponse.json(skillByName, { status: 200 });
+  const skill = skillRows[0];
+
+  const classRows = await sql`
+    SELECT className
+    FROM skillClasses
+    WHERE skillId = ${skill.id}
+  `;
+
+  const formattedSkill = {
+    id: skill.id,
+    name: skill.name,
+    attribute: skill.attribute,
+    description: skill.description,
+    exampleofuse: skill.exampleofuse,
+    commonclasses: classRows.map((row) => row.classname),
+  };
+
+  return NextResponse.json(formattedSkill, { status: 200 });
 }

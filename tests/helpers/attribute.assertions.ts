@@ -17,29 +17,29 @@ export class Assert {
       for (const attribute of attributes) {
         expect(attribute).toHaveProperty('id');
         expect(attribute).toHaveProperty('name');
-        expect(attribute).toHaveProperty('shortName');
+        expect(attribute).toHaveProperty('shortname');
         expect(attribute).toHaveProperty('description');
         expect(attribute).toHaveProperty('skills');
 
         expect(typeof attribute.id).toBe('number');
         expect(typeof attribute.name).toBe('string');
-        expect(typeof attribute.shortName).toBe('string');
+        expect(typeof attribute.shortname).toBe('string');
         expect(typeof attribute.description).toBe('string');
         expect(Array.isArray(attribute.skills)).toBe(true);
       }
     });
   }
 
-  findAttributeByShortName(
+  findAttributeByshortname(
     attributes: Attribute[],
-    expectedShortName: Attribute['shortName'],
+    expectedshortname: Attribute['shortname'],
   ): Attribute {
     const attribute = attributes.find(
-      (item) => item.shortName === expectedShortName,
+      (item) => item.shortname === expectedshortname,
     );
 
     if (!attribute) {
-      throw new Error(`Attribute ${expectedShortName} not found`);
+      throw new Error(`Attribute ${expectedshortname} not found`);
     }
 
     return attribute;
@@ -57,9 +57,9 @@ export class Assert {
     });
   }
 
-  async validateShortName(shortName: string, expectedShortName: string) {
+  async validateshortname(shortname: string, expectedshortname: string) {
     await test.step('Validate Short Name', async () => {
-      expect(shortName).toBe(expectedShortName);
+      expect(shortname).toBe(expectedshortname);
     });
   }
 
@@ -79,16 +79,16 @@ export class Assert {
     attributes: Attribute[],
     expectedAttribute: Attribute,
   ) {
-    const attribute = this.findAttributeByShortName(
+    const attribute = this.findAttributeByshortname(
       attributes,
-      expectedAttribute.shortName,
+      expectedAttribute.shortname,
     );
 
     await this.validateId(attribute.id, expectedAttribute.id);
     await this.validateName(attribute.name, expectedAttribute.name);
-    await this.validateShortName(
-      attribute.shortName,
-      expectedAttribute.shortName,
+    await this.validateshortname(
+      attribute.shortname,
+      expectedAttribute.shortname,
     );
     await this.validateDescription(
       attribute.description,

@@ -61,13 +61,13 @@ paths:
               example:
                 - id: 1
                   name: Strength
-                  shortName: STR
+                  shortname: STR
                   description: Measures physical power, carrying capacity, and effectiveness in brute-force actions such as lifting, pushing, and melee attacks.
                   skills:
                     - Athletics
                 - id: 2
                   name: Dexterity
-                  shortName: DEX
+                  shortname: DEX
                   description: Measures agility, reflexes, balance, and coordination. It affects actions that require speed, precision, and stealth.
                   skills:
                     - Acrobatics
@@ -75,12 +75,12 @@ paths:
                     - Stealth
                 - id: 3
                   name: Constitution
-                  shortName: CON
+                  shortname: CON
                   description: Measures endurance, resilience, and physical toughness. It is commonly associated with health, stamina, and resistance to harm.
                   skills: []
                 - id: 4
                   name: Intelligence
-                  shortName: INT
+                  shortname: INT
                   description: Measures reasoning, memory, knowledge, and analytical ability. It is linked to learning, investigation, and logical thinking.
                   skills:
                     - Arcana
@@ -90,7 +90,7 @@ paths:
                     - Religion
                 - id: 5
                   name: Wisdom
-                  shortName: WIS
+                  shortname: WIS
                   description: Measures perception, intuition, awareness, and good judgment. It reflects how well a character understands the world around them.
                   skills:
                     - Animal Handling
@@ -100,7 +100,7 @@ paths:
                     - Survival
                 - id: 6
                   name: Charisma
-                  shortName: CHA
+                  shortname: CHA
                   description: Measures presence, confidence, influence, and social impact. It affects persuasion, leadership, and interpersonal interactions.
                   skills:
                     - Deception
@@ -184,8 +184,8 @@ paths:
                     name: Athletics
                     attribute: STR
                     description: Represents physical capability in actions such as climbing, jumping, swimming, or forcing objects through strength.
-                    exampleOfUse: Used when a character tries to climb a castle wall or force open a heavy gate.
-                    commonClasses:
+                    exampleofuse: Used when a character tries to climb a castle wall or force open a heavy gate.
+                    commonclasses:
                       - Fighter
                       - Barbarian
                       - Paladin
@@ -196,8 +196,8 @@ paths:
                     name: Stealth
                     attribute: DEX
                     description: Represents the ability to move silently, remain unseen, and avoid detection.
-                    exampleOfUse: Used when a character sneaks past guards or hides in the shadows.
-                    commonClasses:
+                    exampleofuse: Used when a character sneaks past guards or hides in the shadows.
+                    commonclasses:
                       - Rogue
                       - Ranger
                       - Monk
@@ -254,7 +254,7 @@ components:
       required:
         - id
         - name
-        - shortName
+        - shortname
         - description
         - skills
       properties:
@@ -264,7 +264,7 @@ components:
         name:
           type: string
           example: Strength
-        shortName:
+        shortname:
           type: string
           enum:
             - STR
@@ -305,8 +305,8 @@ components:
         - name
         - attribute
         - description
-        - exampleOfUse
-        - commonClasses
+        - exampleofuse
+        - commonclasses
       properties:
         id:
           type: integer
@@ -327,10 +327,10 @@ components:
         description:
           type: string
           example: Represents physical capability in actions such as climbing, jumping, swimming, or forcing objects through strength.
-        exampleOfUse:
+        exampleofuse:
           type: string
           example: Used when a character tries to climb a castle wall or force open a heavy gate.
-        commonClasses:
+        commonclasses:
           type: array
           items:
             type: string

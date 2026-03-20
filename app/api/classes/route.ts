@@ -1,6 +1,23 @@
+import { getSql } from '@/app/lib/db';
 import { NextResponse } from 'next/server';
-import { classesList } from '@/app/data/classes';
 
 export async function GET() {
-  return NextResponse.json(classesList, { status: 200 });
+  const sql = getSql();
+
+  try {
+    const classes = await sql`
+      SELECT id, name
+      FROM classes
+      ORDER BY id
+    `;
+
+    return NextResponse.json(classes, { status: 200 });
+  } catch (error) {
+    console.error('Failed to fetch classes:', error);
+
+    return NextResponse.json(
+      { error: 'Failed to fetch classes' },
+      { status: 500 },
+    );
+  }
 }
