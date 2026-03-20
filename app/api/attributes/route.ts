@@ -1,7 +1,8 @@
-import { sql } from '@/app/lib/db';
+import { getSql } from '@/app/lib/db';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
+  const sql = getSql();
   const attributes = await sql`SELECT * FROM attributes ORDER BY id`;
   const skills = await sql`SELECT name, attribute FROM skills`;
 

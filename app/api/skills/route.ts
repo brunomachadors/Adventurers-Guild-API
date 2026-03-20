@@ -1,7 +1,9 @@
+import { getSql } from '@/app/lib/db';
 import { NextResponse } from 'next/server';
-import { sql } from '@/app/lib/db';
 
 export async function GET() {
+  const sql = getSql();
+
   const skills = await sql`
     SELECT id, name
     FROM skills

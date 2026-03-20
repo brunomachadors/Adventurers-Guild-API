@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@/app/lib/db';
+import { getSql } from '@/app/lib/db';
 
 interface RouteContext {
   params: Promise<{
@@ -18,6 +18,8 @@ function slugifySkillName(value: string): string {
 export async function GET(_: Request, { params }: RouteContext) {
   const { identifier } = await params;
   const parsedId = Number(identifier);
+
+  const sql = getSql();
 
   let skillRows;
 
