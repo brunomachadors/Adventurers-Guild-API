@@ -1,12 +1,12 @@
-import { skills } from '@/app/data/skills';
-import { SkillListItem } from '@/app/types/skill';
 import { NextResponse } from 'next/server';
+import { sql } from '@/app/lib/db';
 
 export async function GET() {
-  const skillList: SkillListItem[] = skills.map(({ id, name }) => ({
-    id,
-    name,
-  }));
+  const skills = await sql`
+    SELECT id, name
+    FROM skills
+    ORDER BY id
+  `;
 
-  return NextResponse.json(skillList, { status: 200 });
+  return NextResponse.json(skills, { status: 200 });
 }

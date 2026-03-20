@@ -33,15 +33,15 @@ export class SkillAssert {
       expect(skill).toHaveProperty('name');
       expect(skill).toHaveProperty('attribute');
       expect(skill).toHaveProperty('description');
-      expect(skill).toHaveProperty('exampleOfUse');
-      expect(skill).toHaveProperty('commonClasses');
+      expect(skill).toHaveProperty('exampleofuse');
+      expect(skill).toHaveProperty('commonclasses');
 
       expect(typeof skill.id).toBe('number');
       expect(typeof skill.name).toBe('string');
       expect(typeof skill.attribute).toBe('string');
       expect(typeof skill.description).toBe('string');
-      expect(typeof skill.exampleOfUse).toBe('string');
-      expect(Array.isArray(skill.commonClasses)).toBe(true);
+      expect(typeof skill.exampleofuse).toBe('string');
+      expect(Array.isArray(skill.commonclasses)).toBe(true);
     });
   }
 
@@ -79,21 +79,21 @@ export class SkillAssert {
     });
   }
 
-  async validateExampleOfUse(
-    exampleOfUse: string,
-    expectedExampleOfUse: string,
+  async validateexampleofuse(
+    exampleofuse: string,
+    expectedexampleofuse: string,
   ) {
     await test.step('Validate Example Of Use', async () => {
-      expect(exampleOfUse).toBe(expectedExampleOfUse);
+      expect(exampleofuse).toBe(expectedexampleofuse);
     });
   }
 
-  async validateCommonClasses(
-    commonClasses: string[],
-    expectedCommonClasses: string[],
+  async validatecommonclasses(
+    commonclasses: string[],
+    expectedcommonclasses: string[],
   ) {
     await test.step('Validate Common Classes', async () => {
-      expect(commonClasses).toEqual(expectedCommonClasses);
+      expect(commonclasses).toEqual(expectedcommonclasses);
     });
   }
 
@@ -121,13 +121,13 @@ export class SkillAssert {
       actualSkill.description,
       expectedSkill.description,
     );
-    await this.validateExampleOfUse(
-      actualSkill.exampleOfUse,
-      expectedSkill.exampleOfUse,
+    await this.validateexampleofuse(
+      actualSkill.exampleofuse,
+      expectedSkill.exampleofuse,
     );
-    await this.validateCommonClasses(
-      actualSkill.commonClasses,
-      expectedSkill.commonClasses,
+    await this.validatecommonclasses(
+      actualSkill.commonclasses,
+      expectedSkill.commonclasses,
     );
   }
 }

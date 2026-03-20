@@ -1,4 +1,4 @@
-import { AttributeShortName } from './attribute';
+import { Attributeshortname } from './attribute';
 
 export type SkillName =
   | 'Athletics'
@@ -28,8 +28,8 @@ export interface SkillListItem {
 export interface SkillDetail {
   id: number;
   name: SkillName;
-  attribute: AttributeShortName;
+  attribute: Attributeshortname;
   description: string;
-  exampleOfUse: string;
-  commonClasses: string[];
+  exampleofuse: string;
+  commonclasses: string[];
 }

@@ -13,10 +13,10 @@ export class AttributesClient {
     return response.json();
   }
 
-  async findByShortName(
-    shortName: Attribute['shortName'],
+  async findByshortname(
+    shortname: Attribute['shortname'],
   ): Promise<Attribute | undefined> {
     const attributes = await this.getAllAsJson();
-    return attributes.find((attribute) => attribute.shortName === shortName);
+    return attributes.find((attribute) => attribute.shortname === shortname);
   }
 }
