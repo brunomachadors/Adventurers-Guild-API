@@ -27,6 +27,13 @@ export class ClassAssert {
     });
   }
 
+  async notFound(response: { status(): number; ok(): boolean }) {
+    await test.step('Should return status code 404', async () => {
+      expect(response.status()).toBe(404);
+      expect(response.ok()).toBeFalsy();
+    });
+  }
+
   async validateSchema(classList: ClassListItem[]) {
     await test.step('Should validate classes list is not empty', async () => {
       expect(classList).toBeTruthy();
@@ -194,6 +201,12 @@ export class ClassAssert {
     });
   }
 
+  async validateErrorMessage(error: string, expectedError: string) {
+    await test.step('Validate Error Message', async () => {
+      expect(error).toBe(expectedError);
+    });
+  }
+
   async validateSpellcasting(
     spellcasting: ClassDetail['spellcasting'],
     expectedSpellcasting: ClassDetail['spellcasting'],
@@ -281,5 +294,17 @@ export class ClassAssert {
         expectedClass.levelprogression,
       );
     }
+  }
+
+  async validateErrorResponse(
+    errorResponse: { error: string },
+    expectedError: string,
+  ) {
+    await test.step('Validate error response schema', async () => {
+      expect(errorResponse).toHaveProperty('error');
+      expect(typeof errorResponse.error).toBe('string');
+    });
+
+    await this.validateErrorMessage(errorResponse.error, expectedError);
   }
 }

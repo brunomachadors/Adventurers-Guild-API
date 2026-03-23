@@ -57,4 +57,38 @@ test.describe('Classes API - Detail', { tag: ['@classes', '@detail'] }, () => {
       },
     );
   }
+
+  test(
+    'Validate Class Detail by invalid id',
+    { tag: ['@negative', '@error'] },
+    async ({ request }) => {
+      const classesClient = new ClassesClient(request);
+      const classAssert = new ClassAssert();
+
+      const response = await classesClient.getClassDetail(9999);
+
+      await classAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await classAssert.validateErrorResponse(body, 'Class not found');
+    },
+  );
+
+  test(
+    'Validate Class Detail by invalid name',
+    { tag: ['@negative', '@error'] },
+    async ({ request }) => {
+      const classesClient = new ClassesClient(request);
+      const classAssert = new ClassAssert();
+
+      const response = await classesClient.getClassDetail('necromancer');
+
+      await classAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await classAssert.validateErrorResponse(body, 'Class not found');
+    },
+  );
 });
