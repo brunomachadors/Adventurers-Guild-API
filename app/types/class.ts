@@ -8,12 +8,33 @@ export interface ClassListItem {
   name: string;
 }
 
+export interface ClassFeatureItem {
+  name: string;
+  description: string;
+}
+
+export interface ClassLevelProgressionItem {
+  level: number;
+  features: ClassFeatureItem[];
+}
+
+export interface ClassSpellcasting {
+  ability: Attributeshortname;
+  usesSpellbook?: boolean;
+  canCastRituals?: boolean;
+}
+
 export interface ClassDetail {
   id: number;
   name: string;
-  primaryAttributes: Attributeshortname[];
-  recommendedSkills: SkillName[];
-  hitDie: number;
+  slug: string;
+  primaryattributes: Attributeshortname[];
+  recommendedskills: SkillName[];
+  savingthrows: Attributeshortname[];
+  hitdie: number;
   role: ClassRole;
   description: string;
+  spellcasting: ClassSpellcasting | null;
+  subclasses: string[];
+  levelprogression: ClassLevelProgressionItem[];
 }

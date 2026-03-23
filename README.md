@@ -138,6 +138,23 @@ adventurers-guild-api
 
 ---
 
+## 🧭 Collaboration Workflows
+
+To keep discussions focused, this project is organized by workflow instead of by resource.
+
+Recommended durable threads:
+
+- API Tests
+- API Evolution
+- Database and Inserts
+- Contract and Documentation
+- Types and Domain Models
+- Technical Maintenance
+
+Detailed thread ownership rules and examples live in [docs/collaboration-workflows.md](docs/collaboration-workflows.md).
+
+---
+
 ## 🧰 Technologies Used
 
 - Next.js
