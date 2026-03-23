@@ -6,4 +6,8 @@ export class ClassesClient {
   async getClasses(): Promise<APIResponse> {
     return this.request.get('/api/classes');
   }
+
+  async getClassDetail(identifier: string | number): Promise<APIResponse> {
+    return this.request.get(`/api/classes/${identifier}`);
+  }
 }

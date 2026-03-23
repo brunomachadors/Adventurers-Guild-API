@@ -30,7 +30,7 @@ export const expectedDetailedSkills: Record<string, SkillDetail> = {
       'Represents physical capability in actions such as climbing, jumping, swimming, or forcing objects through strength.',
     exampleofuse:
       'Used when a character tries to climb a castle wall or force open a heavy gate.',
-    commonclasses: ['Fighter', 'Barbarian', 'Paladin'],
+    commonclasses: ['Fighter', 'Barbarian', 'Paladin', 'Ranger'],
   },
   stealth: {
     id: 4,
@@ -38,7 +38,7 @@ export const expectedDetailedSkills: Record<string, SkillDetail> = {
     attribute: 'DEX',
     description: 'Represents the ability to move silently and remain unseen.',
     exampleofuse: 'Used when sneaking past enemies or hiding.',
-    commonclasses: ['Rogue', 'Ranger', 'Monk'],
+    commonclasses: ['Rogue', 'Ranger', 'Monk', 'Bard'],
   },
   'animal-handling': {
     id: 10,
@@ -46,6 +46,6 @@ export const expectedDetailedSkills: Record<string, SkillDetail> = {
     attribute: 'WIS',
     description: 'Represents the ability to calm and control animals.',
     exampleofuse: 'Used when calming or directing animals.',
-    commonclasses: ['Ranger', 'Druid'],
+    commonclasses: ['Ranger', 'Druid', 'Barbarian'],
   },
 };
