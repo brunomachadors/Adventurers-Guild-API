@@ -34,6 +34,42 @@ Returns the six core RPG attributes with:
 - `description`
 - `skills`
 
+### `GET /api/backgrounds`
+
+Returns a lightweight backgrounds list with:
+
+- `id`
+- `name`
+
+Returns `500` with `{ "error": "Failed to fetch backgrounds" }` if the query fails.
+
+### `GET /api/backgrounds/{identifier}`
+
+Returns detailed information for a single background.
+
+Supported identifiers:
+
+- numeric id, for example `/api/backgrounds/1`
+- slug, for example `/api/backgrounds/acolyte`
+- name or slug in a case-insensitive form, for example `/api/backgrounds/SOLDIER`
+
+Response fields:
+
+- `id`
+- `name`
+- `slug`
+- `description`
+- `abilityScores`
+- `feat`
+- `skillProficiencies`
+- `toolProficiency`
+- `equipmentOptions`
+
+Returns:
+
+- `404` with `{ "error": "Background not found" }` when the background does not exist
+- `500` with `{ "error": "Failed to fetch background detail" }` if the query fails
+
 ### `GET /api/skills`
 
 Returns a lightweight skills list with:
@@ -158,6 +194,25 @@ Attribute list item:
 }
 ```
 
+Background detail:
+
+```json
+{
+  "id": 1,
+  "name": "Acolyte",
+  "slug": "acolyte",
+  "description": "You devoted yourself to service in a temple, either nestled in a town or secluded in a sacred grove.",
+  "abilityScores": ["INT", "WIS", "CHA"],
+  "feat": "Magic Initiate (Cleric)",
+  "skillProficiencies": ["Insight", "Religion"],
+  "toolProficiency": "Calligrapher's Supplies",
+  "equipmentOptions": [
+    "Calligrapher's Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP",
+    "50 GP"
+  ]
+}
+```
+
 Class detail:
 
 ```json
@@ -246,6 +301,7 @@ adventurers-guild-api
 ├── app
 │   ├── api
 │   │   ├── attributes
+│   │   ├── backgrounds
 │   │   ├── classes
 │   │   ├── skills
 │   │   └── spells

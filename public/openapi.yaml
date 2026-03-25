@@ -2,13 +2,14 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.3.0
+  version: 1.4.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
     The documentation in this file reflects the current public routes implemented by the API:
 
     - Attributes list
+    - Backgrounds list and detail
     - Skills list and detail
     - Classes list and detail
     - Spells list and detail
@@ -22,6 +23,8 @@ servers:
 tags:
   - name: Attributes
     description: Core RPG attributes such as Strength, Dexterity, and Wisdom.
+  - name: Backgrounds
+    description: Character backgrounds list and detail endpoints.
   - name: Skills
     description: Skills list and skill detail endpoints.
   - name: Classes
@@ -33,6 +36,7 @@ x-tagGroups:
   - name: Core Resources
     tags:
       - Attributes
+      - Backgrounds
       - Skills
       - Classes
       - Spells
@@ -70,6 +74,138 @@ paths:
                     - Acrobatics
                     - Sleight of Hand
                     - Stealth
+
+  /api/backgrounds:
+    get:
+      tags:
+        - Backgrounds
+      operationId: getBackgrounds
+      summary: List all backgrounds
+      description: |
+        Returns a lightweight list of character backgrounds.
+
+        This endpoint exposes only:
+        - `id`
+        - `name`
+      responses:
+        '200':
+          description: Backgrounds returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BackgroundListItem'
+              example:
+                - id: 1
+                  name: Acolyte
+                - id: 5
+                  name: Criminal
+                - id: 13
+                  name: Sage
+                - id: 16
+                  name: Soldier
+        '500':
+          description: Failed to fetch backgrounds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch backgrounds
+
+  /api/backgrounds/{identifier}:
+    get:
+      tags:
+        - Backgrounds
+      operationId: getBackgroundByIdentifier
+      summary: Get background detail by identifier
+      description: |
+        Returns detailed information about a background.
+
+        Supported identifiers:
+        - numeric id, for example `/api/backgrounds/1`
+        - slug, for example `/api/backgrounds/acolyte`
+        - name or slug in a case-insensitive form, for example `/api/backgrounds/SOLDIER`
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          description: Background identifier as numeric id, name, or slug. Name and slug lookup are case-insensitive.
+          schema:
+            type: string
+          examples:
+            byId:
+              summary: Search by id
+              value: '1'
+            bySlug:
+              summary: Search by slug
+              value: acolyte
+            byUppercaseName:
+              summary: Search by uppercase name
+              value: SOLDIER
+      responses:
+        '200':
+          description: Background found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackgroundDetail'
+              examples:
+                acolyte:
+                  summary: Acolyte detail
+                  value:
+                    id: 1
+                    name: Acolyte
+                    slug: acolyte
+                    description: You devoted yourself to service in a temple, either nestled in a town or secluded in a sacred grove. There you performed rites in honor of a god or pantheon. You served under a priest and studied religion. Thanks to your priest's instruction and your own devotion, you also learned how to channel a modicum of divine power in service to your place of worship and the people who prayed there.
+                    abilityScores:
+                      - INT
+                      - WIS
+                      - CHA
+                    feat: Magic Initiate (Cleric)
+                    skillProficiencies:
+                      - Insight
+                      - Religion
+                    toolProficiency: Calligrapher's Supplies
+                    equipmentOptions:
+                      - Calligrapher's Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP
+                      - 50 GP
+                soldier:
+                  summary: Soldier detail
+                  value:
+                    id: 16
+                    name: Soldier
+                    slug: soldier
+                    description: You began training for war as soon as you reached adulthood and carry precious few memories of life before you took up arms. Battle is in your blood. Sometimes you catch yourself reflexively performing the basic fighting exercises you learned first. Eventually, you put that training to use on the battlefield, protecting the realm by waging war.
+                    abilityScores:
+                      - STR
+                      - DEX
+                      - CON
+                    feat: Savage Attacker
+                    skillProficiencies:
+                      - Athletics
+                      - Intimidation
+                    toolProficiency: One kind of Gaming Set
+                    equipmentOptions:
+                      - Spear, Shortbow, 20 Arrows, Gaming Set (same as above), Healer's Kit, Quiver, Traveler's Clothes, 14 GP
+                      - 50 GP
+        '404':
+          description: Background not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Background not found
+        '500':
+          description: Failed to fetch background detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch background detail
 
   /api/skills:
     get:
@@ -542,6 +678,74 @@ components:
             $ref: '#/components/schemas/SkillName'
           example:
             - Athletics
+
+    BackgroundListItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Acolyte
+
+    BackgroundDetail:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - description
+        - abilityScores
+        - feat
+        - skillProficiencies
+        - toolProficiency
+        - equipmentOptions
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Acolyte
+        slug:
+          type: string
+          example: acolyte
+        description:
+          type: string
+          example: You devoted yourself to service in a temple, either nestled in a town or secluded in a sacred grove.
+        abilityScores:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeShortname'
+          example:
+            - INT
+            - WIS
+            - CHA
+        feat:
+          type: string
+          example: Magic Initiate (Cleric)
+        skillProficiencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Insight
+            - Religion
+        toolProficiency:
+          type: string
+          nullable: true
+          example: Calligrapher's Supplies
+        equipmentOptions:
+          type: array
+          items:
+            type: string
+          example:
+            - Calligrapher's Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP
+            - 50 GP
 
     SkillListItem:
       type: object
