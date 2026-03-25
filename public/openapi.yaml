@@ -2,22 +2,16 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.2.0
+  version: 1.3.0
   description: |
-    A fantasy-themed API designed for learning **backend testing** and **API automation**.
+    Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
-    This project is part of a testing-focused RPG domain and currently includes:
+    The documentation in this file reflects the current public routes implemented by the API:
 
-    - **Attributes** → core RPG attributes such as STR, DEX, and WIS
-    - **Skills** → simplified list and detailed lookup by id or slug
-    - **Classes** → simplified list of playable RPG classes
-
-    This API is ideal for practicing:
-    - API schema validation
-    - response assertions
-    - path parameter validation
-    - automated tests with Playwright
-    - OpenAPI-based documentation
+    - Attributes list
+    - Skills list and detail
+    - Classes list and detail
+    - Spells list and detail
 
 servers:
   - url: http://localhost:3000
@@ -29,9 +23,11 @@ tags:
   - name: Attributes
     description: Core RPG attributes such as Strength, Dexterity, and Wisdom.
   - name: Skills
-    description: Skills related to RPG attributes, including detail lookups.
+    description: Skills list and skill detail endpoints.
   - name: Classes
-    description: Playable RPG character classes.
+    description: Playable RPG classes, including detail payloads.
+  - name: Spells
+    description: Spell list and spell detail endpoints.
 
 x-tagGroups:
   - name: Core Resources
@@ -39,6 +35,7 @@ x-tagGroups:
       - Attributes
       - Skills
       - Classes
+      - Spells
 
 paths:
   /api/attributes:
@@ -48,10 +45,10 @@ paths:
       operationId: getAttributes
       summary: List all attributes
       description: |
-        Returns the six core RPG attributes with their descriptions and related skills.
+        Returns the six core RPG attributes with their descriptions and the skill names associated with each attribute.
       responses:
         '200':
-          description: Successful response
+          description: Attributes returned successfully
           content:
             application/json:
               schema:
@@ -73,40 +70,6 @@ paths:
                     - Acrobatics
                     - Sleight of Hand
                     - Stealth
-                - id: 3
-                  name: Constitution
-                  shortname: CON
-                  description: Measures endurance, resilience, and physical toughness. It is commonly associated with health, stamina, and resistance to harm.
-                  skills: []
-                - id: 4
-                  name: Intelligence
-                  shortname: INT
-                  description: Measures reasoning, memory, knowledge, and analytical ability. It is linked to learning, investigation, and logical thinking.
-                  skills:
-                    - Arcana
-                    - History
-                    - Investigation
-                    - Nature
-                    - Religion
-                - id: 5
-                  name: Wisdom
-                  shortname: WIS
-                  description: Measures perception, intuition, awareness, and good judgment. It reflects how well a character understands the world around them.
-                  skills:
-                    - Animal Handling
-                    - Insight
-                    - Medicine
-                    - Perception
-                    - Survival
-                - id: 6
-                  name: Charisma
-                  shortname: CHA
-                  description: Measures presence, confidence, influence, and social impact. It affects persuasion, leadership, and interpersonal interactions.
-                  skills:
-                    - Deception
-                    - Intimidation
-                    - Performance
-                    - Persuasion
 
   /api/skills:
     get:
@@ -115,14 +78,14 @@ paths:
       operationId: getSkills
       summary: List all skills
       description: |
-        Returns a simplified list of all available skills.
+        Returns a lightweight list of available skills.
 
-        This endpoint is intentionally lightweight and only exposes:
+        This endpoint exposes only:
         - `id`
         - `name`
       responses:
         '200':
-          description: Successful response
+          description: Skills returned successfully
           content:
             application/json:
               schema:
@@ -144,31 +107,31 @@ paths:
       tags:
         - Skills
       operationId: getSkillByIdentifier
-      summary: Get skill by id or name
+      summary: Get skill detail by identifier
       description: |
         Returns detailed information about a skill.
 
-        The `identifier` path parameter supports:
-        - numeric id → `/api/skills/1`
-        - slug name → `/api/skills/stealth`
-        - multi-word slug → `/api/skills/animal-handling`
+        Supported identifiers:
+        - numeric id, for example `/api/skills/1`
+        - slug, for example `/api/skills/animal-handling`
+        - normalized name, for example `/api/skills/stealth`
       parameters:
         - name: identifier
           in: path
           required: true
-          description: Skill identifier. Can be a numeric id or a slug name.
+          description: Skill identifier as numeric id, slug, or normalized name.
           schema:
             type: string
           examples:
             byId:
               summary: Search by id
               value: '1'
-            byName:
+            bySlug:
               summary: Search by slug
-              value: stealth
-            byComplexName:
-              summary: Search by multi-word slug
               value: animal-handling
+            byName:
+              summary: Search by normalized name
+              value: stealth
       responses:
         '200':
           description: Skill found successfully
@@ -177,8 +140,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/SkillDetail'
               examples:
-                byId:
-                  summary: Example response for Athletics
+                athletics:
+                  summary: Athletics detail
                   value:
                     id: 1
                     name: Athletics
@@ -189,18 +152,20 @@ paths:
                       - Fighter
                       - Barbarian
                       - Paladin
-                byName:
-                  summary: Example response for Stealth
+                      - Ranger
+                stealth:
+                  summary: Stealth detail
                   value:
                     id: 4
                     name: Stealth
                     attribute: DEX
-                    description: Represents the ability to move silently, remain unseen, and avoid detection.
-                    exampleofuse: Used when a character sneaks past guards or hides in the shadows.
+                    description: Represents the ability to move silently and remain unseen.
+                    exampleofuse: Used when sneaking past enemies or hiding.
                     commonclasses:
                       - Rogue
                       - Ranger
                       - Monk
+                      - Bard
         '404':
           description: Skill not found
           content:
@@ -217,16 +182,14 @@ paths:
       operationId: getClasses
       summary: List all classes
       description: |
-        Returns a simplified list of RPG classes.
+        Returns a lightweight list of RPG classes.
 
-        This endpoint currently exposes:
+        This endpoint exposes only:
         - `id`
         - `name`
-
-        Future versions may include detailed lookup endpoints for class information.
       responses:
         '200':
-          description: Successful response
+          description: Classes returned successfully
           content:
             application/json:
               schema:
@@ -235,20 +198,323 @@ paths:
                   $ref: '#/components/schemas/ClassListItem'
               example:
                 - id: 1
-                  name: Fighter
+                  name: Barbarian
                 - id: 2
-                  name: Wizard
+                  name: Bard
                 - id: 3
-                  name: Rogue
-                - id: 4
                   name: Cleric
-                - id: 5
-                  name: Ranger
-                - id: 6
-                  name: Paladin
+                - id: 4
+                  name: Druid
+        '500':
+          description: Failed to fetch classes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch classes
+
+  /api/classes/{identifier}:
+    get:
+      tags:
+        - Classes
+      operationId: getClassByIdentifier
+      summary: Get class detail by identifier
+      description: |
+        Returns detailed information about a class.
+
+        Supported identifiers:
+        - numeric id, for example `/api/classes/12`
+        - slug, for example `/api/classes/wizard`
+        - normalized name, for example `/api/classes/fighter`
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          description: Class identifier as numeric id, slug, or normalized name.
+          schema:
+            type: string
+          examples:
+            byId:
+              summary: Search by id
+              value: '12'
+            bySlug:
+              summary: Search by slug
+              value: wizard
+            byName:
+              summary: Search by normalized name
+              value: fighter
+      responses:
+        '200':
+          description: Class found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassDetail'
+              examples:
+                fighter:
+                  summary: Fighter detail
+                  value:
+                    id: 5
+                    name: Fighter
+                    slug: fighter
+                    description: A master of weapons and armor who dominates the battlefield through martial skill, endurance, and tactical expertise.
+                    role: melee
+                    hitdie: 10
+                    primaryattributes:
+                      - STR
+                      - DEX
+                    recommendedskills:
+                      - Athletics
+                      - Perception
+                      - Intimidation
+                      - Survival
+                      - Acrobatics
+                    savingthrows:
+                      - STR
+                      - CON
+                    spellcasting: null
+                    subclasses:
+                      - Champion
+                    levelprogression: []
+                wizard:
+                  summary: Wizard detail
+                  value:
+                    id: 12
+                    name: Wizard
+                    slug: wizard
+                    description: A learned arcane scholar who studies the inner workings of magic to prepare spells, master rituals, and wield unmatched magical versatility.
+                    role: caster
+                    hitdie: 6
+                    primaryattributes:
+                      - INT
+                    recommendedskills:
+                      - Arcana
+                      - Investigation
+                      - History
+                      - Nature
+                      - Religion
+                    savingthrows:
+                      - INT
+                      - WIS
+                    spellcasting:
+                      ability: INT
+                      usesSpellbook: true
+                      canCastRituals: true
+                    subclasses:
+                      - Evoker
+                    levelprogression: []
+        '404':
+          description: Class not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Class not found
+        '500':
+          description: Failed to fetch class detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch class detail
+
+  /api/spells:
+    get:
+      tags:
+        - Spells
+      operationId: getSpells
+      summary: List all spells
+      description: |
+        Returns a lightweight list of spells.
+
+        This endpoint exposes:
+        - `id`
+        - `name`
+        - `level`
+        - `levelLabel`
+      responses:
+        '200':
+          description: Spells returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpellListItem'
+              example:
+                - id: 1
+                  name: Acid Splash
+                  level: 0
+                  levelLabel: Cantrip
+                - id: 18
+                  name: Alarm
+                  level: 1
+                  levelLabel: Level 1
+                - id: 20
+                  name: Animal Friendship
+                  level: 1
+                  levelLabel: Level 1
+        '500':
+          description: Failed to fetch spells
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch spells
+
+  /api/spells/{identifier}:
+    get:
+      tags:
+        - Spells
+      operationId: getSpellByIdentifier
+      summary: Get spell detail by identifier
+      description: |
+        Returns detailed information about a spell.
+
+        Supported identifiers:
+        - numeric id, for example `/api/spells/18`
+        - slug, for example `/api/spells/acid-splash`
+        - normalized name, for example `/api/spells/alarm`
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          description: Spell identifier as numeric id, slug, or normalized name.
+          schema:
+            type: string
+          examples:
+            byId:
+              summary: Search by id
+              value: '18'
+            bySlug:
+              summary: Search by slug
+              value: acid-splash
+            byName:
+              summary: Search by normalized name
+              value: alarm
+      responses:
+        '200':
+          description: Spell found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpellDetail'
+              examples:
+                acidSplash:
+                  summary: Acid Splash detail
+                  value:
+                    id: 1
+                    name: Acid Splash
+                    slug: acid-splash
+                    source: Player's Handbook
+                    school: Evocation
+                    level: 0
+                    levelLabel: Cantrip
+                    castingTime: Action
+                    range: 60 feet
+                    components:
+                      verbal: true
+                      somatic: true
+                      material: false
+                      materialDescription: null
+                    duration: Instantaneous
+                    description: You create an acidic bubble at a point within range, where it explodes in a 5-foot-radius Sphere. Each creature in that Sphere must succeed on a Dexterity saving throw or take 1d6 Acid damage.
+                    classes:
+                      - Sorcerer
+                      - Wizard
+                    scaling:
+                      entries:
+                        - level: 5
+                          description: damage increases to 2d6
+                        - level: 11
+                          description: damage increases to 3d6
+                        - level: 17
+                          description: damage increases to 4d6
+                alarm:
+                  summary: Alarm detail
+                  value:
+                    id: 18
+                    name: Alarm
+                    slug: alarm
+                    source: Player's Handbook
+                    school: Abjuration
+                    level: 1
+                    levelLabel: Level 1
+                    castingTime: 1 minute or Ritual
+                    range: 30 feet
+                    components:
+                      verbal: true
+                      somatic: true
+                      material: true
+                      materialDescription: a bell and silver wire
+                    duration: 8 hours
+                    description: |
+                      You set an alarm against intrusion. Choose a door, a window, or an area within range that is no larger than a 20-foot Cube. Until the spell ends, an alarm alerts you whenever a creature touches or enters the warded area. When you cast the spell, you can designate creatures that won't set off the alarm. You also choose whether the alarm is audible or mental:
+
+                      Audible Alarm. The alarm produces the sound of a handbell for 10 seconds within 60 feet of the warded area.
+
+                      Mental Alarm. You are alerted by a mental ping if you are within 1 mile of the warded area. This ping awakens you if you're asleep.
+                    classes:
+                      - Ranger
+                      - Wizard
+                    scaling: null
+        '404':
+          description: Spell not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Spell not found
+        '500':
+          description: Failed to fetch spell detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch spell detail
 
 components:
   schemas:
+    AttributeShortname:
+      type: string
+      enum:
+        - STR
+        - DEX
+        - CON
+        - INT
+        - WIS
+        - CHA
+      example: STR
+
+    SkillName:
+      type: string
+      enum:
+        - Athletics
+        - Acrobatics
+        - Sleight of Hand
+        - Stealth
+        - Arcana
+        - History
+        - Investigation
+        - Nature
+        - Religion
+        - Animal Handling
+        - Insight
+        - Medicine
+        - Perception
+        - Survival
+        - Deception
+        - Intimidation
+        - Performance
+        - Persuasion
+      example: Athletics
+
     Attribute:
       type: object
       required:
@@ -265,23 +531,15 @@ components:
           type: string
           example: Strength
         shortname:
-          type: string
-          enum:
-            - STR
-            - DEX
-            - CON
-            - INT
-            - WIS
-            - CHA
-          example: STR
+          $ref: '#/components/schemas/AttributeShortname'
         description:
           type: string
           example: Measures physical power, carrying capacity, and effectiveness in brute-force actions such as lifting, pushing, and melee attacks.
         skills:
           type: array
-          description: List of skills related to the attribute.
+          description: List of skill names associated with the attribute.
           items:
-            type: string
+            $ref: '#/components/schemas/SkillName'
           example:
             - Athletics
 
@@ -295,8 +553,7 @@ components:
           type: integer
           example: 1
         name:
-          type: string
-          example: Athletics
+          $ref: '#/components/schemas/SkillName'
 
     SkillDetail:
       type: object
@@ -312,18 +569,9 @@ components:
           type: integer
           example: 1
         name:
-          type: string
-          example: Athletics
+          $ref: '#/components/schemas/SkillName'
         attribute:
-          type: string
-          enum:
-            - STR
-            - DEX
-            - CON
-            - INT
-            - WIS
-            - CHA
-          example: STR
+          $ref: '#/components/schemas/AttributeShortname'
         description:
           type: string
           example: Represents physical capability in actions such as climbing, jumping, swimming, or forcing objects through strength.
@@ -338,6 +586,17 @@ components:
             - Fighter
             - Barbarian
             - Paladin
+            - Ranger
+
+    ClassRole:
+      type: string
+      enum:
+        - melee
+        - caster
+        - support
+        - stealth
+        - hybrid
+      example: caster
 
     ClassListItem:
       type: object
@@ -347,10 +606,253 @@ components:
       properties:
         id:
           type: integer
+          example: 12
+        name:
+          type: string
+          example: Wizard
+
+    ClassSpellcasting:
+      type: object
+      required:
+        - ability
+      properties:
+        ability:
+          $ref: '#/components/schemas/AttributeShortname'
+        usesSpellbook:
+          type: boolean
+          example: true
+        canCastRituals:
+          type: boolean
+          example: true
+
+    ClassFeatureItem:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          example: Spellcasting
+        description:
+          type: string
+          example: You can prepare and cast wizard spells.
+
+    ClassLevelProgressionItem:
+      type: object
+      required:
+        - level
+        - features
+      properties:
+        level:
+          type: integer
+          example: 1
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassFeatureItem'
+
+    ClassDetail:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - primaryattributes
+        - recommendedskills
+        - savingthrows
+        - hitdie
+        - role
+        - description
+        - spellcasting
+        - subclasses
+        - levelprogression
+      properties:
+        id:
+          type: integer
+          example: 12
+        name:
+          type: string
+          example: Wizard
+        slug:
+          type: string
+          example: wizard
+        primaryattributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeShortname'
+          example:
+            - INT
+        recommendedskills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Arcana
+            - Investigation
+            - History
+            - Nature
+            - Religion
+        savingthrows:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeShortname'
+          example:
+            - INT
+            - WIS
+        hitdie:
+          type: integer
+          example: 6
+        role:
+          $ref: '#/components/schemas/ClassRole'
+        description:
+          type: string
+          example: A learned arcane scholar who studies the inner workings of magic to prepare spells, master rituals, and wield unmatched magical versatility.
+        spellcasting:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ClassSpellcasting'
+        subclasses:
+          type: array
+          items:
+            type: string
+          example:
+            - Evoker
+        levelprogression:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassLevelProgressionItem'
+
+    SpellListItem:
+      type: object
+      required:
+        - id
+        - name
+        - level
+        - levelLabel
+      properties:
+        id:
+          type: integer
           example: 1
         name:
           type: string
-          example: Fighter
+          example: Acid Splash
+        level:
+          type: integer
+          example: 0
+        levelLabel:
+          type: string
+          example: Cantrip
+
+    SpellComponents:
+      type: object
+      required:
+        - verbal
+        - somatic
+        - material
+        - materialDescription
+      properties:
+        verbal:
+          type: boolean
+          example: true
+        somatic:
+          type: boolean
+          example: true
+        material:
+          type: boolean
+          example: false
+        materialDescription:
+          type: string
+          nullable: true
+          example: null
+
+    SpellScalingEntry:
+      type: object
+      required:
+        - level
+        - description
+      properties:
+        level:
+          type: integer
+          example: 5
+        description:
+          type: string
+          example: damage increases to 2d6
+
+    SpellScaling:
+      type: object
+      required:
+        - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpellScalingEntry'
+
+    SpellDetail:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - source
+        - school
+        - level
+        - levelLabel
+        - castingTime
+        - range
+        - components
+        - duration
+        - description
+        - classes
+        - scaling
+      properties:
+        id:
+          type: integer
+          example: 18
+        name:
+          type: string
+          example: Alarm
+        slug:
+          type: string
+          example: alarm
+        source:
+          type: string
+          example: Player's Handbook
+        school:
+          type: string
+          example: Abjuration
+        level:
+          type: integer
+          example: 1
+        levelLabel:
+          type: string
+          example: Level 1
+        castingTime:
+          type: string
+          example: 1 minute or Ritual
+        range:
+          type: string
+          example: 30 feet
+        components:
+          $ref: '#/components/schemas/SpellComponents'
+        duration:
+          type: string
+          example: 8 hours
+        description:
+          type: string
+          example: You set an alarm against intrusion.
+        classes:
+          type: array
+          items:
+            type: string
+          example:
+            - Ranger
+            - Wizard
+        scaling:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/SpellScaling'
 
     ErrorResponse:
       type: object
