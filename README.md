@@ -1,260 +1,282 @@
-# 🐉 Adventurers Guild API
+# Adventurers Guild API
 
-A fantasy-themed REST API built to teach backend testing, API automation, and quality engineering practices through a playful RPG scenario inspired by tabletop adventures.
+Fantasy-themed REST API built with Next.js to support learning and practice around backend testing, API automation, contract validation, and documentation.
 
----
+## Purpose
 
-## ⚔️ Project Purpose
-
-The main goal of this project is to provide a realistic backend system that students can interact with while learning:
+This project is designed to provide a stable API surface that can be used to practice:
 
 - API testing fundamentals
-- Backend quality validation
-- Test automation
-- API documentation
-- Contract validation
-- Response structure validation
+- Response and schema validation
+- Contract-first documentation
 - Error handling validation
-- CI-ready test execution
+- Automated API checks with tools like Postman, Newman, Playwright, and TypeScript
 
----
+## Base URLs
 
-## 🧙 Concept
+- Production: [https://adventurers-guild-api.vercel.app](https://adventurers-guild-api.vercel.app)
+- Local: `http://localhost:3000`
 
-The world revolves around a **Guild of Adventurers**, where characters possess classic RPG attributes:
+## Interactive Documentation
 
-| Attribute | Meaning                                  |
-| --------- | ---------------------------------------- |
-| STR       | Strength – Physical power                |
-| DEX       | Dexterity – Agility and reflexes         |
-| CON       | Constitution – Endurance and resilience  |
-| INT       | Intelligence – Reasoning and knowledge   |
-| WIS       | Wisdom – Awareness and perception        |
-| CHA       | Charisma – Influence and social presence |
+- ReDoc: [https://adventurers-guild-api.vercel.app/docs](https://adventurers-guild-api.vercel.app/docs)
+- OpenAPI file: [https://adventurers-guild-api.vercel.app/openapi.yaml](https://adventurers-guild-api.vercel.app/openapi.yaml)
 
----
+## Current API Surface
 
-## 🌍 Live API
+### `GET /api/attributes`
 
-Production API hosted on Vercel:
+Returns the six core RPG attributes with:
 
-```
+- `id`
+- `name`
+- `shortname`
+- `description`
+- `skills`
 
-[https://adventurers-guild-api.vercel.app](https://adventurers-guild-api.vercel.app)
+### `GET /api/skills`
 
-```
+Returns a lightweight skills list with:
 
-Example endpoint:
+- `id`
+- `name`
 
-```
+### `GET /api/skills/{identifier}`
 
-GET /api/attributes
+Returns detailed information for a single skill.
 
-```
+Supported identifiers:
 
-Full endpoint example:
+- numeric id, for example `/api/skills/1`
+- slug, for example `/api/skills/animal-handling`
+- normalized skill name, for example `/api/skills/stealth`
 
-```
+Response fields:
 
-[https://adventurers-guild-api.vercel.app/api/attributes](https://adventurers-guild-api.vercel.app/api/attributes)
+- `id`
+- `name`
+- `attribute`
+- `description`
+- `exampleofuse`
+- `commonclasses`
 
-```
+Returns `404` with `{ "error": "Skill not found" }` when the skill does not exist.
 
----
+### `GET /api/classes`
 
-## 📚 API Documentation
+Returns a lightweight classes list with:
 
-Interactive Swagger documentation:
+- `id`
+- `name`
 
-```
+Returns `500` with `{ "error": "Failed to fetch classes" }` if the query fails.
 
-[https://adventurers-guild-api.vercel.app/docs](https://adventurers-guild-api.vercel.app/docs)
+### `GET /api/classes/{identifier}`
 
-```
+Returns detailed information for a single class.
 
-The documentation allows users to:
+Supported identifiers:
 
-- Explore endpoints
-- Inspect request/response schemas
-- Test endpoints directly from the browser
-- Understand expected responses
+- numeric id, for example `/api/classes/12`
+- slug, for example `/api/classes/wizard`
+- normalized class name, for example `/api/classes/fighter`
 
----
+Response fields:
 
-## 🧩 Current Endpoints
+- `id`
+- `name`
+- `slug`
+- `description`
+- `role`
+- `hitdie`
+- `primaryattributes`
+- `recommendedskills`
+- `savingthrows`
+- `spellcasting`
+- `subclasses`
+- `levelprogression`
 
-### 📜 Attributes
+Returns:
 
-#### Get all attributes
+- `404` with `{ "error": "Class not found" }` when the class does not exist
+- `500` with `{ "error": "Failed to fetch class detail" }` if the query fails
 
-```
+### `GET /api/spells`
 
-GET /api/attributes
+Returns a lightweight spells list with:
 
-```
+- `id`
+- `name`
+- `level`
+- `levelLabel`
 
-Returns the list of RPG core attributes.
+Returns `500` with `{ "error": "Failed to fetch spells" }` if the query fails.
 
-Example response:
+### `GET /api/spells/{identifier}`
+
+Returns detailed information for a single spell.
+
+Supported identifiers:
+
+- numeric id, for example `/api/spells/18`
+- slug, for example `/api/spells/acid-splash`
+- normalized name, for example `/api/spells/alarm`
+
+Response fields:
+
+- `id`
+- `name`
+- `slug`
+- `source`
+- `school`
+- `level`
+- `levelLabel`
+- `castingTime`
+- `range`
+- `components`
+- `duration`
+- `description`
+- `classes`
+- `scaling`
+
+Returns:
+
+- `404` with `{ "error": "Spell not found" }` when the spell does not exist
+- `500` with `{ "error": "Failed to fetch spell detail" }` if the query fails
+
+## Example Responses
+
+Attribute list item:
 
 ```json
-[
-  {
-    "id": 1,
-    "name": "Strength",
-    "shortname": "STR",
-    "description": "Measures physical power and brute-force capability."
-  }
-]
+{
+  "id": 1,
+  "name": "Strength",
+  "shortname": "STR",
+  "description": "Measures physical power, carrying capacity, and effectiveness in brute-force actions such as lifting, pushing, and melee attacks.",
+  "skills": ["Athletics"]
+}
 ```
 
----
+Class detail:
 
-## 🏗️ Project Architecture
-
+```json
+{
+  "id": 12,
+  "name": "Wizard",
+  "slug": "wizard",
+  "description": "A learned arcane scholar who studies the inner workings of magic to prepare spells, master rituals, and wield unmatched magical versatility.",
+  "role": "caster",
+  "hitdie": 6,
+  "primaryattributes": ["INT"],
+  "recommendedskills": [
+    "Arcana",
+    "Investigation",
+    "History",
+    "Nature",
+    "Religion"
+  ],
+  "savingthrows": ["INT", "WIS"],
+  "spellcasting": {
+    "ability": "INT",
+    "usesSpellbook": true,
+    "canCastRituals": true
+  },
+  "subclasses": ["Evoker"]
+}
 ```
-adventurers-guild-api
-│
-├── public
-│   └── openapi.yaml
-│
-├── src
-│   ├── app
-│   │   ├── api
-│   │   │   └── attributes
-│   │   │       └── route.ts
-│   │   │
-│   │   └── docs
-│   │       └── page.tsx
-│   │
-│   ├── data
-│   │   └── attributes.ts
-│   │
-│   └── types
-│       └── attribute.ts
-│
-└── README.md
+
+Spell detail:
+
+```json
+{
+  "id": 18,
+  "name": "Alarm",
+  "slug": "alarm",
+  "source": "Player's Handbook",
+  "school": "Abjuration",
+  "level": 1,
+  "levelLabel": "Level 1",
+  "castingTime": "1 minute or Ritual",
+  "range": "30 feet",
+  "components": {
+    "verbal": true,
+    "somatic": true,
+    "material": true,
+    "materialDescription": "a bell and silver wire"
+  },
+  "duration": "8 hours",
+  "description": "You set an alarm against intrusion.",
+  "classes": ["Ranger", "Wizard"],
+  "scaling": null
+}
 ```
 
----
-
-## 🧭 Collaboration Workflows
-
-To keep discussions focused, this project is organized by workflow instead of by resource.
-
-Recommended durable threads:
-
-- API Tests
-- API Evolution
-- Database and Inserts
-- Contract and Documentation
-- Types and Domain Models
-- Technical Maintenance
-
-Detailed thread ownership rules and examples live in [docs/collaboration-workflows.md](docs/collaboration-workflows.md).
-
----
-
-## 🧰 Technologies Used
-
-- Next.js
-- TypeScript
-- Vercel
-- OpenAPI / Swagger
-- Swagger UI
-- Node.js
-
----
-
-## 🧪 Testing Ecosystem
-
-This API is designed to support testing with tools such as:
-
-- Postman
-- Newman
-- Playwright
-- JavaScript / TypeScript
-
-Students can practice:
-
-- response validation
-- schema validation
-- automated API testing
-- test scripting
-- pipeline integration
-
----
-
-## 🎓 Educational Context
-
-This API is used as part of a **Backend Test Automation course**, where students progressively learn how to:
-
-1. Understand backend concepts
-2. Perform API calls
-3. Write automated tests with Postman
-4. Build test scripts using JavaScript
-5. Automate tests using Playwright
-6. Validate API responses and data structures
-7. Integrate tests in CI pipelines
-
----
-
-## 🚀 Running the Project Locally
+## Local Development
 
 Clone the repository:
 
-```
+```bash
 git clone https://github.com/your-repo/adventurers-guild-api.git
+cd adventurers-guild-api
 ```
 
 Install dependencies:
 
-```
+```bash
 npm install
 ```
 
-Run the development server:
+Start the development server:
 
-```
+```bash
 npm run dev
 ```
 
-API:
+Useful local URLs:
 
+- API base: `http://localhost:3000/api`
+- Docs: `http://localhost:3000/docs`
+- OpenAPI file: `http://localhost:3000/openapi.yaml`
+
+## Project Structure
+
+```text
+adventurers-guild-api
+├── app
+│   ├── api
+│   │   ├── attributes
+│   │   ├── classes
+│   │   ├── skills
+│   │   └── spells
+│   ├── docs
+│   ├── lib
+│   └── types
+├── public
+│   └── openapi.yaml
+├── tests
+│   └── data
+└── README.md
 ```
-http://localhost:3000/api
-```
 
-Docs:
+## Notes For Documentation Work
 
-```
-http://localhost:3000/docs
-```
+This repository treats documentation as part of the public API contract. The documentation should always reflect:
 
----
+- the current route handlers
+- the current shared types in `app/types`
+- the real error messages returned by the API
+- the response shapes asserted in `tests/data`
 
-## 📖 Future Features
+## Technologies
 
-Planned expansions include:
+- Next.js
+- TypeScript
+- Neon serverless Postgres
+- OpenAPI 3.0
+- ReDoc
+- Playwright
 
-- Characters
-- Inventory system
-- Monsters
-- Quests
-- Equipment
-- Gold economy
-
-These features will introduce **complex business rules for testing scenarios**.
-
----
-
-## ⚡ Author
-
-Bruno Machado
-Software Quality Engineer & Mentor
-
----
-
-## 🛡️ License
+## License
 
 This project is available for educational use and experimentation.
