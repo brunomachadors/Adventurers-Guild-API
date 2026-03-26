@@ -64,3 +64,44 @@ export interface CharacterResponseBody {
   missingFields: CharacterMissingField[];
   classDetails?: CharacterClassDetails | null;
 }
+
+export interface CharacterSpellOptionItem {
+  id: number;
+  name: string;
+  level: number;
+  levelLabel: string;
+}
+
+export interface CharacterSpellOptionsResponseBody {
+  characterId: number;
+  classId: number | null;
+  className: string | null;
+  spells: CharacterSpellOptionItem[];
+}
+
+export type CharacterSpellSelectionType = 'known' | 'prepared' | 'cantrip';
+
+export interface CharacterSpellSelectionRule {
+  canSelectSpells: boolean;
+  selectionType: CharacterSpellSelectionType | null;
+  maxCantrips: number;
+  maxSpells: number;
+}
+
+export interface CharacterSelectedSpellItem extends CharacterSpellOptionItem {
+  selectionType: CharacterSpellSelectionType;
+}
+
+export interface CharacterSpellSelectionResponseBody {
+  characterId: number;
+  classId: number | null;
+  className: string | null;
+  level: number;
+  selectionRules: CharacterSpellSelectionRule;
+  selectedSpells: CharacterSelectedSpellItem[];
+  availableSpells: CharacterSpellOptionItem[];
+}
+
+export interface CharacterSpellSelectionUpdateRequestBody {
+  spellIds: number[];
+}

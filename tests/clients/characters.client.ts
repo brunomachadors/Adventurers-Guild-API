@@ -2,6 +2,7 @@ import { APIRequestContext, APIResponse } from '@playwright/test';
 
 import {
   CharacterCreateRequestBody,
+  CharacterSpellSelectionUpdateRequestBody,
   CharacterUpdateRequestBody,
 } from '@/app/types/character';
 
@@ -30,12 +31,41 @@ export class CharactersClient {
     });
   }
 
+  async getCharacterSpellOptions(
+    id: number,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.get(`/api/characters/${id}/spell-options`, {
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
+  async getCharacterSpellSelection(
+    id: number,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.get(`/api/characters/${id}/spell-selection`, {
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
   async updateCharacter(
     id: number,
     payload: CharacterUpdateRequestBody,
     token?: string,
   ): Promise<APIResponse> {
     return this.request.patch(`/api/characters/${id}`, {
+      data: payload,
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
+  async updateCharacterSpells(
+    id: number,
+    payload: CharacterSpellSelectionUpdateRequestBody,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.put(`/api/characters/${id}/spells`, {
       data: payload,
       headers: this.buildAuthHeaders(token),
     });

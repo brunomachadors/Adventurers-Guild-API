@@ -1,6 +1,8 @@
 import {
   CharacterClassDetails,
   CharacterListItem,
+  CharacterSpellOptionsResponseBody,
+  CharacterSpellSelectionResponseBody,
   CharacterResponseBody,
   CharacterStatus,
 } from '@/app/types/character';
@@ -59,6 +61,113 @@ export class CharactersAssert {
         expect(typeof character.name).toBe('string');
         expect(typeof character.status).toBe('string');
         expect(typeof character.level).toBe('number');
+      });
+    }
+  }
+
+  async validateCharacterSpellOptionsSchema(
+    spellOptions: CharacterSpellOptionsResponseBody,
+  ) {
+    await test.step('Validate character spell options schema', async () => {
+      expect(spellOptions).toHaveProperty('characterId');
+      expect(spellOptions).toHaveProperty('classId');
+      expect(spellOptions).toHaveProperty('className');
+      expect(spellOptions).toHaveProperty('spells');
+
+      expect(typeof spellOptions.characterId).toBe('number');
+      expect(
+        spellOptions.classId === null || typeof spellOptions.classId === 'number',
+      ).toBe(true);
+      expect(
+        spellOptions.className === null ||
+          typeof spellOptions.className === 'string',
+      ).toBe(true);
+      expect(Array.isArray(spellOptions.spells)).toBe(true);
+    });
+
+    for (const spell of spellOptions.spells) {
+      await test.step(`Validate spell option schema for ${spell.name}`, async () => {
+        expect(spell).toHaveProperty('id');
+        expect(spell).toHaveProperty('name');
+        expect(spell).toHaveProperty('level');
+        expect(spell).toHaveProperty('levelLabel');
+
+        expect(typeof spell.id).toBe('number');
+        expect(typeof spell.name).toBe('string');
+        expect(typeof spell.level).toBe('number');
+        expect(typeof spell.levelLabel).toBe('string');
+      });
+    }
+  }
+
+  async validateCharacterSpellSelectionSchema(
+    spellSelection: CharacterSpellSelectionResponseBody,
+  ) {
+    await test.step('Validate character spell selection schema', async () => {
+      expect(spellSelection).toHaveProperty('characterId');
+      expect(spellSelection).toHaveProperty('classId');
+      expect(spellSelection).toHaveProperty('className');
+      expect(spellSelection).toHaveProperty('level');
+      expect(spellSelection).toHaveProperty('selectionRules');
+      expect(spellSelection).toHaveProperty('selectedSpells');
+      expect(spellSelection).toHaveProperty('availableSpells');
+
+      expect(typeof spellSelection.characterId).toBe('number');
+      expect(
+        spellSelection.classId === null ||
+          typeof spellSelection.classId === 'number',
+      ).toBe(true);
+      expect(
+        spellSelection.className === null ||
+          typeof spellSelection.className === 'string',
+      ).toBe(true);
+      expect(typeof spellSelection.level).toBe('number');
+      expect(Array.isArray(spellSelection.selectedSpells)).toBe(true);
+      expect(Array.isArray(spellSelection.availableSpells)).toBe(true);
+    });
+
+    await test.step('Validate spell selection rules schema', async () => {
+      expect(spellSelection.selectionRules).toHaveProperty('canSelectSpells');
+      expect(spellSelection.selectionRules).toHaveProperty('selectionType');
+      expect(spellSelection.selectionRules).toHaveProperty('maxCantrips');
+      expect(spellSelection.selectionRules).toHaveProperty('maxSpells');
+
+      expect(typeof spellSelection.selectionRules.canSelectSpells).toBe('boolean');
+      expect(
+        spellSelection.selectionRules.selectionType === null ||
+          typeof spellSelection.selectionRules.selectionType === 'string',
+      ).toBe(true);
+      expect(typeof spellSelection.selectionRules.maxCantrips).toBe('number');
+      expect(typeof spellSelection.selectionRules.maxSpells).toBe('number');
+    });
+
+    for (const spell of spellSelection.selectedSpells) {
+      await test.step(`Validate selected spell schema for ${spell.name}`, async () => {
+        expect(spell).toHaveProperty('id');
+        expect(spell).toHaveProperty('name');
+        expect(spell).toHaveProperty('level');
+        expect(spell).toHaveProperty('levelLabel');
+        expect(spell).toHaveProperty('selectionType');
+
+        expect(typeof spell.id).toBe('number');
+        expect(typeof spell.name).toBe('string');
+        expect(typeof spell.level).toBe('number');
+        expect(typeof spell.levelLabel).toBe('string');
+        expect(typeof spell.selectionType).toBe('string');
+      });
+    }
+
+    for (const spell of spellSelection.availableSpells) {
+      await test.step(`Validate available spell schema for ${spell.name}`, async () => {
+        expect(spell).toHaveProperty('id');
+        expect(spell).toHaveProperty('name');
+        expect(spell).toHaveProperty('level');
+        expect(spell).toHaveProperty('levelLabel');
+
+        expect(typeof spell.id).toBe('number');
+        expect(typeof spell.name).toBe('string');
+        expect(typeof spell.level).toBe('number');
+        expect(typeof spell.levelLabel).toBe('string');
       });
     }
   }
@@ -208,6 +317,15 @@ export class CharactersAssert {
   async validateLevel(level: number, expectedLevel: number) {
     await test.step('Validate Level', async () => {
       expect(level).toBe(expectedLevel);
+    });
+  }
+
+  async validateClassName(
+    className: string | null,
+    expectedClassName: string | null,
+  ) {
+    await test.step('Validate Class Name', async () => {
+      expect(className).toBe(expectedClassName);
     });
   }
 
