@@ -2,61 +2,65 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { apiResources, projectHighlights } from '@/app/data/api-resources';
+import logoImage from '@/public/logo.png';
 
 export default function HomePage() {
   return (
     <main className="page-frame">
       <section className="hero-panel">
-        <div className="hero-panel__content">
-          <p className="kicker">Guild charter</p>
-          <h1>A campaign codex for exploring the Adventurers Guild API.</h1>
-          <p className="hero-copy">
-            The interface now leans into a tabletop fantasy mood, turning the
-            API entrypoint into something closer to a parchment guide for
-            adventurers, maintainers, and curious visitors.
-          </p>
-
-          <div className="hero-actions">
-            <Link className="button button--primary" href="/support">
-              Enter the guild hall
-            </Link>
-            <Link className="button button--secondary" href="/docs">
-              Read the codex
-            </Link>
-          </div>
-
-          <div className="hero-banner">
-            <Image
-              alt="Adventurers Guild fantasy banner"
-              className="hero-banner__image"
-              height={420}
-              priority
-              src="/logo.png"
-              width={960}
-            />
-            <div className="hero-banner__overlay">
-              <p className="mini-label">Featured banner</p>
-              <p>
-                The guild mark now anchors the landing experience and strengthens
-                the campaign identity of the portal.
-              </p>
+        <div className="hero-banner hero-banner--feature">
+          <Image
+            alt="Adventurers Guild fantasy banner"
+            className="hero-banner__image"
+            height={540}
+            priority
+            src={logoImage}
+            width={1280}
+          />
+          <div className="hero-banner__overlay hero-banner__overlay--feature">
+            <div className="hero-actions">
+              <Link className="button button--primary" href="/support">
+                Enter the guild hall
+              </Link>
+              <Link className="button button--secondary" href="/docs">
+                Read the codex
+              </Link>
             </div>
           </div>
         </div>
 
-        <aside className="hero-panel__aside hero-panel__aside--sheet">
-          <p className="mini-label">Party notes</p>
-          <div className="sheet-emblem" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-          <ul className="feature-list">
-            {projectHighlights.map((highlight) => (
-              <li key={highlight}>{highlight}</li>
-            ))}
-          </ul>
-        </aside>
+        <div className="hero-panel__grid">
+          <article className="hero-panel__aside hero-panel__aside--sheet">
+            <p className="mini-label">Party notes</p>
+            <div className="sheet-emblem" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <ul className="feature-list">
+              {projectHighlights.map((highlight) => (
+                <li key={highlight}>{highlight}</li>
+              ))}
+            </ul>
+          </article>
+
+          <article className="hero-panel__aside hero-panel__aside--sheet">
+            <p className="mini-label">Next route</p>
+            <h2>Choose your entrypoint into the realm</h2>
+            <p className="hero-copy">
+              Start with the support hub for orientation or move directly to the
+              interactive docs when you want the technical spellbook.
+            </p>
+            <div className="hero-actions">
+              <Link className="button button--primary" href="/support">
+                Open support
+              </Link>
+              <Link className="button button--secondary" href="/docs">
+                Open docs
+              </Link>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section className="section-block">

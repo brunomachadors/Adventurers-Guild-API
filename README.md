@@ -180,6 +180,41 @@ Returns:
 - `404` with `{ "error": "Spell not found" }` when the spell does not exist
 - `500` with `{ "error": "Failed to fetch spell detail" }` if the query fails
 
+### `GET /api/species`
+
+Returns a lightweight species list with:
+
+- `id`
+- `name`
+
+Returns `500` with `{ "error": "Failed to fetch species" }` if the query fails.
+
+### `GET /api/species/{identifier}`
+
+Returns detailed information for a single species.
+
+Supported identifiers:
+
+- numeric id, for example `/api/species/1`
+- slug, for example `/api/species/dragonborn`
+- normalized name, for example `/api/species/elf`
+
+Response fields:
+
+- `id`
+- `name`
+- `slug`
+- `description`
+- `creatureType`
+- `size`
+- `speed`
+- `specialTraits`
+
+Returns:
+
+- `404` with `{ "error": "Species not found" }` when the species does not exist
+- `500` with `{ "error": "Failed to fetch species detail" }` if the query fails
+
 ## Example Responses
 
 Attribute list item:
@@ -267,6 +302,26 @@ Spell detail:
 }
 ```
 
+Species detail:
+
+```json
+{
+  "id": 1,
+  "name": "Dragonborn",
+  "slug": "dragonborn",
+  "description": "Dragonborn look like wingless, bipedal dragons.",
+  "creatureType": "Humanoid",
+  "size": "Medium",
+  "speed": 30,
+  "specialTraits": [
+    {
+      "name": "Draconic Ancestry",
+      "description": "You have a dragon ancestor, which grants you a Breath Weapon and damage resistance tied to that ancestry."
+    }
+  ]
+}
+```
+
 ## Local Development
 
 Clone the repository:
@@ -304,6 +359,7 @@ adventurers-guild-api
 │   │   ├── backgrounds
 │   │   ├── classes
 │   │   ├── skills
+│   │   ├── species
 │   │   └── spells
 │   ├── docs
 │   ├── lib
