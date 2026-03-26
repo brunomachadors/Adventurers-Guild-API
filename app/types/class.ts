@@ -22,6 +22,20 @@ export interface ClassSpellcasting {
   ability: Attributeshortname;
   usesSpellbook?: boolean;
   canCastRituals?: boolean;
+  selection?: ClassSpellSelection;
+}
+
+export type ClassSpellSelectionType = 'known' | 'prepared';
+
+export interface ClassSpellSelection {
+  selectionType: ClassSpellSelectionType;
+  cantrips?: Record<string, number>;
+  spells?: Record<string, number>;
+  preparedSpells?: Record<string, number>;
+  spellbookSpells?: Record<string, number>;
+  spellsAddedPerLevel?: number;
+  mode?: string;
+  changesWhen?: string;
 }
 
 export interface ClassDetail {
