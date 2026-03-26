@@ -287,13 +287,13 @@ Response fields:
 - `missingFields`
 - `classDetails`
 - `speciesDetails`
+- `backgroundDetails`
 
 When related data exists, the API can enrich the detail response with:
 
 - `classDetails`
 - `speciesDetails`
-
-The current implementation still returns `backgroundId` as a scalar reference and does not yet include nested `backgroundDetails`.
+- `backgroundDetails`
 
 Returns:
 
@@ -320,6 +320,7 @@ Response fields:
 - `missingFields`
 - `classDetails`
 - `speciesDetails`
+- `backgroundDetails`
 
 Returns:
 
@@ -443,7 +444,7 @@ Character detail:
   "speciesId": 3,
   "backgroundId": 13,
   "level": 1,
-  "missingFields": ["backgroundId"],
+  "missingFields": [],
   "classDetails": {
     "id": 12,
     "name": "Wizard",
@@ -481,6 +482,20 @@ Character detail:
         "name": "Darkvision",
         "description": "You have Darkvision with a range of 60 feet."
       }
+    ]
+  },
+  "backgroundDetails": {
+    "id": 13,
+    "name": "Sage",
+    "slug": "sage",
+    "description": "You spent your formative years traveling between manors and monasteries, performing various odd jobs and services in exchange for access to their libraries.",
+    "abilityScores": ["CON", "INT", "WIS"],
+    "feat": "Magic Initiate (Wizard)",
+    "skillProficiencies": ["Arcana", "History"],
+    "toolProficiency": "Calligrapher's Supplies",
+    "equipmentOptions": [
+      "Quarterstaff, Calligrapher's Supplies, Book (history), Parchment (8 sheets), Robe, 8 GP",
+      "50 GP"
     ]
   }
 }

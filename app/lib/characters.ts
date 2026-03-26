@@ -4,6 +4,7 @@ import {
   CharacterResponseBody,
   CharacterStatus,
 } from '@/app/types/character';
+import { BackgroundDetail } from '@/app/types/background';
 import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
 import { getSql } from './db';
 
@@ -202,6 +203,55 @@ export async function getCharacterSpeciesDetails(
   };
 }
 
+export async function getCharacterBackgroundDetails(
+  backgroundId: number | null,
+): Promise<BackgroundDetail | null> {
+  if (backgroundId === null) {
+    return null;
+  }
+
+  const sql = getSql();
+  const backgroundRows = await sql`
+    SELECT
+      id,
+      name,
+      slug,
+      description,
+      abilityscores,
+      feat,
+      skillproficiencies,
+      toolproficiency,
+      equipmentoptions
+    FROM backgrounds
+    WHERE id = ${backgroundId}
+    LIMIT 1
+  `;
+
+  if (!backgroundRows || backgroundRows.length === 0) {
+    return null;
+  }
+
+  const backgroundItem = backgroundRows[0];
+
+  return {
+    id: toNumber(backgroundItem.id),
+    name: backgroundItem.name,
+    slug: backgroundItem.slug,
+    description: backgroundItem.description,
+    abilityScores: Array.isArray(backgroundItem.abilityscores)
+      ? backgroundItem.abilityscores
+      : [],
+    feat: backgroundItem.feat,
+    skillProficiencies: Array.isArray(backgroundItem.skillproficiencies)
+      ? backgroundItem.skillproficiencies
+      : [],
+    toolProficiency: backgroundItem.toolproficiency ?? null,
+    equipmentOptions: Array.isArray(backgroundItem.equipmentoptions)
+      ? backgroundItem.equipmentoptions
+      : [],
+  };
+}
+
 export async function formatCharacterResponse(character: {
   id: number | string;
   name: string;
@@ -234,6 +284,9 @@ export async function formatCharacterResponse(character: {
     ),
     speciesDetails: await getCharacterSpeciesDetails(
       formattedCharacter.speciesId,
+    ),
+    backgroundDetails: await getCharacterBackgroundDetails(
+      formattedCharacter.backgroundId,
     ),
   };
 }

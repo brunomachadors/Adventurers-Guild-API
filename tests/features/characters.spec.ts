@@ -11,6 +11,7 @@ import { AuthClient } from '../clients/auth.client';
 import { CharactersClient } from '../clients/characters.client';
 import { AuthAssert } from '../helpers/auth.assertions';
 import { CharactersAssert } from '../helpers/characters.assertions';
+import { expectedDetailedBackgrounds } from '../data/backgrounds.expected';
 import { expectedDetailedSpecies } from '../data/species.expected';
 
 async function issueDemoToken(request: APIRequestContext) {
@@ -42,7 +43,7 @@ test.describe(
   let createdCharacterName: string;
 
   test(
-    'List characters for authenticated owner',
+    'List Characters',
     { tag: ['@get', '@smoke', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -60,7 +61,7 @@ test.describe(
   );
 
   test(
-    'Create draft character',
+    'Create Draft',
     { tag: ['@post', '@smoke', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -105,11 +106,15 @@ test.describe(
         createdCharacter.speciesDetails ?? null,
         false,
       );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        createdCharacter.backgroundDetails ?? null,
+        false,
+      );
     },
   );
 
   test(
-    'Get created draft character',
+    'Get Draft',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -151,11 +156,15 @@ test.describe(
         fetchedCharacter.speciesDetails ?? null,
         false,
       );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        fetchedCharacter.backgroundDetails ?? null,
+        false,
+      );
     },
   );
 
   test(
-    'Patch character class and species',
+    'Add Class Barbarian',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -165,7 +174,6 @@ test.describe(
         createdCharacterId,
         {
           classId: 1,
-          speciesId: 2,
           level: 1,
         },
         authToken,
@@ -183,7 +191,7 @@ test.describe(
       );
       await charactersAssert.validateStatus(updatedCharacter.status, 'draft');
       await charactersAssert.validateClassId(updatedCharacter.classId, 1);
-      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 2);
+      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, null);
       await charactersAssert.validateBackgroundId(
         updatedCharacter.backgroundId,
         null,
@@ -191,7 +199,7 @@ test.describe(
       await charactersAssert.validateLevel(updatedCharacter.level, 1);
       await charactersAssert.validateMissingFields(
         updatedCharacter.missingFields,
-        ['backgroundId'],
+        ['speciesId', 'backgroundId'],
       );
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
@@ -199,7 +207,11 @@ test.describe(
       );
       await charactersAssert.validateSpeciesDetailsPresence(
         updatedCharacter.speciesDetails ?? null,
-        true,
+        false,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        updatedCharacter.backgroundDetails ?? null,
+        false,
       );
 
       if (updatedCharacter.classDetails) {
@@ -213,6 +225,172 @@ test.describe(
           updatedCharacter.level,
         );
       }
+    },
+  );
+
+  test(
+    'Get Barbarian',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateClassId(character.classId, 1);
+      await charactersAssert.validateSpeciesId(character.speciesId, null);
+      await charactersAssert.validateBackgroundId(character.backgroundId, null);
+      await charactersAssert.validateMissingFields(character.missingFields, [
+        'speciesId',
+        'backgroundId',
+      ]);
+      await charactersAssert.validateClassDetailsPresence(
+        character.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        false,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        false,
+      );
+    },
+  );
+
+  test(
+    'Add Species Dwarf',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacter(
+        createdCharacterId,
+        {
+          speciesId: 2,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateClassId(character.classId, 1);
+      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateBackgroundId(character.backgroundId, null);
+      await charactersAssert.validateMissingFields(character.missingFields, [
+        'backgroundId',
+      ]);
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        true,
+      );
+
+      if (character.speciesDetails) {
+        await charactersAssert.validateId(character.speciesDetails.id, 2);
+        await charactersAssert.validateName(
+          character.speciesDetails.name,
+          expectedDetailedSpecies.dwarf.name,
+        );
+        await charactersAssert.validateSpeciesDetailsSchema(
+          character.speciesDetails,
+        );
+      }
+    },
+  );
+
+  test(
+    'Get Dwarf Barbarian',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateClassId(character.classId, 1);
+      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateBackgroundId(character.backgroundId, null);
+      await charactersAssert.validateMissingFields(character.missingFields, [
+        'backgroundId',
+      ]);
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        false,
+      );
+    },
+  );
+
+  test(
+    'Add Background Soldier',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const updateResponse = await charactersClient.updateCharacter(
+        createdCharacterId,
+        {
+          backgroundId: 16,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(updateResponse);
+
+      const updatedCharacter: CharacterResponseBody = await updateResponse.json();
+
+      await charactersAssert.validateCharacterResponseSchema(updatedCharacter);
+      await charactersAssert.validateId(updatedCharacter.id, createdCharacterId);
+      await charactersAssert.validateName(
+        updatedCharacter.name,
+        createdCharacterName,
+      );
+      await charactersAssert.validateStatus(updatedCharacter.status, 'complete');
+      await charactersAssert.validateClassId(updatedCharacter.classId, 1);
+      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 2);
+      await charactersAssert.validateBackgroundId(
+        updatedCharacter.backgroundId,
+        16,
+      );
+      await charactersAssert.validateLevel(updatedCharacter.level, 1);
+      await charactersAssert.validateMissingFields(updatedCharacter.missingFields, []);
+      await charactersAssert.validateClassDetailsPresence(
+        updatedCharacter.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        updatedCharacter.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        updatedCharacter.backgroundDetails ?? null,
+        true,
+      );
 
       if (updatedCharacter.speciesDetails) {
         await charactersAssert.validateId(updatedCharacter.speciesDetails.id, 2);
@@ -222,6 +400,17 @@ test.describe(
         );
         await charactersAssert.validateSpeciesDetailsSchema(
           updatedCharacter.speciesDetails,
+        );
+      }
+
+      if (updatedCharacter.backgroundDetails) {
+        await charactersAssert.validateId(updatedCharacter.backgroundDetails.id, 16);
+        await charactersAssert.validateName(
+          updatedCharacter.backgroundDetails.name,
+          expectedDetailedBackgrounds.soldier.name,
+        );
+        await charactersAssert.validateBackgroundDetailsSchema(
+          updatedCharacter.backgroundDetails,
         );
       }
     },
@@ -305,7 +494,7 @@ test.describe(
   );
 
   test(
-    'Get updated character',
+    'Get Complete Barbarian',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -323,21 +512,22 @@ test.describe(
       await charactersAssert.validateCharacterResponseSchema(finalCharacter);
       await charactersAssert.validateId(finalCharacter.id, createdCharacterId);
       await charactersAssert.validateName(finalCharacter.name, createdCharacterName);
-      await charactersAssert.validateStatus(finalCharacter.status, 'draft');
+      await charactersAssert.validateStatus(finalCharacter.status, 'complete');
       await charactersAssert.validateClassId(finalCharacter.classId, 1);
       await charactersAssert.validateSpeciesId(finalCharacter.speciesId, 2);
-      await charactersAssert.validateBackgroundId(finalCharacter.backgroundId, null);
+      await charactersAssert.validateBackgroundId(finalCharacter.backgroundId, 16);
       await charactersAssert.validateLevel(finalCharacter.level, 1);
-      await charactersAssert.validateMissingFields(
-        finalCharacter.missingFields,
-        ['backgroundId'],
-      );
+      await charactersAssert.validateMissingFields(finalCharacter.missingFields, []);
       await charactersAssert.validateClassDetailsPresence(
         finalCharacter.classDetails ?? null,
         true,
       );
       await charactersAssert.validateSpeciesDetailsPresence(
         finalCharacter.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        finalCharacter.backgroundDetails ?? null,
         true,
       );
 
@@ -363,6 +553,180 @@ test.describe(
           finalCharacter.speciesDetails,
         );
       }
+
+      if (finalCharacter.backgroundDetails) {
+        await charactersAssert.validateId(finalCharacter.backgroundDetails.id, 16);
+        await charactersAssert.validateName(
+          finalCharacter.backgroundDetails.name,
+          expectedDetailedBackgrounds.soldier.name,
+        );
+        await charactersAssert.validateBackgroundDetailsSchema(
+          finalCharacter.backgroundDetails,
+        );
+      }
+    },
+  );
+  },
+);
+
+test.describe(
+  'Characters API - Create Complete Paladin',
+  { tag: ['@characters', '@flow', '@complete-create'] },
+  () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let authToken: string;
+  let createdCharacterId: number;
+  let createdCharacterName: string;
+
+  test(
+    'Create Paladin Human Noble',
+    { tag: ['@post', '@smoke', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      authToken = await issueDemoToken(request);
+      createdCharacterName = `Cedric ${Date.now()}`;
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: createdCharacterName,
+          classId: 7,
+          speciesId: 7,
+          backgroundId: 12,
+          level: 1,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      createdCharacterId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateName(character.name, createdCharacterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 7);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 12);
+      await charactersAssert.validateLevel(character.level, 1);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateClassDetailsPresence(
+        character.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        true,
+      );
+
+      if (character.classDetails) {
+        await charactersAssert.validateId(character.classDetails.id, 7);
+        await charactersAssert.validateName(character.classDetails.name, 'Paladin');
+        await charactersAssert.validateClassDetailsSchema(
+          character.classDetails,
+          character.level,
+        );
+      }
+
+      if (character.speciesDetails) {
+        await charactersAssert.validateId(character.speciesDetails.id, 7);
+        await charactersAssert.validateName(
+          character.speciesDetails.name,
+          expectedDetailedSpecies.human.name,
+        );
+        await charactersAssert.validateSpeciesDetailsSchema(
+          character.speciesDetails,
+        );
+      }
+
+      if (character.backgroundDetails) {
+        await charactersAssert.validateId(character.backgroundDetails.id, 12);
+        await charactersAssert.validateName(
+          character.backgroundDetails.name,
+          expectedDetailedBackgrounds.noble.name,
+        );
+        await charactersAssert.validateBackgroundDetailsSchema(
+          character.backgroundDetails,
+        );
+      }
+    },
+  );
+
+  test(
+    'Get Complete Paladin',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateName(character.name, createdCharacterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 7);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 12);
+      await charactersAssert.validateLevel(character.level, 1);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateClassDetailsPresence(
+        character.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        true,
+      );
+
+      if (character.classDetails) {
+        await charactersAssert.validateId(character.classDetails.id, 7);
+        await charactersAssert.validateName(character.classDetails.name, 'Paladin');
+        await charactersAssert.validateClassDetailsSchema(
+          character.classDetails,
+          character.level,
+        );
+      }
+
+      if (character.speciesDetails) {
+        await charactersAssert.validateId(character.speciesDetails.id, 7);
+        await charactersAssert.validateName(
+          character.speciesDetails.name,
+          expectedDetailedSpecies.human.name,
+        );
+        await charactersAssert.validateSpeciesDetailsSchema(
+          character.speciesDetails,
+        );
+      }
+
+      if (character.backgroundDetails) {
+        await charactersAssert.validateId(character.backgroundDetails.id, 12);
+        await charactersAssert.validateName(
+          character.backgroundDetails.name,
+          expectedDetailedBackgrounds.noble.name,
+        );
+        await charactersAssert.validateBackgroundDetailsSchema(
+          character.backgroundDetails,
+        );
+      }
     },
   );
   },
@@ -380,7 +744,7 @@ test.describe(
   let selectedSpellIds: number[];
 
   test(
-    'List characters for authenticated owner',
+    'List Characters',
     { tag: ['@get', '@smoke', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -398,7 +762,7 @@ test.describe(
   );
 
   test(
-    'Create draft character',
+    'Create Draft',
     { tag: ['@post', '@smoke', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -443,11 +807,15 @@ test.describe(
         createdCharacter.speciesDetails ?? null,
         false,
       );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        createdCharacter.backgroundDetails ?? null,
+        false,
+      );
     },
   );
 
   test(
-    'Get created draft character',
+    'Get Draft',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -489,11 +857,15 @@ test.describe(
         fetchedCharacter.speciesDetails ?? null,
         false,
       );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        fetchedCharacter.backgroundDetails ?? null,
+        false,
+      );
     },
   );
 
   test(
-    'Patch character class and species',
+    'Add Class Wizard',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -503,7 +875,6 @@ test.describe(
         createdCharacterId,
         {
           classId: 12,
-          speciesId: 3,
           level: 1,
         },
         authToken,
@@ -521,7 +892,7 @@ test.describe(
       );
       await charactersAssert.validateStatus(updatedCharacter.status, 'draft');
       await charactersAssert.validateClassId(updatedCharacter.classId, 12);
-      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 3);
+      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, null);
       await charactersAssert.validateBackgroundId(
         updatedCharacter.backgroundId,
         null,
@@ -529,7 +900,7 @@ test.describe(
       await charactersAssert.validateLevel(updatedCharacter.level, 1);
       await charactersAssert.validateMissingFields(
         updatedCharacter.missingFields,
-        ['backgroundId'],
+        ['speciesId', 'backgroundId'],
       );
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
@@ -537,7 +908,11 @@ test.describe(
       );
       await charactersAssert.validateSpeciesDetailsPresence(
         updatedCharacter.speciesDetails ?? null,
-        true,
+        false,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        updatedCharacter.backgroundDetails ?? null,
+        false,
       );
 
       if (updatedCharacter.classDetails) {
@@ -551,15 +926,177 @@ test.describe(
           updatedCharacter.level,
         );
       }
+    },
+  );
 
-      if (updatedCharacter.speciesDetails) {
-        await charactersAssert.validateId(updatedCharacter.speciesDetails.id, 3);
+  test(
+    'Get Wizard',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateClassId(character.classId, 12);
+      await charactersAssert.validateSpeciesId(character.speciesId, null);
+      await charactersAssert.validateBackgroundId(character.backgroundId, null);
+      await charactersAssert.validateMissingFields(character.missingFields, [
+        'speciesId',
+        'backgroundId',
+      ]);
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        false,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        false,
+      );
+    },
+  );
+
+  test(
+    'Add Species Elf',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacter(
+        createdCharacterId,
+        {
+          speciesId: 3,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateClassId(character.classId, 12);
+      await charactersAssert.validateSpeciesId(character.speciesId, 3);
+      await charactersAssert.validateBackgroundId(character.backgroundId, null);
+      await charactersAssert.validateMissingFields(character.missingFields, [
+        'backgroundId',
+      ]);
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        true,
+      );
+
+      if (character.speciesDetails) {
+        await charactersAssert.validateId(character.speciesDetails.id, 3);
         await charactersAssert.validateName(
-          updatedCharacter.speciesDetails.name,
+          character.speciesDetails.name,
           expectedDetailedSpecies.elf.name,
         );
         await charactersAssert.validateSpeciesDetailsSchema(
-          updatedCharacter.speciesDetails,
+          character.speciesDetails,
+        );
+      }
+    },
+  );
+
+  test(
+    'Get Elf Wizard',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateClassId(character.classId, 12);
+      await charactersAssert.validateSpeciesId(character.speciesId, 3);
+      await charactersAssert.validateBackgroundId(character.backgroundId, null);
+      await charactersAssert.validateMissingFields(character.missingFields, [
+        'backgroundId',
+      ]);
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        false,
+      );
+    },
+  );
+
+  test(
+    'Add Background Sage',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const updateResponse = await charactersClient.updateCharacter(
+        createdCharacterId,
+        {
+          backgroundId: 13,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(updateResponse);
+
+      const updatedCharacter: CharacterResponseBody = await updateResponse.json();
+
+      await charactersAssert.validateCharacterResponseSchema(updatedCharacter);
+      await charactersAssert.validateId(updatedCharacter.id, createdCharacterId);
+      await charactersAssert.validateName(
+        updatedCharacter.name,
+        createdCharacterName,
+      );
+      await charactersAssert.validateStatus(updatedCharacter.status, 'complete');
+      await charactersAssert.validateClassId(updatedCharacter.classId, 12);
+      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 3);
+      await charactersAssert.validateBackgroundId(
+        updatedCharacter.backgroundId,
+        13,
+      );
+      await charactersAssert.validateLevel(updatedCharacter.level, 1);
+      await charactersAssert.validateMissingFields(updatedCharacter.missingFields, []);
+      await charactersAssert.validateClassDetailsPresence(
+        updatedCharacter.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        updatedCharacter.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        updatedCharacter.backgroundDetails ?? null,
+        true,
+      );
+
+      if (updatedCharacter.backgroundDetails) {
+        await charactersAssert.validateId(updatedCharacter.backgroundDetails.id, 13);
+        await charactersAssert.validateName(
+          updatedCharacter.backgroundDetails.name,
+          expectedDetailedBackgrounds.sage.name,
+        );
+        await charactersAssert.validateBackgroundDetailsSchema(
+          updatedCharacter.backgroundDetails,
         );
       }
     },
@@ -745,7 +1282,7 @@ test.describe(
   );
 
   test(
-    'Get updated character',
+    'Get Complete Wizard',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -763,21 +1300,22 @@ test.describe(
       await charactersAssert.validateCharacterResponseSchema(finalCharacter);
       await charactersAssert.validateId(finalCharacter.id, createdCharacterId);
       await charactersAssert.validateName(finalCharacter.name, createdCharacterName);
-      await charactersAssert.validateStatus(finalCharacter.status, 'draft');
+      await charactersAssert.validateStatus(finalCharacter.status, 'complete');
       await charactersAssert.validateClassId(finalCharacter.classId, 12);
       await charactersAssert.validateSpeciesId(finalCharacter.speciesId, 3);
-      await charactersAssert.validateBackgroundId(finalCharacter.backgroundId, null);
+      await charactersAssert.validateBackgroundId(finalCharacter.backgroundId, 13);
       await charactersAssert.validateLevel(finalCharacter.level, 1);
-      await charactersAssert.validateMissingFields(
-        finalCharacter.missingFields,
-        ['backgroundId'],
-      );
+      await charactersAssert.validateMissingFields(finalCharacter.missingFields, []);
       await charactersAssert.validateClassDetailsPresence(
         finalCharacter.classDetails ?? null,
         true,
       );
       await charactersAssert.validateSpeciesDetailsPresence(
         finalCharacter.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        finalCharacter.backgroundDetails ?? null,
         true,
       );
 
@@ -801,6 +1339,17 @@ test.describe(
         );
         await charactersAssert.validateSpeciesDetailsSchema(
           finalCharacter.speciesDetails,
+        );
+      }
+
+      if (finalCharacter.backgroundDetails) {
+        await charactersAssert.validateId(finalCharacter.backgroundDetails.id, 13);
+        await charactersAssert.validateName(
+          finalCharacter.backgroundDetails.name,
+          expectedDetailedBackgrounds.sage.name,
+        );
+        await charactersAssert.validateBackgroundDetailsSchema(
+          finalCharacter.backgroundDetails,
         );
       }
     },

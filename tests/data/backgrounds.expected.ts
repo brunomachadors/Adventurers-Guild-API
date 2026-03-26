@@ -53,6 +53,21 @@ export const expectedDetailedBackgrounds: Record<string, BackgroundDetail> = {
       '50 GP',
     ],
   },
+  noble: {
+    id: 12,
+    name: 'Noble',
+    slug: 'noble',
+    description:
+      'You were raised in a castle, surrounded by wealth, power, and privilege. Your family of minor aristocrats ensured that you received a first-class education, some of which you appreciated and some of which you resented. Your time in the castle, especially the many hours you spent observing your family at court, also taught you a great deal about leadership.',
+    abilityScores: ['STR', 'INT', 'CHA'],
+    feat: 'Skilled',
+    skillProficiencies: ['History', 'Persuasion'],
+    toolProficiency: 'One kind of Gaming Set',
+    equipmentOptions: [
+      'Gaming Set (same as above), Fine Clothes, Perfume, 29 GP',
+      '50 GP',
+    ],
+  },
   soldier: {
     id: 16,
     name: 'Soldier',
