@@ -2,18 +2,20 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.4.0
+  version: 1.5.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
     The documentation in this file reflects the current public routes implemented by the API:
 
+    - Auth token issuance
     - Attributes list
     - Backgrounds list and detail
     - Skills list and detail
     - Classes list and detail
     - Spells list and detail
     - Species list and detail
+    - Character management and character spell flows
 
 servers:
   - url: http://localhost:3000
@@ -22,6 +24,8 @@ servers:
     description: Production
 
 tags:
+  - name: Auth
+    description: Authentication and bearer token issuance.
   - name: Attributes
     description: Core RPG attributes such as Strength, Dexterity, and Wisdom.
   - name: Backgrounds
@@ -34,8 +38,13 @@ tags:
     description: Spell list and spell detail endpoints.
   - name: Species
     description: Species list and species detail endpoints.
+  - name: Characters
+    description: Protected character management and character spell selection endpoints.
 
 x-tagGroups:
+  - name: Access
+    tags:
+      - Auth
   - name: Core Resources
     tags:
       - Attributes
@@ -44,8 +53,62 @@ x-tagGroups:
       - Classes
       - Spells
       - Species
+  - name: Character Management
+    tags:
+      - Characters
 
 paths:
+  /api/auth/token:
+    post:
+      tags:
+        - Auth
+      operationId: issueAuthToken
+      summary: Issue bearer token
+      description: |
+        Validates owner credentials and returns a JWT-like bearer token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequestBody'
+            example:
+              username: demo
+              password: demo123
+      responses:
+        '200':
+          description: Token issued successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponseBody'
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwib3duZXJJZCI6MSwidXNlcm5hbWUiOiJkZW1vIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDAwMDM2MDB9.signature
+        '400':
+          description: Invalid token request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid token request payload
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid credentials
+        '500':
+          description: Failed to issue token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to issue token
+
   /api/attributes:
     get:
       tags:
@@ -737,8 +800,524 @@ paths:
               example:
                 error: Failed to fetch species detail
 
+  /api/characters:
+    get:
+      tags:
+        - Characters
+      operationId: getCharacters
+      summary: List authenticated owner characters
+      description: |
+        Returns the characters owned by the authenticated owner.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Characters returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CharacterListItem'
+              example:
+                - id: 101
+                  name: Merien
+                  status: draft
+                  level: 1
+                - id: 102
+                  name: Arin
+                  status: complete
+                  level: 3
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '500':
+          description: Failed to fetch characters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch characters
+    post:
+      tags:
+        - Characters
+      operationId: createCharacter
+      summary: Create character
+      description: |
+        Creates a character for the authenticated owner.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterCreateRequestBody'
+            examples:
+              draftCharacter:
+                summary: Create draft character
+                value:
+                  name: Merien
+              partialCharacter:
+                summary: Create character with class
+                value:
+                  name: Arin
+                  classId: 12
+      responses:
+        '201':
+          description: Character created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponseBody'
+              example:
+                id: 101
+                name: Merien
+                status: draft
+                classId: null
+                speciesId: null
+                backgroundId: null
+                level: 1
+                missingFields:
+                  - classId
+                  - speciesId
+                  - backgroundId
+                classDetails: null
+        '400':
+          description: Invalid character request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid character request payload
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '500':
+          description: Failed to create character
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to create character
+
+  /api/characters/{id}:
+    get:
+      tags:
+        - Characters
+      operationId: getCharacterById
+      summary: Get character detail
+      description: |
+        Returns a single character owned by the authenticated owner.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Character found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponseBody'
+              example:
+                id: 101
+                name: Merien
+                status: draft
+                classId: 12
+                speciesId: null
+                backgroundId: null
+                level: 1
+                missingFields:
+                  - speciesId
+                  - backgroundId
+                classDetails:
+                  id: 12
+                  name: Wizard
+                  slug: wizard
+                  description: A learned arcane scholar who studies the inner workings of magic to prepare spells, master rituals, and wield unmatched magical versatility.
+                  role: caster
+                  hitDie: 6
+                  primaryAttributes:
+                    - INT
+                  recommendedSkills:
+                    - Arcana
+                    - Investigation
+                    - History
+                    - Nature
+                    - Religion
+                  savingThrows:
+                    - INT
+                    - WIS
+                  spellcasting:
+                    ability: INT
+                    usesSpellbook: true
+                    canCastRituals: true
+                  subclasses:
+                    - Evoker
+                  featuresByLevel: []
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to fetch character detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch character detail
+    patch:
+      tags:
+        - Characters
+      operationId: updateCharacter
+      summary: Update character
+      description: |
+        Updates a single character owned by the authenticated owner.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterUpdateRequestBody'
+            examples:
+              assignClass:
+                summary: Assign wizard class
+                value:
+                  classId: 12
+              updateNameAndLevel:
+                summary: Update name and level
+                value:
+                  name: Merien the Wise
+                  level: 2
+      responses:
+        '200':
+          description: Character updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterResponseBody'
+        '400':
+          description: Invalid character request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid character request payload
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to update character
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to update character
+
+  /api/characters/{id}/spell-options:
+    get:
+      tags:
+        - Characters
+      operationId: getCharacterSpellOptions
+      summary: Get character spell options
+      description: |
+        Returns the spells available to the character based on the assigned class.
+        If the character has no spellcasting class, `spells` is returned as an empty array.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Character spell options returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterSpellOptionsResponseBody'
+              examples:
+                nonCaster:
+                  summary: Non-spellcasting class
+                  value:
+                    characterId: 101
+                    classId: 1
+                    className: Barbarian
+                    spells: []
+                wizard:
+                  summary: Wizard spell options
+                  value:
+                    characterId: 101
+                    classId: 12
+                    className: Wizard
+                    spells:
+                      - id: 1
+                        name: Acid Splash
+                        level: 0
+                        levelLabel: Cantrip
+                      - id: 18
+                        name: Alarm
+                        level: 1
+                        levelLabel: Level 1
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to fetch character spell options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch character spell options
+
+  /api/characters/{id}/spell-selection:
+    get:
+      tags:
+        - Characters
+      operationId: getCharacterSpellSelection
+      summary: Get character spell selection state
+      description: |
+        Returns current selection rules, selected spells, and available spells for the character.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Character spell selection returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterSpellSelectionResponseBody'
+              example:
+                characterId: 101
+                classId: 12
+                className: Wizard
+                level: 1
+                selectionRules:
+                  canSelectSpells: true
+                  selectionType: prepared
+                  maxCantrips: 3
+                  maxSpells: 0
+                selectedSpells: []
+                availableSpells:
+                  - id: 1
+                    name: Acid Splash
+                    level: 0
+                    levelLabel: Cantrip
+                  - id: 18
+                    name: Alarm
+                    level: 1
+                    levelLabel: Level 1
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to fetch character spell selection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch character spell selection
+
+  /api/characters/{id}/spells:
+    put:
+      tags:
+        - Characters
+      operationId: updateCharacterSpells
+      summary: Replace selected character spells
+      description: |
+        Replaces the character's selected spells based on the current spell selection rules.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterSpellSelectionUpdateRequestBody'
+            example:
+              spellIds:
+                - 1
+                - 2
+                - 3
+      responses:
+        '200':
+          description: Character spells updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterSpellSelectionResponseBody'
+        '400':
+          description: Invalid character spell selection payload or invalid spell selection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidPayload:
+                  summary: Invalid payload
+                  value:
+                    error: Invalid character spell selection payload
+                duplicates:
+                  summary: Duplicate spell ids
+                  value:
+                    error: Duplicate spell ids are not allowed
+                unavailableSelection:
+                  summary: Class cannot select spells
+                  value:
+                    error: Spell selection is not available for this character
+                invalidSpell:
+                  summary: Invalid spell id for character
+                  value:
+                    error: One or more spells are invalid for this character
+                tooManyCantrips:
+                  summary: Too many cantrips
+                  value:
+                    error: Too many cantrips selected
+                tooManySpells:
+                  summary: Too many leveled spells
+                  value:
+                    error: Too many spells selected
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to update character spells
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to update character spells
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    CharacterId:
+      name: id
+      in: path
+      required: true
+      description: Character numeric identifier.
+      schema:
+        type: integer
+        minimum: 1
+
   schemas:
+    TokenRequestBody:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: demo
+        password:
+          type: string
+          example: demo123
+
+    TokenResponseBody:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwib3duZXJJZCI6MSwidXNlcm5hbWUiOiJkZW1vIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDAwMDM2MDB9.signature
+
     AttributeShortname:
       type: string
       enum:
@@ -1243,6 +1822,381 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SpeciesTrait'
+
+    CharacterStatus:
+      type: string
+      enum:
+        - draft
+        - complete
+      example: draft
+
+    CharacterMissingField:
+      type: string
+      enum:
+        - classId
+        - speciesId
+        - backgroundId
+      example: classId
+
+    CharacterListItem:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - level
+      properties:
+        id:
+          type: integer
+          example: 101
+        name:
+          type: string
+          example: Merien
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+        level:
+          type: integer
+          example: 1
+
+    CharacterCreateRequestBody:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Merien
+        classId:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 12
+        speciesId:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 1
+        backgroundId:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 13
+        level:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 1
+
+    CharacterUpdateRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Merien the Wise
+        classId:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 12
+        speciesId:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 1
+        backgroundId:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 13
+        level:
+          type: integer
+          nullable: true
+          minimum: 1
+          example: 2
+
+    CharacterClassFeatureItem:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          example: Spellcasting
+        description:
+          type: string
+          example: You can prepare and cast wizard spells.
+
+    CharacterClassProgressionItem:
+      type: object
+      required:
+        - level
+        - features
+      properties:
+        level:
+          type: integer
+          example: 1
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterClassFeatureItem'
+
+    CharacterClassDetails:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - description
+        - role
+        - hitDie
+        - primaryAttributes
+        - recommendedSkills
+        - savingThrows
+        - spellcasting
+        - subclasses
+        - featuresByLevel
+      properties:
+        id:
+          type: integer
+          example: 12
+        name:
+          type: string
+          example: Wizard
+        slug:
+          type: string
+          example: wizard
+        description:
+          type: string
+          example: A learned arcane scholar who studies the inner workings of magic to prepare spells, master rituals, and wield unmatched magical versatility.
+        role:
+          type: string
+          example: caster
+        hitDie:
+          type: integer
+          example: 6
+        primaryAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeShortname'
+          example:
+            - INT
+        recommendedSkills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Arcana
+            - Investigation
+        savingThrows:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeShortname'
+          example:
+            - INT
+            - WIS
+        spellcasting:
+          type: object
+          nullable: true
+          additionalProperties: true
+          example:
+            ability: INT
+            usesSpellbook: true
+            canCastRituals: true
+        subclasses:
+          type: array
+          items:
+            type: string
+          example:
+            - Evoker
+        featuresByLevel:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterClassProgressionItem'
+
+    CharacterResponseBody:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - classId
+        - speciesId
+        - backgroundId
+        - level
+        - missingFields
+        - classDetails
+      properties:
+        id:
+          type: integer
+          example: 101
+        name:
+          type: string
+          example: Merien
+        status:
+          $ref: '#/components/schemas/CharacterStatus'
+        classId:
+          type: integer
+          nullable: true
+          example: 12
+        speciesId:
+          type: integer
+          nullable: true
+          example: null
+        backgroundId:
+          type: integer
+          nullable: true
+          example: null
+        level:
+          type: integer
+          example: 1
+        missingFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterMissingField'
+          example:
+            - speciesId
+            - backgroundId
+        classDetails:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterClassDetails'
+
+    CharacterSpellOptionItem:
+      type: object
+      required:
+        - id
+        - name
+        - level
+        - levelLabel
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Acid Splash
+        level:
+          type: integer
+          example: 0
+        levelLabel:
+          type: string
+          example: Cantrip
+
+    CharacterSpellOptionsResponseBody:
+      type: object
+      required:
+        - characterId
+        - classId
+        - className
+        - spells
+      properties:
+        characterId:
+          type: integer
+          example: 101
+        classId:
+          type: integer
+          nullable: true
+          example: 12
+        className:
+          type: string
+          nullable: true
+          example: Wizard
+        spells:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSpellOptionItem'
+
+    CharacterSpellSelectionType:
+      type: string
+      enum:
+        - known
+        - prepared
+        - cantrip
+      example: prepared
+
+    CharacterSpellSelectionRule:
+      type: object
+      required:
+        - canSelectSpells
+        - selectionType
+        - maxCantrips
+        - maxSpells
+      properties:
+        canSelectSpells:
+          type: boolean
+          example: true
+        selectionType:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterSpellSelectionType'
+        maxCantrips:
+          type: integer
+          example: 3
+        maxSpells:
+          type: integer
+          example: 0
+
+    CharacterSelectedSpellItem:
+      allOf:
+        - $ref: '#/components/schemas/CharacterSpellOptionItem'
+        - type: object
+          required:
+            - selectionType
+          properties:
+            selectionType:
+              $ref: '#/components/schemas/CharacterSpellSelectionType'
+
+    CharacterSpellSelectionResponseBody:
+      type: object
+      required:
+        - characterId
+        - classId
+        - className
+        - level
+        - selectionRules
+        - selectedSpells
+        - availableSpells
+      properties:
+        characterId:
+          type: integer
+          example: 101
+        classId:
+          type: integer
+          nullable: true
+          example: 12
+        className:
+          type: string
+          nullable: true
+          example: Wizard
+        level:
+          type: integer
+          example: 1
+        selectionRules:
+          $ref: '#/components/schemas/CharacterSpellSelectionRule'
+        selectedSpells:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSelectedSpellItem'
+        availableSpells:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSpellOptionItem'
+
+    CharacterSpellSelectionUpdateRequestBody:
+      type: object
+      required:
+        - spellIds
+      properties:
+        spellIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          example:
+            - 1
+            - 2
+            - 3
 
     ErrorResponse:
       type: object

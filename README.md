@@ -22,7 +22,35 @@ This project is designed to provide a stable API surface that can be used to pra
 - ReDoc: [https://adventurers-guild-api.vercel.app/docs](https://adventurers-guild-api.vercel.app/docs)
 - OpenAPI file: [https://adventurers-guild-api.vercel.app/openapi.yaml](https://adventurers-guild-api.vercel.app/openapi.yaml)
 
+## Authentication
+
+The API currently has a token issuance endpoint and a set of protected character endpoints.
+
+Public token endpoint:
+
+- `POST /api/auth/token`
+
+Protected routes require:
+
+- `Authorization: Bearer <token>`
+
 ## Current API Surface
+
+### `POST /api/auth/token`
+
+Issues a JWT-like bearer token for an owner account.
+
+Request body fields:
+
+- `username`
+- `password`
+
+Returns:
+
+- `200` with `{ "token": "<jwt>" }`
+- `400` with `{ "error": "Invalid token request payload" }`
+- `401` with `{ "error": "Invalid credentials" }`
+- `500` with `{ "error": "Failed to issue token" }`
 
 ### `GET /api/attributes`
 
@@ -215,7 +243,173 @@ Returns:
 - `404` with `{ "error": "Species not found" }` when the species does not exist
 - `500` with `{ "error": "Failed to fetch species detail" }` if the query fails
 
+### `GET /api/characters`
+
+Returns the authenticated owner's characters.
+
+Requires bearer token.
+
+List item fields:
+
+- `id`
+- `name`
+- `status`
+- `level`
+
+Returns:
+
+- `401` with `{ "error": "Unauthorized" }` when the token is missing or invalid
+- `500` with `{ "error": "Failed to fetch characters" }` if the query fails
+
+### `POST /api/characters`
+
+Creates a character for the authenticated owner.
+
+Requires bearer token.
+
+Request body fields:
+
+- `name` required
+- `classId` optional
+- `speciesId` optional
+- `backgroundId` optional
+- `level` optional, defaults to `1`
+
+Response fields:
+
+- `id`
+- `name`
+- `status`
+- `classId`
+- `speciesId`
+- `backgroundId`
+- `level`
+- `missingFields`
+- `classDetails`
+
+Returns:
+
+- `201` when the character is created
+- `400` with `{ "error": "Invalid character request payload" }`
+- `401` with `{ "error": "Unauthorized" }`
+- `500` with `{ "error": "Failed to create character" }`
+
+### `GET /api/characters/{id}`
+
+Returns the authenticated owner's character detail.
+
+Requires bearer token.
+
+Response fields:
+
+- `id`
+- `name`
+- `status`
+- `classId`
+- `speciesId`
+- `backgroundId`
+- `level`
+- `missingFields`
+- `classDetails`
+
+Returns:
+
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to fetch character detail" }`
+
+### `PATCH /api/characters/{id}`
+
+Updates the authenticated owner's character.
+
+Requires bearer token.
+
+Accepted fields:
+
+- `name`
+- `classId`
+- `speciesId`
+- `backgroundId`
+- `level`
+
+Returns:
+
+- `200` with the updated character response
+- `400` with `{ "error": "Invalid character request payload" }`
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to update character" }`
+
+### `GET /api/characters/{id}/spell-options`
+
+Returns the spell list available for the character's class.
+
+Requires bearer token.
+
+Response fields:
+
+- `characterId`
+- `classId`
+- `className`
+- `spells`
+
+If the character has no spellcasting class, `spells` is returned as an empty array.
+
+Returns:
+
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to fetch character spell options" }`
+
+### `GET /api/characters/{id}/spell-selection`
+
+Returns the current spell selection state for the character.
+
+Requires bearer token.
+
+Response fields:
+
+- `characterId`
+- `classId`
+- `className`
+- `level`
+- `selectionRules`
+- `selectedSpells`
+- `availableSpells`
+
+Returns:
+
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to fetch character spell selection" }`
+
+### `PUT /api/characters/{id}/spells`
+
+Replaces the character's selected spells.
+
+Requires bearer token.
+
+Request body fields:
+
+- `spellIds`
+
+Returns:
+
+- `200` with the updated spell selection response
+- `400` for invalid payloads or invalid spell selections
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to update character spells" }`
+
 ## Example Responses
+
+Token response:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwib3duZXJJZCI6MSwidXNlcm5hbWUiOiJkZW1vIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDAwMDM2MDB9.signature"
+}
+```
 
 Attribute list item:
 
@@ -226,6 +420,71 @@ Attribute list item:
   "shortname": "STR",
   "description": "Measures physical power, carrying capacity, and effectiveness in brute-force actions such as lifting, pushing, and melee attacks.",
   "skills": ["Athletics"]
+}
+```
+
+Character detail:
+
+```json
+{
+  "id": 101,
+  "name": "Merien",
+  "status": "draft",
+  "classId": 12,
+  "speciesId": null,
+  "backgroundId": null,
+  "level": 1,
+  "missingFields": ["speciesId", "backgroundId"],
+  "classDetails": {
+    "id": 12,
+    "name": "Wizard",
+    "slug": "wizard",
+    "description": "A learned arcane scholar who studies the inner workings of magic to prepare spells, master rituals, and wield unmatched magical versatility.",
+    "role": "caster",
+    "hitDie": 6,
+    "primaryAttributes": ["INT"],
+    "recommendedSkills": [
+      "Arcana",
+      "Investigation",
+      "History",
+      "Nature",
+      "Religion"
+    ],
+    "savingThrows": ["INT", "WIS"],
+    "spellcasting": {
+      "ability": "INT",
+      "usesSpellbook": true,
+      "canCastRituals": true
+    },
+    "subclasses": ["Evoker"],
+    "featuresByLevel": []
+  }
+}
+```
+
+Character spell selection:
+
+```json
+{
+  "characterId": 101,
+  "classId": 12,
+  "className": "Wizard",
+  "level": 1,
+  "selectionRules": {
+    "canSelectSpells": true,
+    "selectionType": "prepared",
+    "maxCantrips": 3,
+    "maxSpells": 0
+  },
+  "selectedSpells": [],
+  "availableSpells": [
+    {
+      "id": 1,
+      "name": "Acid Splash",
+      "level": 0,
+      "levelLabel": "Cantrip"
+    }
+  ]
 }
 ```
 
@@ -356,7 +615,9 @@ adventurers-guild-api
 ├── app
 │   ├── api
 │   │   ├── attributes
+│   │   ├── auth
 │   │   ├── backgrounds
+│   │   ├── characters
 │   │   ├── classes
 │   │   ├── skills
 │   │   ├── species

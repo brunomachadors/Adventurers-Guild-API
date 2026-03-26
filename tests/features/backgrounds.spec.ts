@@ -9,7 +9,7 @@ import {
 import { BackgroundAssert } from '../helpers/backgrounds.assertions';
 
 test.describe('Backgrounds API - List', { tag: ['@backgrounds', '@list'] }, () => {
-  test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
+  test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
     const backgroundsClient = new BackgroundsClient(request);
     const backgroundAssert = new BackgroundAssert();
 
@@ -25,7 +25,7 @@ test.describe('Backgrounds API - List', { tag: ['@backgrounds', '@list'] }, () =
   for (const expectedBackground of expectedBackgroundsList) {
     test(
       `Validate Background ${expectedBackground.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const backgroundsClient = new BackgroundsClient(request);
         const backgroundAssert = new BackgroundAssert();
@@ -46,7 +46,7 @@ test.describe(
   'Backgrounds API - Detail',
   { tag: ['@backgrounds', '@detail'] },
   () => {
-    test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
+    test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
       const backgroundsClient = new BackgroundsClient(request);
       const backgroundAssert = new BackgroundAssert();
 
@@ -67,7 +67,7 @@ test.describe(
     )) {
       test(
         `Validate Background Detail by id - ${expectedBackground.name}`,
-        { tag: ['@data'] },
+        { tag: ['@get', '@data'] },
         async ({ request }) => {
           const backgroundsClient = new BackgroundsClient(request);
           const backgroundAssert = new BackgroundAssert();
@@ -86,7 +86,7 @@ test.describe(
 
       test(
         `Validate Background Detail by name - ${expectedBackground.name}`,
-        { tag: ['@data'] },
+        { tag: ['@get', '@data'] },
         async ({ request }) => {
           const backgroundsClient = new BackgroundsClient(request);
           const backgroundAssert = new BackgroundAssert();
@@ -105,7 +105,7 @@ test.describe(
 
       test(
         `Validate Background Detail by slug - ${expectedBackground.name}`,
-        { tag: ['@data'] },
+        { tag: ['@get', '@data'] },
         async ({ request }) => {
           const backgroundsClient = new BackgroundsClient(request);
           const backgroundAssert = new BackgroundAssert();
@@ -123,7 +123,7 @@ test.describe(
 
     test(
       'Validate Background Detail by lowercase identifier',
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const backgroundsClient = new BackgroundsClient(request);
         const backgroundAssert = new BackgroundAssert();
@@ -141,7 +141,7 @@ test.describe(
 
     test(
       'Validate Background Detail by uppercase identifier',
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const backgroundsClient = new BackgroundsClient(request);
         const backgroundAssert = new BackgroundAssert();
@@ -159,7 +159,7 @@ test.describe(
 
     test(
       'Validate Background Detail by invalid id',
-      { tag: ['@negative', '@error'] },
+      { tag: ['@get', '@negative', '@error'] },
       async ({ request }) => {
         const backgroundsClient = new BackgroundsClient(request);
         const backgroundAssert = new BackgroundAssert();
@@ -179,7 +179,7 @@ test.describe(
 
     test(
       'Validate Background Detail by invalid identifier',
-      { tag: ['@negative', '@error'] },
+      { tag: ['@get', '@negative', '@error'] },
       async ({ request }) => {
         const backgroundsClient = new BackgroundsClient(request);
         const backgroundAssert = new BackgroundAssert();
