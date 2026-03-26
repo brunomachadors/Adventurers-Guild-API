@@ -286,6 +286,14 @@ Response fields:
 - `level`
 - `missingFields`
 - `classDetails`
+- `speciesDetails`
+- `backgroundDetails`
+
+When related data exists, the API can enrich the detail response with:
+
+- `classDetails`
+- `speciesDetails`
+- `backgroundDetails`
 
 Returns:
 
@@ -311,6 +319,8 @@ Response fields:
 - `level`
 - `missingFields`
 - `classDetails`
+- `speciesDetails`
+- `backgroundDetails`
 
 Returns:
 
@@ -431,10 +441,10 @@ Character detail:
   "name": "Merien",
   "status": "draft",
   "classId": 12,
-  "speciesId": null,
-  "backgroundId": null,
+  "speciesId": 3,
+  "backgroundId": 13,
   "level": 1,
-  "missingFields": ["speciesId", "backgroundId"],
+  "missingFields": [],
   "classDetails": {
     "id": 12,
     "name": "Wizard",
@@ -458,6 +468,35 @@ Character detail:
     },
     "subclasses": ["Evoker"],
     "featuresByLevel": []
+  },
+  "speciesDetails": {
+    "id": 3,
+    "name": "Elf",
+    "slug": "elf",
+    "description": "Elves are a magical people of otherworldly grace.",
+    "creatureType": "Humanoid",
+    "size": "Medium",
+    "speed": 30,
+    "specialTraits": [
+      {
+        "name": "Darkvision",
+        "description": "You have Darkvision with a range of 60 feet."
+      }
+    ]
+  },
+  "backgroundDetails": {
+    "id": 13,
+    "name": "Sage",
+    "slug": "sage",
+    "description": "You spent your formative years traveling between manors and monasteries, performing various odd jobs and services in exchange for access to their libraries.",
+    "abilityScores": ["CON", "INT", "WIS"],
+    "feat": "Magic Initiate (Wizard)",
+    "skillProficiencies": ["Arcana", "History"],
+    "toolProficiency": "Calligrapher's Supplies",
+    "equipmentOptions": [
+      "Quarterstaff, Calligrapher's Supplies, Book (history), Parchment (8 sheets), Robe, 8 GP",
+      "50 GP"
+    ]
   }
 }
 ```

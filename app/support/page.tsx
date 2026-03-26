@@ -66,6 +66,9 @@ export default function SupportPage() {
               <div>
                 <h3>{resource.name}</h3>
                 <p>{resource.description}</p>
+                <p className="resource-fields">
+                  Key fields: {resource.listFields.join(', ')}
+                </p>
               </div>
 
               <div className="support-list__meta">

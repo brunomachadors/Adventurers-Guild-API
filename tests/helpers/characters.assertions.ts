@@ -6,6 +6,8 @@ import {
   CharacterResponseBody,
   CharacterStatus,
 } from '@/app/types/character';
+import { BackgroundDetail } from '@/app/types/background';
+import { SpeciesDetail } from '@/app/types/species';
 import { expect, test } from '@playwright/test';
 
 export class CharactersAssert {
@@ -183,6 +185,8 @@ export class CharactersAssert {
       expect(character).toHaveProperty('level');
       expect(character).toHaveProperty('missingFields');
       expect(character).toHaveProperty('classDetails');
+      expect(character).toHaveProperty('speciesDetails');
+      expect(character).toHaveProperty('backgroundDetails');
 
       expect(typeof character.id).toBe('number');
       expect(typeof character.name).toBe('string');
@@ -203,6 +207,14 @@ export class CharactersAssert {
         character.classDetails === null ||
           typeof character.classDetails === 'object',
       ).toBe(true);
+      expect(
+        character.speciesDetails === null ||
+          typeof character.speciesDetails === 'object',
+      ).toBe(true);
+      expect(
+        character.backgroundDetails === null ||
+          typeof character.backgroundDetails === 'object',
+      ).toBe(true);
     });
 
     for (const missingField of character.missingFields) {
@@ -213,6 +225,14 @@ export class CharactersAssert {
 
     if (character.classDetails) {
       await this.validateClassDetailsSchema(character.classDetails, character.level);
+    }
+
+    if (character.speciesDetails) {
+      await this.validateSpeciesDetailsSchema(character.speciesDetails);
+    }
+
+    if (character.backgroundDetails) {
+      await this.validateBackgroundDetailsSchema(character.backgroundDetails);
     }
   }
 
@@ -270,6 +290,73 @@ export class CharactersAssert {
         });
       }
     }
+  }
+
+  async validateSpeciesDetailsSchema(speciesDetails: SpeciesDetail) {
+    await test.step(
+      `Validate species details schema for ${speciesDetails.name}`,
+      async () => {
+        expect(speciesDetails).toHaveProperty('id');
+        expect(speciesDetails).toHaveProperty('name');
+        expect(speciesDetails).toHaveProperty('slug');
+        expect(speciesDetails).toHaveProperty('description');
+        expect(speciesDetails).toHaveProperty('creatureType');
+        expect(speciesDetails).toHaveProperty('size');
+        expect(speciesDetails).toHaveProperty('speed');
+        expect(speciesDetails).toHaveProperty('specialTraits');
+
+        expect(typeof speciesDetails.id).toBe('number');
+        expect(typeof speciesDetails.name).toBe('string');
+        expect(typeof speciesDetails.slug).toBe('string');
+        expect(typeof speciesDetails.description).toBe('string');
+        expect(typeof speciesDetails.creatureType).toBe('string');
+        expect(typeof speciesDetails.size).toBe('string');
+        expect(typeof speciesDetails.speed).toBe('number');
+        expect(Array.isArray(speciesDetails.specialTraits)).toBe(true);
+      },
+    );
+
+    for (const trait of speciesDetails.specialTraits) {
+      await test.step(
+        `Validate species trait schema for ${trait.name}`,
+        async () => {
+          expect(trait).toHaveProperty('name');
+          expect(trait).toHaveProperty('description');
+          expect(typeof trait.name).toBe('string');
+          expect(typeof trait.description).toBe('string');
+        },
+      );
+    }
+  }
+
+  async validateBackgroundDetailsSchema(backgroundDetails: BackgroundDetail) {
+    await test.step(
+      `Validate background details schema for ${backgroundDetails.name}`,
+      async () => {
+        expect(backgroundDetails).toHaveProperty('id');
+        expect(backgroundDetails).toHaveProperty('name');
+        expect(backgroundDetails).toHaveProperty('slug');
+        expect(backgroundDetails).toHaveProperty('description');
+        expect(backgroundDetails).toHaveProperty('abilityScores');
+        expect(backgroundDetails).toHaveProperty('feat');
+        expect(backgroundDetails).toHaveProperty('skillProficiencies');
+        expect(backgroundDetails).toHaveProperty('toolProficiency');
+        expect(backgroundDetails).toHaveProperty('equipmentOptions');
+
+        expect(typeof backgroundDetails.id).toBe('number');
+        expect(typeof backgroundDetails.name).toBe('string');
+        expect(typeof backgroundDetails.slug).toBe('string');
+        expect(typeof backgroundDetails.description).toBe('string');
+        expect(Array.isArray(backgroundDetails.abilityScores)).toBe(true);
+        expect(typeof backgroundDetails.feat).toBe('string');
+        expect(Array.isArray(backgroundDetails.skillProficiencies)).toBe(true);
+        expect(
+          backgroundDetails.toolProficiency === null ||
+            typeof backgroundDetails.toolProficiency === 'string',
+        ).toBe(true);
+        expect(Array.isArray(backgroundDetails.equipmentOptions)).toBe(true);
+      },
+    );
   }
 
   async validateId(id: number, expectedId: number) {
@@ -347,6 +434,32 @@ export class CharactersAssert {
         expect(classDetails).not.toBeNull();
       } else {
         expect(classDetails).toBeNull();
+      }
+    });
+  }
+
+  async validateSpeciesDetailsPresence(
+    speciesDetails: CharacterResponseBody['speciesDetails'],
+    shouldExist: boolean,
+  ) {
+    await test.step('Validate Species Details Presence', async () => {
+      if (shouldExist) {
+        expect(speciesDetails).not.toBeNull();
+      } else {
+        expect(speciesDetails).toBeNull();
+      }
+    });
+  }
+
+  async validateBackgroundDetailsPresence(
+    backgroundDetails: CharacterResponseBody['backgroundDetails'],
+    shouldExist: boolean,
+  ) {
+    await test.step('Validate Background Details Presence', async () => {
+      if (shouldExist) {
+        expect(backgroundDetails).not.toBeNull();
+      } else {
+        expect(backgroundDetails).toBeNull();
       }
     });
   }
