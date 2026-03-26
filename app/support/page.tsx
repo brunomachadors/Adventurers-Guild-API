@@ -69,10 +69,18 @@ export default function SupportPage() {
               </div>
 
               <div className="support-list__meta">
-                <span className="endpoint-pill">GET {resource.listPath}</span>
-                <span className="endpoint-pill endpoint-pill--muted">
-                  {resource.detailPath}
-                </span>
+                {resource.endpoints.map((endpoint) => (
+                  <span
+                    className={`endpoint-pill${
+                      endpoint.startsWith('GET ')
+                        ? ' endpoint-pill--muted'
+                        : ''
+                    }`}
+                    key={endpoint}
+                  >
+                    {endpoint}
+                  </span>
+                ))}
               </div>
             </article>
           ))}

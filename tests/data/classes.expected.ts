@@ -85,6 +85,21 @@ export const expectedDetailedClasses: Record<string, ExpectedClassDetail> = {
       ability: 'INT',
       usesSpellbook: true,
       canCastRituals: true,
+      selection: {
+        mode: 'spellbook_plus_prepared',
+        selectionType: 'prepared',
+        changesWhen: 'long_rest',
+        cantrips: {
+          1: 3,
+        },
+        preparedSpells: {
+          1: 4,
+        },
+        spellbookSpells: {
+          1: 6,
+        },
+        spellsAddedPerLevel: 2,
+      },
     },
     subclasses: ['Evoker'],
     hitdie: 6,

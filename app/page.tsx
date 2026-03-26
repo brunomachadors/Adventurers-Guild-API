@@ -86,10 +86,14 @@ export default function HomePage() {
               <p className="resource-description">{resource.description}</p>
 
               <div className="endpoint-stack">
-                <span className="endpoint-pill">GET {resource.listPath}</span>
-                {resource.detailPath !== resource.listPath ? (
+                {resource.endpoints.slice(0, 3).map((endpoint) => (
+                  <span className="endpoint-pill" key={endpoint}>
+                    {endpoint}
+                  </span>
+                ))}
+                {resource.endpoints.length > 3 ? (
                   <span className="endpoint-pill endpoint-pill--muted">
-                    GET {resource.detailPath}
+                    +{resource.endpoints.length - 3} more endpoints
                   </span>
                 ) : null}
               </div>
