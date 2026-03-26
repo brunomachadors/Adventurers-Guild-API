@@ -3,6 +3,7 @@ import { SpeciesDetail, SpeciesListItem } from '@/app/types/species';
 export const expectedSpeciesList: SpeciesListItem[] = [
   { id: 1, name: 'Dragonborn' },
   { id: 2, name: 'Dwarf' },
+  { id: 3, name: 'Elf' },
   { id: 7, name: 'Human' },
   { id: 8, name: 'Orc' },
 ];
@@ -72,6 +73,42 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
         name: 'Stonecunning',
         description:
           'As a Bonus Action, you gain Tremorsense with a range of 60 feet for 10 minutes while on or touching stone. You can use this a number of times equal to your Proficiency Bonus, regaining all uses on a Long Rest.',
+      },
+    ],
+  },
+  elf: {
+    id: 3,
+    name: 'Elf',
+    slug: 'elf',
+    description:
+      'Created by the god Corellon, the first elves could change their forms at will. They lost this ability when Corellon cursed them for plotting with the deity Lolth, who tried and failed to usurp Corellon’s dominion. When Lolth was cast into the Abyss, most elves renounced her and earned Corellon’s forgiveness, but that which Corellon had taken from them was lost forever.\n\nNo longer able to shape-shift at will, the elves retreated to the Feywild, where their sorrow was deepened by that plane’s influence. Over time, curiosity led many of them to explore other planes of existence, including worlds in the Material Plane.\n\nElves have pointed ears and lack facial and body hair. They live for around 750 years, and they don’t sleep but instead enter a trance when they need to rest. In that state, they remain aware of their surroundings while immersing themselves in memories and meditations.',
+    creatureType: 'Humanoid',
+    size: 'Medium',
+    speed: 30,
+    specialTraits: [
+      {
+        name: 'Darkvision',
+        description: 'You have Darkvision with a range of 60 feet.',
+      },
+      {
+        name: 'Elven Lineage',
+        description:
+          'Choose a lineage from the Elven Lineages table. You gain the level 1 benefit, and at character levels 3 and 5 you learn additional spells tied to that lineage.',
+      },
+      {
+        name: 'Fey Ancestry',
+        description:
+          'You have Advantage on saving throws you make to avoid or end the Charmed condition.',
+      },
+      {
+        name: 'Keen Senses',
+        description:
+          'You have proficiency in the Insight, Perception, or Survival skill.',
+      },
+      {
+        name: 'Trance',
+        description:
+          'You do not need to sleep, magic cannot put you to sleep, and you can finish a Long Rest in 4 hours through meditation while retaining awareness.',
       },
     ],
   },

@@ -4,6 +4,7 @@ import {
   CharacterResponseBody,
   CharacterStatus,
 } from '@/app/types/character';
+import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
 import { getSql } from './db';
 
 function toNumber(value: number | string): number {
@@ -131,6 +132,76 @@ export async function getCharacterClassDetails(
   };
 }
 
+function isSpeciesTrait(value: unknown): value is SpeciesTrait {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'name' in value &&
+    'description' in value &&
+    typeof value.name === 'string' &&
+    typeof value.description === 'string'
+  );
+}
+
+function parseSpecialTraits(value: unknown): SpeciesTrait[] {
+  if (Array.isArray(value)) {
+    return value.filter(isSpeciesTrait);
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+
+      return Array.isArray(parsed) ? parsed.filter(isSpeciesTrait) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+export async function getCharacterSpeciesDetails(
+  speciesId: number | null,
+): Promise<SpeciesDetail | null> {
+  if (speciesId === null) {
+    return null;
+  }
+
+  const sql = getSql();
+  const speciesRows = await sql`
+    SELECT
+      id,
+      name,
+      slug,
+      description,
+      creaturetype,
+      size,
+      speed,
+      specialtraits
+    FROM species
+    WHERE id = ${speciesId}
+    LIMIT 1
+  `;
+
+  if (!speciesRows || speciesRows.length === 0) {
+    return null;
+  }
+
+  const speciesItem = speciesRows[0];
+
+  return {
+    id: toNumber(speciesItem.id),
+    name: speciesItem.name,
+    slug: speciesItem.slug,
+    description: speciesItem.description,
+    creatureType: speciesItem.creaturetype,
+    size: speciesItem.size,
+    speed: toNumber(speciesItem.speed),
+    specialTraits: parseSpecialTraits(speciesItem.specialtraits),
+  };
+}
+
 export async function formatCharacterResponse(character: {
   id: number | string;
   name: string;
@@ -160,6 +231,9 @@ export async function formatCharacterResponse(character: {
     classDetails: await getCharacterClassDetails(
       formattedCharacter.classId,
       formattedCharacter.level,
+    ),
+    speciesDetails: await getCharacterSpeciesDetails(
+      formattedCharacter.speciesId,
     ),
   };
 }

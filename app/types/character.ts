@@ -63,6 +63,7 @@ export interface CharacterResponseBody {
   level: number;
   missingFields: CharacterMissingField[];
   classDetails?: CharacterClassDetails | null;
+  speciesDetails?: import('./species').SpeciesDetail | null;
 }
 
 export interface CharacterSpellOptionItem {

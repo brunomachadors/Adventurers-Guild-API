@@ -84,6 +84,10 @@ export default function HomePage() {
 
               <p>{resource.summary}</p>
               <p className="resource-description">{resource.description}</p>
+              <p className="resource-fields">
+                Key fields: {resource.listFields.slice(0, 5).join(', ')}
+                {resource.listFields.length > 5 ? ', ...' : ''}
+              </p>
 
               <div className="endpoint-stack">
                 {resource.endpoints.slice(0, 3).map((endpoint) => (

@@ -889,6 +889,7 @@ paths:
                   - speciesId
                   - backgroundId
                 classDetails: null
+                speciesDetails: null
         '400':
           description: Invalid character request payload
           content:
@@ -922,6 +923,12 @@ paths:
       summary: Get character detail
       description: |
         Returns a single character owned by the authenticated owner.
+
+        When related data exists, the detail payload can include nested:
+        - `classDetails`
+        - `speciesDetails`
+
+        The current implementation keeps `backgroundId` as a scalar reference and does not yet return nested `backgroundDetails`.
       security:
         - bearerAuth: []
       parameters:
@@ -938,11 +945,10 @@ paths:
                 name: Merien
                 status: draft
                 classId: 12
-                speciesId: null
-                backgroundId: null
+                speciesId: 3
+                backgroundId: 13
                 level: 1
                 missingFields:
-                  - speciesId
                   - backgroundId
                 classDetails:
                   id: 12
@@ -969,6 +975,17 @@ paths:
                   subclasses:
                     - Evoker
                   featuresByLevel: []
+                speciesDetails:
+                  id: 3
+                  name: Elf
+                  slug: elf
+                  description: Elves are a magical people of otherworldly grace.
+                  creatureType: Humanoid
+                  size: Medium
+                  speed: 30
+                  specialTraits:
+                    - name: Darkvision
+                      description: You have Darkvision with a range of 60 feet.
         '401':
           description: Unauthorized
           content:
@@ -999,7 +1016,7 @@ paths:
       operationId: updateCharacter
       summary: Update character
       description: |
-        Updates a single character owned by the authenticated owner.
+        Updates a single character owned by the authenticated owner and returns the same enriched detail shape, including `classDetails` and `speciesDetails` when those relations exist.
       security:
         - bearerAuth: []
       parameters:
@@ -2026,6 +2043,7 @@ components:
         - level
         - missingFields
         - classDetails
+        - speciesDetails
       properties:
         id:
           type: integer
@@ -2061,6 +2079,10 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CharacterClassDetails'
+        speciesDetails:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/SpeciesDetail'
 
     CharacterSpellOptionItem:
       type: object

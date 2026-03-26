@@ -11,6 +11,7 @@ import { AuthClient } from '../clients/auth.client';
 import { CharactersClient } from '../clients/characters.client';
 import { AuthAssert } from '../helpers/auth.assertions';
 import { CharactersAssert } from '../helpers/characters.assertions';
+import { expectedDetailedSpecies } from '../data/species.expected';
 
 async function issueDemoToken(request: APIRequestContext) {
   const authClient = new AuthClient(request);
@@ -100,6 +101,10 @@ test.describe(
         createdCharacter.classDetails ?? null,
         false,
       );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        createdCharacter.speciesDetails ?? null,
+        false,
+      );
     },
   );
 
@@ -142,11 +147,15 @@ test.describe(
         fetchedCharacter.classDetails ?? null,
         false,
       );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        fetchedCharacter.speciesDetails ?? null,
+        false,
+      );
     },
   );
 
   test(
-    'Patch character class',
+    'Patch character class and species',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -156,6 +165,8 @@ test.describe(
         createdCharacterId,
         {
           classId: 1,
+          speciesId: 2,
+          level: 1,
         },
         authToken,
       );
@@ -172,18 +183,22 @@ test.describe(
       );
       await charactersAssert.validateStatus(updatedCharacter.status, 'draft');
       await charactersAssert.validateClassId(updatedCharacter.classId, 1);
-      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, null);
+      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 2);
       await charactersAssert.validateBackgroundId(
         updatedCharacter.backgroundId,
         null,
       );
       await charactersAssert.validateLevel(updatedCharacter.level, 1);
-      await charactersAssert.validateMissingFields(updatedCharacter.missingFields, [
-        'speciesId',
-        'backgroundId',
-      ]);
+      await charactersAssert.validateMissingFields(
+        updatedCharacter.missingFields,
+        ['backgroundId'],
+      );
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        updatedCharacter.speciesDetails ?? null,
         true,
       );
 
@@ -196,6 +211,17 @@ test.describe(
         await charactersAssert.validateClassDetailsSchema(
           updatedCharacter.classDetails,
           updatedCharacter.level,
+        );
+      }
+
+      if (updatedCharacter.speciesDetails) {
+        await charactersAssert.validateId(updatedCharacter.speciesDetails.id, 2);
+        await charactersAssert.validateName(
+          updatedCharacter.speciesDetails.name,
+          expectedDetailedSpecies.dwarf.name,
+        );
+        await charactersAssert.validateSpeciesDetailsSchema(
+          updatedCharacter.speciesDetails,
         );
       }
     },
@@ -299,15 +325,19 @@ test.describe(
       await charactersAssert.validateName(finalCharacter.name, createdCharacterName);
       await charactersAssert.validateStatus(finalCharacter.status, 'draft');
       await charactersAssert.validateClassId(finalCharacter.classId, 1);
-      await charactersAssert.validateSpeciesId(finalCharacter.speciesId, null);
+      await charactersAssert.validateSpeciesId(finalCharacter.speciesId, 2);
       await charactersAssert.validateBackgroundId(finalCharacter.backgroundId, null);
       await charactersAssert.validateLevel(finalCharacter.level, 1);
-      await charactersAssert.validateMissingFields(finalCharacter.missingFields, [
-        'speciesId',
-        'backgroundId',
-      ]);
+      await charactersAssert.validateMissingFields(
+        finalCharacter.missingFields,
+        ['backgroundId'],
+      );
       await charactersAssert.validateClassDetailsPresence(
         finalCharacter.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        finalCharacter.speciesDetails ?? null,
         true,
       );
 
@@ -320,6 +350,17 @@ test.describe(
         await charactersAssert.validateClassDetailsSchema(
           finalCharacter.classDetails,
           finalCharacter.level,
+        );
+      }
+
+      if (finalCharacter.speciesDetails) {
+        await charactersAssert.validateId(finalCharacter.speciesDetails.id, 2);
+        await charactersAssert.validateName(
+          finalCharacter.speciesDetails.name,
+          expectedDetailedSpecies.dwarf.name,
+        );
+        await charactersAssert.validateSpeciesDetailsSchema(
+          finalCharacter.speciesDetails,
         );
       }
     },
@@ -398,6 +439,10 @@ test.describe(
         createdCharacter.classDetails ?? null,
         false,
       );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        createdCharacter.speciesDetails ?? null,
+        false,
+      );
     },
   );
 
@@ -440,11 +485,15 @@ test.describe(
         fetchedCharacter.classDetails ?? null,
         false,
       );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        fetchedCharacter.speciesDetails ?? null,
+        false,
+      );
     },
   );
 
   test(
-    'Patch character class',
+    'Patch character class and species',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -454,6 +503,8 @@ test.describe(
         createdCharacterId,
         {
           classId: 12,
+          speciesId: 3,
+          level: 1,
         },
         authToken,
       );
@@ -470,18 +521,22 @@ test.describe(
       );
       await charactersAssert.validateStatus(updatedCharacter.status, 'draft');
       await charactersAssert.validateClassId(updatedCharacter.classId, 12);
-      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, null);
+      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 3);
       await charactersAssert.validateBackgroundId(
         updatedCharacter.backgroundId,
         null,
       );
       await charactersAssert.validateLevel(updatedCharacter.level, 1);
-      await charactersAssert.validateMissingFields(updatedCharacter.missingFields, [
-        'speciesId',
-        'backgroundId',
-      ]);
+      await charactersAssert.validateMissingFields(
+        updatedCharacter.missingFields,
+        ['backgroundId'],
+      );
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        updatedCharacter.speciesDetails ?? null,
         true,
       );
 
@@ -494,6 +549,17 @@ test.describe(
         await charactersAssert.validateClassDetailsSchema(
           updatedCharacter.classDetails,
           updatedCharacter.level,
+        );
+      }
+
+      if (updatedCharacter.speciesDetails) {
+        await charactersAssert.validateId(updatedCharacter.speciesDetails.id, 3);
+        await charactersAssert.validateName(
+          updatedCharacter.speciesDetails.name,
+          expectedDetailedSpecies.elf.name,
+        );
+        await charactersAssert.validateSpeciesDetailsSchema(
+          updatedCharacter.speciesDetails,
         );
       }
     },
@@ -699,15 +765,19 @@ test.describe(
       await charactersAssert.validateName(finalCharacter.name, createdCharacterName);
       await charactersAssert.validateStatus(finalCharacter.status, 'draft');
       await charactersAssert.validateClassId(finalCharacter.classId, 12);
-      await charactersAssert.validateSpeciesId(finalCharacter.speciesId, null);
+      await charactersAssert.validateSpeciesId(finalCharacter.speciesId, 3);
       await charactersAssert.validateBackgroundId(finalCharacter.backgroundId, null);
       await charactersAssert.validateLevel(finalCharacter.level, 1);
-      await charactersAssert.validateMissingFields(finalCharacter.missingFields, [
-        'speciesId',
-        'backgroundId',
-      ]);
+      await charactersAssert.validateMissingFields(
+        finalCharacter.missingFields,
+        ['backgroundId'],
+      );
       await charactersAssert.validateClassDetailsPresence(
         finalCharacter.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        finalCharacter.speciesDetails ?? null,
         true,
       );
 
@@ -720,6 +790,17 @@ test.describe(
         await charactersAssert.validateClassDetailsSchema(
           finalCharacter.classDetails,
           finalCharacter.level,
+        );
+      }
+
+      if (finalCharacter.speciesDetails) {
+        await charactersAssert.validateId(finalCharacter.speciesDetails.id, 3);
+        await charactersAssert.validateName(
+          finalCharacter.speciesDetails.name,
+          expectedDetailedSpecies.elf.name,
+        );
+        await charactersAssert.validateSpeciesDetailsSchema(
+          finalCharacter.speciesDetails,
         );
       }
     },

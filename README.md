@@ -286,6 +286,14 @@ Response fields:
 - `level`
 - `missingFields`
 - `classDetails`
+- `speciesDetails`
+
+When related data exists, the API can enrich the detail response with:
+
+- `classDetails`
+- `speciesDetails`
+
+The current implementation still returns `backgroundId` as a scalar reference and does not yet include nested `backgroundDetails`.
 
 Returns:
 
@@ -311,6 +319,7 @@ Response fields:
 - `level`
 - `missingFields`
 - `classDetails`
+- `speciesDetails`
 
 Returns:
 
@@ -431,10 +440,10 @@ Character detail:
   "name": "Merien",
   "status": "draft",
   "classId": 12,
-  "speciesId": null,
-  "backgroundId": null,
+  "speciesId": 3,
+  "backgroundId": 13,
   "level": 1,
-  "missingFields": ["speciesId", "backgroundId"],
+  "missingFields": ["backgroundId"],
   "classDetails": {
     "id": 12,
     "name": "Wizard",
@@ -458,6 +467,21 @@ Character detail:
     },
     "subclasses": ["Evoker"],
     "featuresByLevel": []
+  },
+  "speciesDetails": {
+    "id": 3,
+    "name": "Elf",
+    "slug": "elf",
+    "description": "Elves are a magical people of otherworldly grace.",
+    "creatureType": "Humanoid",
+    "size": "Medium",
+    "speed": 30,
+    "specialTraits": [
+      {
+        "name": "Darkvision",
+        "description": "You have Darkvision with a range of 60 feet."
+      }
+    ]
   }
 }
 ```

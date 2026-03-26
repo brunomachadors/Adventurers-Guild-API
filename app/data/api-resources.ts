@@ -87,9 +87,9 @@ export const apiResources: ApiResource[] = [
     name: 'Characters',
     slug: 'characters',
     description:
-      'Protected character management flow with creation, updates, detail retrieval, and spell selection endpoints.',
+      'Protected character management flow with creation, updates, detail retrieval, spell selection, and enriched responses that now include species details alongside class context.',
     summary:
-      'Introduces authenticated player-oriented workflows beyond the static reference catalogs.',
+      'Introduces authenticated player-oriented workflows with richer character payloads and species-aware detail responses.',
     listFields: [
       'id',
       'name',
@@ -98,6 +98,9 @@ export const apiResources: ApiResource[] = [
       'speciesId',
       'backgroundId',
       'level',
+      'missingFields',
+      'classDetails',
+      'speciesDetails',
     ],
     endpoints: [
       'GET /api/characters',
@@ -114,5 +117,5 @@ export const apiResources: ApiResource[] = [
 export const projectHighlights = [
   'Visual entrypoint for the API project',
   'Interactive documentation available in /docs',
-  'API surface now includes species, authentication, and character workflows',
+  'Character flows now return species-aware responses alongside class context',
 ];

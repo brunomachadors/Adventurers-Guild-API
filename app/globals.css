@@ -415,6 +415,13 @@ li {
   margin-top: auto;
 }
 
+.resource-fields {
+  margin: 0;
+  color: #714c34;
+  font-size: 1.02rem;
+  font-style: italic;
+}
+
 .endpoint-stack,
 .support-list__meta {
   display: flex;
