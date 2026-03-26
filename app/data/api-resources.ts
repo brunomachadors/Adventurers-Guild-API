@@ -59,10 +59,29 @@ export const apiResources: ApiResource[] = [
     summary: 'Provides both compact spell listings and rich spell detail.',
     listFields: ['id', 'name', 'level', 'levelLabel'],
   },
+  {
+    name: 'Species',
+    slug: 'species',
+    listPath: '/api/species',
+    detailPath: '/api/species/{identifier}',
+    description:
+      'Species catalog with list and detail endpoints covering creature type, size, speed, and special traits.',
+    summary: 'Adds ancestry and creature profile data to the current API surface.',
+    listFields: [
+      'id',
+      'name',
+      'slug',
+      'description',
+      'creatureType',
+      'size',
+      'speed',
+      'specialTraits',
+    ],
+  },
 ];
 
 export const projectHighlights = [
   'Visual entrypoint for the API project',
   'Interactive documentation available in /docs',
-  'Clear separation between project overview, support content, and technical docs',
+  'API surface now includes species alongside core fantasy resources',
 ];

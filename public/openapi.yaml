@@ -13,6 +13,7 @@ info:
     - Skills list and detail
     - Classes list and detail
     - Spells list and detail
+    - Species list and detail
 
 servers:
   - url: http://localhost:3000
@@ -31,6 +32,8 @@ tags:
     description: Playable RPG classes, including detail payloads.
   - name: Spells
     description: Spell list and spell detail endpoints.
+  - name: Species
+    description: Species list and species detail endpoints.
 
 x-tagGroups:
   - name: Core Resources
@@ -40,6 +43,7 @@ x-tagGroups:
       - Skills
       - Classes
       - Spells
+      - Species
 
 paths:
   /api/attributes:
@@ -615,6 +619,124 @@ paths:
               example:
                 error: Failed to fetch spell detail
 
+  /api/species:
+    get:
+      tags:
+        - Species
+      operationId: getSpecies
+      summary: List all species
+      description: |
+        Returns a lightweight list of species.
+
+        This endpoint exposes only:
+        - `id`
+        - `name`
+      responses:
+        '200':
+          description: Species returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpeciesListItem'
+              example:
+                - id: 1
+                  name: Dragonborn
+                - id: 2
+                  name: Dwarf
+                - id: 3
+                  name: Elf
+        '500':
+          description: Failed to fetch species
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch species
+
+  /api/species/{identifier}:
+    get:
+      tags:
+        - Species
+      operationId: getSpeciesByIdentifier
+      summary: Get species detail by identifier
+      description: |
+        Returns detailed information about a species.
+
+        Supported identifiers:
+        - numeric id, for example `/api/species/1`
+        - slug, for example `/api/species/dragonborn`
+        - normalized name, for example `/api/species/elf`
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          description: Species identifier as numeric id, name, or slug. Name and slug lookup are case-insensitive.
+          schema:
+            type: string
+          examples:
+            byId:
+              summary: Search by id
+              value: '1'
+            bySlug:
+              summary: Search by slug
+              value: dragonborn
+            byName:
+              summary: Search by name
+              value: elf
+      responses:
+        '200':
+          description: Species found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpeciesDetail'
+              examples:
+                dragonborn:
+                  summary: Dragonborn detail
+                  value:
+                    id: 1
+                    name: Dragonborn
+                    slug: dragonborn
+                    description: Dragonborn look like wingless, bipedal dragons.
+                    creatureType: Humanoid
+                    size: Medium
+                    speed: 30
+                    specialTraits:
+                      - name: Draconic Ancestry
+                        description: You have a dragon ancestor, which grants you a Breath Weapon and damage resistance tied to that ancestry.
+                elf:
+                  summary: Elf detail
+                  value:
+                    id: 3
+                    name: Elf
+                    slug: elf
+                    description: Elves are a magical people of otherworldly grace.
+                    creatureType: Humanoid
+                    size: Medium
+                    speed: 30
+                    specialTraits:
+                      - name: Darkvision
+                        description: You have Darkvision with a range of 60 feet.
+        '404':
+          description: Species not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Species not found
+        '500':
+          description: Failed to fetch species detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch species detail
+
 components:
   schemas:
     AttributeShortname:
@@ -1057,6 +1179,70 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/SpellScaling'
+
+    SpeciesListItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Dragonborn
+
+    SpeciesTrait:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          example: Darkvision
+        description:
+          type: string
+          example: You have Darkvision with a range of 60 feet.
+
+    SpeciesDetail:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - description
+        - creatureType
+        - size
+        - speed
+        - specialTraits
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Dragonborn
+        slug:
+          type: string
+          example: dragonborn
+        description:
+          type: string
+          example: Dragonborn look like wingless, bipedal dragons.
+        creatureType:
+          type: string
+          example: Humanoid
+        size:
+          type: string
+          example: Medium
+        speed:
+          type: integer
+          example: 30
+        specialTraits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeciesTrait'
 
     ErrorResponse:
       type: object
