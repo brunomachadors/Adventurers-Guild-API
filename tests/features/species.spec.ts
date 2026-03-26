@@ -9,7 +9,7 @@ import {
 import { SpeciesAssert } from '../helpers/species.assertions';
 
 test.describe('Species API - List', { tag: ['@species', '@list'] }, () => {
-  test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
+  test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
     const speciesClient = new SpeciesClient(request);
     const speciesAssert = new SpeciesAssert();
 
@@ -25,7 +25,7 @@ test.describe('Species API - List', { tag: ['@species', '@list'] }, () => {
   for (const expectedSpecies of expectedSpeciesList) {
     test(
       `Validate Species ${expectedSpecies.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const speciesClient = new SpeciesClient(request);
         const speciesAssert = new SpeciesAssert();
@@ -43,7 +43,7 @@ test.describe('Species API - List', { tag: ['@species', '@list'] }, () => {
 });
 
 test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
-  test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
+  test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
     const speciesClient = new SpeciesClient(request);
     const speciesAssert = new SpeciesAssert();
 
@@ -62,7 +62,7 @@ test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
   )) {
     test(
       `Validate Species Detail by id - ${expectedSpecies.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const speciesClient = new SpeciesClient(request);
         const speciesAssert = new SpeciesAssert();
@@ -79,7 +79,7 @@ test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
 
     test(
       `Validate Species Detail by name - ${expectedSpecies.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const speciesClient = new SpeciesClient(request);
         const speciesAssert = new SpeciesAssert();
@@ -96,7 +96,7 @@ test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
 
     test(
       `Validate Species Detail by slug - ${expectedSpecies.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const speciesClient = new SpeciesClient(request);
         const speciesAssert = new SpeciesAssert();
@@ -114,7 +114,7 @@ test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
 
   test(
     'Validate Species Detail by lowercase identifier',
-    { tag: ['@data'] },
+    { tag: ['@get', '@data'] },
     async ({ request }) => {
       const speciesClient = new SpeciesClient(request);
       const speciesAssert = new SpeciesAssert();
@@ -132,7 +132,7 @@ test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
 
   test(
     'Validate Species Detail by uppercase identifier',
-    { tag: ['@data'] },
+    { tag: ['@get', '@data'] },
     async ({ request }) => {
       const speciesClient = new SpeciesClient(request);
       const speciesAssert = new SpeciesAssert();
@@ -150,7 +150,7 @@ test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
 
   test(
     'Validate Species Detail by invalid id',
-    { tag: ['@negative', '@error'] },
+    { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const speciesClient = new SpeciesClient(request);
       const speciesAssert = new SpeciesAssert();
@@ -167,7 +167,7 @@ test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
 
   test(
     'Validate Species Detail by invalid identifier',
-    { tag: ['@negative', '@error'] },
+    { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const speciesClient = new SpeciesClient(request);
       const speciesAssert = new SpeciesAssert();

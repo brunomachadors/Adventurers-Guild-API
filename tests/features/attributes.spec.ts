@@ -6,7 +6,7 @@ import { Attribute } from '@/app/types/attribute';
 
 test(
   'Validate attributes schema',
-  { tag: ['@attributes', '@schema'] },
+  { tag: ['@get', '@attributes', '@schema'] },
   async ({ request }) => {
     const attributesClient = new AttributesClient(request);
     const assert = new Assert();
@@ -24,7 +24,7 @@ test(
 for (const expectedAttribute of expectedAttributes) {
   test(
     `Validate ${expectedAttribute.shortname}`,
-    { tag: ['@attributes', '@data'] },
+    { tag: ['@get', '@attributes', '@data'] },
     async ({ request }) => {
       const attributesClient = new AttributesClient(request);
       const assert = new Assert();

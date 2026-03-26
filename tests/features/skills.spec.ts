@@ -8,7 +8,7 @@ import {
 } from '../data/skills.expected';
 
 test.describe('Skills API - List', { tag: ['@skills', '@list'] }, () => {
-  test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
+  test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
     const skillsClient = new SkillClient(request);
     const skillAssert = new SkillAssert();
     const response = await skillsClient.getSkills();
@@ -20,7 +20,7 @@ test.describe('Skills API - List', { tag: ['@skills', '@list'] }, () => {
   for (const expectedSkill of expectedSkillsList) {
     test(
       `Validate Skill ${expectedSkill.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const skillsClient = new SkillClient(request);
         const skillAssert = new SkillAssert();
@@ -39,7 +39,7 @@ test.describe('Skills API - Detail', { tag: ['@skills', '@detail'] }, () => {
   )) {
     test(
       `Validate Skill Detail by id - ${expectedSkill.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const skillsClient = new SkillClient(request);
         const skillAssert = new SkillAssert();
@@ -56,7 +56,7 @@ test.describe('Skills API - Detail', { tag: ['@skills', '@detail'] }, () => {
 
     test(
       `Validate Skill Detail by name - ${expectedSkill.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const skillsClient = new SkillClient(request);
         const skillAssert = new SkillAssert();

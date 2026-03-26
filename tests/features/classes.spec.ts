@@ -6,7 +6,7 @@ import { ClassListItem } from '@/app/types/class';
 import { ClassesClient } from '../clients/classes.client';
 
 test.describe('Classes API', { tag: ['@classes'] }, () => {
-  test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
+  test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
     const classesClient = new ClassesClient(request);
     const classAssert = new ClassAssert();
     const response = await classesClient.getClasses();
@@ -18,7 +18,7 @@ test.describe('Classes API', { tag: ['@classes'] }, () => {
   for (const expectedClass of expectedClassesList) {
     test(
       `Validate Class ${expectedClass.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const classesClient = new ClassesClient(request);
         const classAssert = new ClassAssert();

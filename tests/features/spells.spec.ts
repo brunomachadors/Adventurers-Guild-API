@@ -6,7 +6,7 @@ import { expectedDetailedSpells, expectedSpellsList } from '../data/spells.expec
 import { SpellAssert } from '../helpers/spells.assertions';
 
 test.describe('Spells API - List', { tag: ['@spells', '@list'] }, () => {
-  test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
+  test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
     const spellsClient = new SpellsClient(request);
     const spellAssert = new SpellAssert();
 
@@ -22,7 +22,7 @@ test.describe('Spells API - List', { tag: ['@spells', '@list'] }, () => {
   for (const expectedSpell of expectedSpellsList) {
     test(
       `Validate Spell ${expectedSpell.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const spellsClient = new SpellsClient(request);
         const spellAssert = new SpellAssert();
@@ -40,7 +40,7 @@ test.describe('Spells API - List', { tag: ['@spells', '@list'] }, () => {
 });
 
 test.describe('Spells API - Detail', { tag: ['@spells', '@detail'] }, () => {
-  test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
+  test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
     const spellsClient = new SpellsClient(request);
     const spellAssert = new SpellAssert();
 
@@ -59,7 +59,7 @@ test.describe('Spells API - Detail', { tag: ['@spells', '@detail'] }, () => {
   )) {
     test(
       `Validate Spell Detail by id - ${expectedSpell.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const spellsClient = new SpellsClient(request);
         const spellAssert = new SpellAssert();
@@ -76,7 +76,7 @@ test.describe('Spells API - Detail', { tag: ['@spells', '@detail'] }, () => {
 
     test(
       `Validate Spell Detail by identifier - ${expectedSpell.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const spellsClient = new SpellsClient(request);
         const spellAssert = new SpellAssert();
@@ -94,7 +94,7 @@ test.describe('Spells API - Detail', { tag: ['@spells', '@detail'] }, () => {
 
   test(
     'Validate detailed spells are present in list with matching base fields',
-    { tag: ['@consistency', '@data'] },
+    { tag: ['@get', '@consistency', '@data'] },
     async ({ request }) => {
       const spellsClient = new SpellsClient(request);
       const spellAssert = new SpellAssert();
@@ -121,7 +121,7 @@ test.describe('Spells API - Detail', { tag: ['@spells', '@detail'] }, () => {
   )) {
     test(
       `Validate Spell Detail consistency by id and identifier - ${expectedSpell.name}`,
-      { tag: ['@consistency', '@data'] },
+      { tag: ['@get', '@consistency', '@data'] },
       async ({ request }) => {
         const spellsClient = new SpellsClient(request);
         const spellAssert = new SpellAssert();
@@ -150,7 +150,7 @@ test.describe('Spells API - Detail', { tag: ['@spells', '@detail'] }, () => {
 
   test(
     'Validate Spell Detail by invalid id',
-    { tag: ['@negative', '@error'] },
+    { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const spellsClient = new SpellsClient(request);
       const spellAssert = new SpellAssert();
@@ -167,7 +167,7 @@ test.describe('Spells API - Detail', { tag: ['@spells', '@detail'] }, () => {
 
   test(
     'Validate Spell Detail by invalid identifier',
-    { tag: ['@negative', '@error'] },
+    { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const spellsClient = new SpellsClient(request);
       const spellAssert = new SpellAssert();

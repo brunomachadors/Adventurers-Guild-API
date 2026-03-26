@@ -6,7 +6,7 @@ import { expectedDetailedClasses } from '../data/classes.expected';
 import { ClassAssert } from '../helpers/classes.assertions';
 
 test.describe('Classes API - Detail', { tag: ['@classes', '@detail'] }, () => {
-  test('Validate Schema', { tag: ['@schema'] }, async ({ request }) => {
+  test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
     const classesClient = new ClassesClient(request);
     const classAssert = new ClassAssert();
 
@@ -25,7 +25,7 @@ test.describe('Classes API - Detail', { tag: ['@classes', '@detail'] }, () => {
   )) {
     test(
       `Validate Class Detail by id - ${expectedClass.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const classesClient = new ClassesClient(request);
         const classAssert = new ClassAssert();
@@ -42,7 +42,7 @@ test.describe('Classes API - Detail', { tag: ['@classes', '@detail'] }, () => {
 
     test(
       `Validate Class Detail by name - ${expectedClass.name}`,
-      { tag: ['@data'] },
+      { tag: ['@get', '@data'] },
       async ({ request }) => {
         const classesClient = new ClassesClient(request);
         const classAssert = new ClassAssert();
@@ -60,7 +60,7 @@ test.describe('Classes API - Detail', { tag: ['@classes', '@detail'] }, () => {
 
   test(
     'Validate Class Detail by invalid id',
-    { tag: ['@negative', '@error'] },
+    { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const classesClient = new ClassesClient(request);
       const classAssert = new ClassAssert();
@@ -77,7 +77,7 @@ test.describe('Classes API - Detail', { tag: ['@classes', '@detail'] }, () => {
 
   test(
     'Validate Class Detail by invalid name',
-    { tag: ['@negative', '@error'] },
+    { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const classesClient = new ClassesClient(request);
       const classAssert = new ClassAssert();
