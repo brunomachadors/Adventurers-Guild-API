@@ -3,6 +3,7 @@ import {
   formatCharacterResponse,
   getCharacterMissingFields,
   getCharacterStatus,
+  isCharacterAbilityScoresOrNull,
   isNullablePositiveInteger,
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
@@ -28,7 +29,9 @@ function isCharacterCreateRequestBody(
     (!('speciesId' in value) || isNullablePositiveInteger(value.speciesId)) &&
     (!('backgroundId' in value) ||
       isNullablePositiveInteger(value.backgroundId)) &&
-    (!('level' in value) || isNullablePositiveInteger(value.level))
+    (!('level' in value) || isNullablePositiveInteger(value.level)) &&
+    (!('abilityScores' in value) ||
+      isCharacterAbilityScoresOrNull(value.abilityScores))
   );
 }
 
@@ -129,6 +132,7 @@ export async function POST(request: Request) {
     const speciesId = body.speciesId ?? null;
     const backgroundId = body.backgroundId ?? null;
     const level = body.level ?? 1;
+    const abilityScores = body.abilityScores ?? null;
     const status =
       classId !== null && speciesId !== null && backgroundId !== null
         ? 'complete'
@@ -143,7 +147,8 @@ export async function POST(request: Request) {
         classid,
         speciesid,
         backgroundid,
-        level
+        level,
+        abilityscores
       )
       VALUES (
         ${authenticatedOwner.id},
@@ -152,9 +157,10 @@ export async function POST(request: Request) {
         ${classId},
         ${speciesId},
         ${backgroundId},
-        ${level}
+        ${level},
+        ${abilityScores}
       )
-      RETURNING id, name, classid, speciesid, backgroundid, level
+      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores
     `;
 
     const character = characterRows[0];
@@ -165,6 +171,7 @@ export async function POST(request: Request) {
       speciesId: character.speciesid,
       backgroundId: character.backgroundid,
       level: character.level,
+      abilityScores: character.abilityscores,
     });
 
     return NextResponse.json(responseBody, { status: 201 });

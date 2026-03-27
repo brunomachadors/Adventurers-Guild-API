@@ -1,4 +1,7 @@
 import {
+  CharacterAbilityScoreOptionsResponseBody,
+  CharacterAbilityScores,
+  CharacterResolvedAbilityScores,
   CharacterClassDetails,
   CharacterListItem,
   CharacterSpellOptionsResponseBody,
@@ -11,6 +14,31 @@ import { SpeciesDetail } from '@/app/types/species';
 import { expect, test } from '@playwright/test';
 
 export class CharactersAssert {
+  private createEmptyAbilityScores(): CharacterAbilityScores {
+    return {
+      STR: 0,
+      DEX: 0,
+      CON: 0,
+      INT: 0,
+      WIS: 0,
+      CHA: 0,
+    };
+  }
+
+  private addAbilityScores(
+    base: CharacterAbilityScores,
+    bonuses: CharacterAbilityScores,
+  ): CharacterAbilityScores {
+    return {
+      STR: base.STR + bonuses.STR,
+      DEX: base.DEX + bonuses.DEX,
+      CON: base.CON + bonuses.CON,
+      INT: base.INT + bonuses.INT,
+      WIS: base.WIS + bonuses.WIS,
+      CHA: base.CHA + bonuses.CHA,
+    };
+  }
+
   async created(response: { status(): number; ok(): boolean }) {
     await test.step('Should return status code 201', async () => {
       expect(response.status()).toBe(201);
@@ -174,6 +202,52 @@ export class CharactersAssert {
     }
   }
 
+  async validateCharacterAbilityScoreOptionsSchema(
+    abilityScoreOptions: CharacterAbilityScoreOptionsResponseBody,
+  ) {
+    await test.step('Validate character ability score options schema', async () => {
+      expect(abilityScoreOptions).toHaveProperty('characterId');
+      expect(abilityScoreOptions).toHaveProperty('backgroundId');
+      expect(abilityScoreOptions).toHaveProperty('backgroundName');
+      expect(abilityScoreOptions).toHaveProperty('selectionRules');
+      expect(abilityScoreOptions).toHaveProperty('selectedAbilityScores');
+      expect(abilityScoreOptions).toHaveProperty('availableChoices');
+
+      expect(typeof abilityScoreOptions.characterId).toBe('number');
+      expect(
+        abilityScoreOptions.backgroundId === null ||
+          typeof abilityScoreOptions.backgroundId === 'number',
+      ).toBe(true);
+      expect(
+        abilityScoreOptions.backgroundName === null ||
+          typeof abilityScoreOptions.backgroundName === 'string',
+      ).toBe(true);
+      expect(
+        abilityScoreOptions.selectionRules === null ||
+          typeof abilityScoreOptions.selectionRules === 'object',
+      ).toBe(true);
+      expect(
+        abilityScoreOptions.selectedAbilityScores === null ||
+          typeof abilityScoreOptions.selectedAbilityScores === 'object',
+      ).toBe(true);
+      expect(Array.isArray(abilityScoreOptions.availableChoices)).toBe(true);
+    });
+
+    if (abilityScoreOptions.selectionRules) {
+      await this.validateAbilityScoreRulesSchema(
+        abilityScoreOptions.selectionRules,
+      );
+    }
+
+    if (abilityScoreOptions.selectedAbilityScores) {
+      await this.validateSelectedAbilityScores(
+        abilityScoreOptions.selectedAbilityScores,
+        abilityScoreOptions.selectedAbilityScores.base,
+        abilityScoreOptions.selectedAbilityScores.bonuses,
+      );
+    }
+  }
+
   async validateCharacterResponseSchema(character: CharacterResponseBody) {
     await test.step('Validate character response schema', async () => {
       expect(character).toHaveProperty('id');
@@ -184,6 +258,8 @@ export class CharactersAssert {
       expect(character).toHaveProperty('backgroundId');
       expect(character).toHaveProperty('level');
       expect(character).toHaveProperty('missingFields');
+      expect(character).toHaveProperty('abilityScores');
+      expect(character).toHaveProperty('abilityScoreRules');
       expect(character).toHaveProperty('classDetails');
       expect(character).toHaveProperty('speciesDetails');
       expect(character).toHaveProperty('backgroundDetails');
@@ -204,6 +280,14 @@ export class CharactersAssert {
       expect(typeof character.level).toBe('number');
       expect(Array.isArray(character.missingFields)).toBe(true);
       expect(
+        character.abilityScores === null ||
+          typeof character.abilityScores === 'object',
+      ).toBe(true);
+      expect(
+        character.abilityScoreRules === null ||
+          typeof character.abilityScoreRules === 'object',
+      ).toBe(true);
+      expect(
         character.classDetails === null ||
           typeof character.classDetails === 'object',
       ).toBe(true);
@@ -221,6 +305,14 @@ export class CharactersAssert {
       await test.step(`Validate missing field schema for ${missingField}`, async () => {
         expect(typeof missingField).toBe('string');
       });
+    }
+
+    if (character.abilityScores) {
+      await this.validateResolvedAbilityScoresSchema(character.abilityScores);
+    }
+
+    if (character.abilityScoreRules) {
+      await this.validateAbilityScoreRulesSchema(character.abilityScoreRules);
     }
 
     if (character.classDetails) {
@@ -359,6 +451,108 @@ export class CharactersAssert {
     );
   }
 
+  async validateAbilityScoresSchema(abilityScores: CharacterAbilityScores) {
+    await test.step('Validate ability scores schema', async () => {
+      expect(abilityScores).toHaveProperty('STR');
+      expect(abilityScores).toHaveProperty('DEX');
+      expect(abilityScores).toHaveProperty('CON');
+      expect(abilityScores).toHaveProperty('INT');
+      expect(abilityScores).toHaveProperty('WIS');
+      expect(abilityScores).toHaveProperty('CHA');
+
+      expect(typeof abilityScores.STR).toBe('number');
+      expect(typeof abilityScores.DEX).toBe('number');
+      expect(typeof abilityScores.CON).toBe('number');
+      expect(typeof abilityScores.INT).toBe('number');
+      expect(typeof abilityScores.WIS).toBe('number');
+      expect(typeof abilityScores.CHA).toBe('number');
+    });
+  }
+
+  async validateResolvedAbilityScoresSchema(
+    abilityScores: CharacterResolvedAbilityScores,
+  ) {
+    await test.step('Validate resolved ability scores schema', async () => {
+      expect(abilityScores).toHaveProperty('base');
+      expect(abilityScores).toHaveProperty('bonuses');
+      expect(abilityScores).toHaveProperty('final');
+    });
+
+    await this.validateAbilityScoresSchema(abilityScores.base);
+    await this.validateAbilityScoresSchema(abilityScores.bonuses);
+    await this.validateAbilityScoresSchema(abilityScores.final);
+  }
+
+  async validateAbilityScoreRulesSchema(
+    abilityScoreRules: CharacterResponseBody['abilityScoreRules'],
+  ) {
+    await test.step('Validate ability score rules schema', async () => {
+      expect(abilityScoreRules).not.toBeNull();
+      expect(abilityScoreRules).toHaveProperty('source');
+      expect(abilityScoreRules).toHaveProperty('allowedChoices');
+      expect(abilityScoreRules).toHaveProperty('bonusRules');
+
+      expect(abilityScoreRules?.source).toBe('background');
+      expect(Array.isArray(abilityScoreRules?.allowedChoices)).toBe(true);
+      expect(
+        abilityScoreRules?.bonusRules === null ||
+          typeof abilityScoreRules?.bonusRules === 'object',
+      ).toBe(true);
+    });
+
+    for (const allowedChoice of abilityScoreRules?.allowedChoices ?? []) {
+      await test.step(
+        `Validate ability score rule choice schema for ${allowedChoice}`,
+        async () => {
+          expect(typeof allowedChoice).toBe('string');
+        },
+      );
+    }
+
+    const bonusRules = abilityScoreRules?.bonusRules;
+
+    if (bonusRules) {
+      await test.step('Validate ability score bonus rules schema', async () => {
+        expect(bonusRules).toHaveProperty('mode');
+        expect(bonusRules).toHaveProperty('options');
+
+        expect(bonusRules.mode).toBe('standard_background');
+        expect(Array.isArray(bonusRules.options)).toBe(true);
+      });
+
+      for (const option of bonusRules.options) {
+        await test.step(
+          `Validate ability score bonus rule option schema for ${option.type}`,
+          async () => {
+            expect(option).toHaveProperty('type');
+            expect(typeof option.type).toBe('string');
+
+            if (option.type === 'plus2_plus1') {
+              expect(option).toHaveProperty('choices');
+              expect(Array.isArray(option.choices)).toBe(true);
+
+              for (const choice of option.choices) {
+                expect(choice).toHaveProperty('bonus');
+                expect(choice).toHaveProperty('count');
+                expect(typeof choice.bonus).toBe('number');
+                expect(typeof choice.count).toBe('number');
+
+                if (choice.mustBeDifferentFromBonus !== undefined) {
+                  expect(typeof choice.mustBeDifferentFromBonus).toBe('number');
+                }
+              }
+            }
+
+            if (option.type === 'plus1_each_suggested') {
+              expect(option).toHaveProperty('basedOn');
+              expect(option.basedOn).toBe('abilityscores');
+            }
+          },
+        );
+      }
+    }
+  }
+
   async validateId(id: number, expectedId: number) {
     await test.step('Validate ID', async () => {
       expect(id).toBe(expectedId);
@@ -423,6 +617,119 @@ export class CharactersAssert {
     await test.step('Validate Missing Fields', async () => {
       expect(missingFields).toEqual(expectedMissingFields);
     });
+  }
+
+  async validateAbilityScores(
+    abilityScores: CharacterResponseBody['abilityScores'],
+    expectedBaseAbilityScores: CharacterAbilityScores | null,
+    expectedBonusAbilityScores?: CharacterAbilityScores,
+  ) {
+    await test.step('Validate Ability Scores', async () => {
+      if (expectedBaseAbilityScores === null) {
+        expect(abilityScores).toBeNull();
+
+        return;
+      }
+
+      expect(abilityScores).not.toBeNull();
+      expect(abilityScores?.base).toEqual(expectedBaseAbilityScores);
+      expect(abilityScores?.bonuses).toEqual(
+        expectedBonusAbilityScores ?? this.createEmptyAbilityScores(),
+      );
+      expect(abilityScores?.final).toEqual(
+        this.addAbilityScores(
+          expectedBaseAbilityScores,
+          expectedBonusAbilityScores ?? this.createEmptyAbilityScores(),
+        ),
+      );
+    });
+
+    if (abilityScores) {
+      await this.validateResolvedAbilityScoresSchema(abilityScores);
+    }
+  }
+
+  async validateSelectedAbilityScores(
+    abilityScores: CharacterResolvedAbilityScores | null,
+    expectedBaseAbilityScores: CharacterAbilityScores | null,
+    expectedBonusAbilityScores?: CharacterAbilityScores,
+  ) {
+    await test.step('Validate Selected Ability Scores', async () => {
+      if (expectedBaseAbilityScores === null) {
+        expect(abilityScores).toBeNull();
+
+        return;
+      }
+
+      expect(abilityScores).not.toBeNull();
+      expect(abilityScores?.base).toEqual(expectedBaseAbilityScores);
+      expect(abilityScores?.bonuses).toEqual(
+        expectedBonusAbilityScores ?? this.createEmptyAbilityScores(),
+      );
+      expect(abilityScores?.final).toEqual(
+        this.addAbilityScores(
+          expectedBaseAbilityScores,
+          expectedBonusAbilityScores ?? this.createEmptyAbilityScores(),
+        ),
+      );
+    });
+
+    if (abilityScores) {
+      await this.validateResolvedAbilityScoresSchema(abilityScores);
+    }
+  }
+
+  async validateAbilityScoreRules(
+    abilityScoreRules: CharacterResponseBody['abilityScoreRules'],
+    expectedAllowedChoices: string[] | null,
+  ) {
+    await test.step('Validate Ability Score Rules', async () => {
+      if (expectedAllowedChoices === null) {
+        expect(abilityScoreRules).toBeNull();
+
+        return;
+      }
+
+      expect(abilityScoreRules).not.toBeNull();
+      expect(abilityScoreRules?.source).toBe('background');
+      expect(abilityScoreRules?.allowedChoices).toEqual(expectedAllowedChoices);
+      expect(abilityScoreRules?.bonusRules).not.toBeNull();
+      expect(abilityScoreRules?.bonusRules?.mode).toBe('standard_background');
+      expect(abilityScoreRules?.bonusRules?.options).toHaveLength(2);
+    });
+
+    if (abilityScoreRules) {
+      await this.validateAbilityScoreRulesSchema(abilityScoreRules);
+    }
+
+    const bonusRules = abilityScoreRules?.bonusRules;
+
+    if (bonusRules) {
+      await test.step('Validate Ability Score Bonus Rules', async () => {
+        const plusTwoPlusOneOption = bonusRules.options.find(
+          (option) => option.type === 'plus2_plus1',
+        );
+        const plusOneEachSuggestedOption = bonusRules.options.find(
+          (option) => option.type === 'plus1_each_suggested',
+        );
+
+        expect(plusTwoPlusOneOption).toBeDefined();
+        expect(plusOneEachSuggestedOption).toBeDefined();
+
+        expect(plusTwoPlusOneOption).toEqual({
+          type: 'plus2_plus1',
+          choices: [
+            { bonus: 2, count: 1 },
+            { bonus: 1, count: 1, mustBeDifferentFromBonus: 2 },
+          ],
+        });
+
+        expect(plusOneEachSuggestedOption).toEqual({
+          type: 'plus1_each_suggested',
+          basedOn: 'abilityscores',
+        });
+      });
+    }
   }
 
   async validateClassDetailsPresence(

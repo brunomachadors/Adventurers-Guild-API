@@ -1,6 +1,7 @@
 import { getAuthenticatedOwnerFromRequest } from '@/app/lib/auth';
 import {
   formatCharacterResponse,
+  isCharacterAbilityScoresOrNull,
   isNullablePositiveInteger,
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
@@ -24,7 +25,9 @@ function isCharacterUpdateRequestBody(
     (!('speciesId' in value) || isNullablePositiveInteger(value.speciesId)) &&
     (!('backgroundId' in value) ||
       isNullablePositiveInteger(value.backgroundId)) &&
-    (!('level' in value) || isNullablePositiveInteger(value.level))
+    (!('level' in value) || isNullablePositiveInteger(value.level)) &&
+    (!('abilityScores' in value) ||
+      isCharacterAbilityScoresOrNull(value.abilityScores))
   );
 }
 
@@ -45,7 +48,7 @@ export async function GET(request: Request, { params }: RouteContext) {
 
   try {
     const characterRows = await sql`
-      SELECT id, name, classid, speciesid, backgroundid, level
+      SELECT id, name, classid, speciesid, backgroundid, level, abilityscores
       FROM characters
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
@@ -67,6 +70,7 @@ export async function GET(request: Request, { params }: RouteContext) {
       speciesId: character.speciesid,
       backgroundId: character.backgroundid,
       level: character.level,
+      abilityScores: character.abilityscores,
     });
 
     return NextResponse.json(responseBody, { status: 200 });
@@ -105,7 +109,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
     const sql = getSql();
     const existingRows = await sql`
-      SELECT id, name, classid, speciesid, backgroundid, level
+      SELECT id, name, classid, speciesid, backgroundid, level, abilityscores
       FROM characters
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
@@ -142,6 +146,10 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         : existingCharacter.backgroundid;
     const nextLevel =
       body.level !== undefined ? body.level : Number(existingCharacter.level);
+    const nextAbilityScores =
+      body.abilityScores !== undefined
+        ? body.abilityScores
+        : existingCharacter.abilityscores;
     const nextStatus =
       nextClassId !== null &&
       nextSpeciesId !== null &&
@@ -158,10 +166,11 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         speciesid = ${nextSpeciesId},
         backgroundid = ${nextBackgroundId},
         level = ${nextLevel},
+        abilityscores = ${nextAbilityScores},
         updatedat = NOW()
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
-      RETURNING id, name, classid, speciesid, backgroundid, level
+      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores
     `;
 
     const character = characterRows[0];
@@ -172,6 +181,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       speciesId: character.speciesid,
       backgroundId: character.backgroundid,
       level: character.level,
+      abilityScores: character.abilityscores,
     });
 
     return NextResponse.json(responseBody, { status: 200 });

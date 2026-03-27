@@ -34,6 +34,10 @@ code {
   min-height: 100vh;
 }
 
+.site-shell > * {
+  width: 100%;
+}
+
 .site-header {
   position: sticky;
   top: 0;
@@ -135,6 +139,99 @@ h3 {
 .site-nav__link--active {
   background: #5e2f1d;
   color: #f5e7cb;
+}
+
+.site-footer {
+  margin-top: 32px;
+  background:
+    radial-gradient(circle at top, rgba(164, 104, 67, 0.14), transparent 38%),
+    linear-gradient(180deg, #5a2a1a 0%, #3d190f 100%);
+  color: #f3e3c3;
+  border-top: 1px solid rgba(255, 235, 202, 0.18);
+}
+
+.site-footer__inner {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 36px 0 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr);
+  gap: 28px;
+}
+
+.site-footer__lead,
+.site-footer__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.site-footer__lead p:not(.mini-label),
+.site-footer__section a {
+  color: #f3e3c3;
+  font-family: var(--font-body), sans-serif;
+}
+
+.site-footer__lead h2 {
+  color: #fff7e8;
+  max-width: 16ch;
+  text-shadow: 0 1px 0 rgba(40, 14, 6, 0.28);
+}
+
+.site-footer__lead p {
+  max-width: 28ch;
+}
+
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.site-footer__section {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 230, 190, 0.14);
+  background: rgba(255, 244, 220, 0.04);
+}
+
+.site-footer .mini-label {
+  color: #f2c493;
+  text-shadow: 0 1px 0 rgba(36, 12, 5, 0.24);
+}
+
+.site-footer__links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.site-footer__link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 247, 231, 0.08);
+  border: 1px solid rgba(255, 228, 189, 0.12);
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease,
+    border-color 160ms ease;
+}
+
+.site-footer__link-card:hover,
+.site-footer__link-card:focus-visible {
+  background: rgba(255, 247, 231, 0.12);
+  border-color: rgba(255, 228, 189, 0.22);
+  transform: translateY(-1px);
+}
+
+.site-footer__link-title {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1.08rem;
+  color: #fff8ea;
+  text-shadow: 0 1px 0 rgba(36, 12, 5, 0.24);
 }
 
 .page-frame {
@@ -492,12 +589,14 @@ li {
   .hero-panel,
   .hero-panel__grid,
   .resource-grid,
+  .site-footer__grid,
   .support-grid,
   .support-list__item {
     grid-template-columns: 1fr;
   }
 
   .site-header__inner,
+  .site-footer__inner,
   .resource-card__header,
   .support-list__item {
     flex-direction: column;

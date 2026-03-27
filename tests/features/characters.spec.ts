@@ -1,5 +1,8 @@
 import { TokenResponseBody } from '@/app/types/auth';
 import {
+  CharacterAbilityScoreOptionsResponseBody,
+  CharacterAbilityScoresInput,
+  CharacterAbilityScores,
   CharacterListItem,
   CharacterResponseBody,
   CharacterSpellOptionsResponseBody,
@@ -13,6 +16,96 @@ import { AuthAssert } from '../helpers/auth.assertions';
 import { CharactersAssert } from '../helpers/characters.assertions';
 import { expectedDetailedBackgrounds } from '../data/backgrounds.expected';
 import { expectedDetailedSpecies } from '../data/species.expected';
+
+const barbarianAbilityScores: CharacterAbilityScores = {
+  STR: 15,
+  DEX: 13,
+  CON: 14,
+  INT: 8,
+  WIS: 12,
+  CHA: 10,
+};
+
+const wizardAbilityScores: CharacterAbilityScores = {
+  STR: 8,
+  DEX: 14,
+  CON: 13,
+  INT: 15,
+  WIS: 12,
+  CHA: 10,
+};
+
+const paladinAbilityScores: CharacterAbilityScores = {
+  STR: 15,
+  DEX: 10,
+  CON: 13,
+  INT: 8,
+  WIS: 12,
+  CHA: 14,
+};
+
+const patchedDraftAbilityScores: CharacterAbilityScores = {
+  STR: 16,
+  DEX: 12,
+  CON: 14,
+  INT: 10,
+  WIS: 10,
+  CHA: 8,
+};
+
+const barbarianAbilityBonuses: CharacterAbilityScores = {
+  STR: 2,
+  DEX: 0,
+  CON: 1,
+  INT: 0,
+  WIS: 0,
+  CHA: 0,
+};
+
+const wizardAbilityBonuses: CharacterAbilityScores = {
+  STR: 0,
+  DEX: 0,
+  CON: 0,
+  INT: 2,
+  WIS: 1,
+  CHA: 0,
+};
+
+const paladinAbilityBonuses: CharacterAbilityScores = {
+  STR: 2,
+  DEX: 0,
+  CON: 0,
+  INT: 0,
+  WIS: 0,
+  CHA: 1,
+};
+
+const barbarianAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: barbarianAbilityScores,
+  bonuses: barbarianAbilityBonuses,
+};
+
+const wizardAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: wizardAbilityScores,
+  bonuses: wizardAbilityBonuses,
+};
+
+const paladinAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: paladinAbilityScores,
+  bonuses: paladinAbilityBonuses,
+};
+
+const patchedDraftAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: patchedDraftAbilityScores,
+  bonuses: {
+    STR: 0,
+    DEX: 0,
+    CON: 0,
+    INT: 0,
+    WIS: 0,
+    CHA: 0,
+  },
+};
 
 async function issueDemoToken(request: APIRequestContext) {
   const authClient = new AuthClient(request);
@@ -42,13 +135,16 @@ test.describe(
   let createdCharacterId: number;
   let createdCharacterName: string;
 
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
   test(
     'List Characters',
     { tag: ['@get', '@smoke', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      authToken = await issueDemoToken(request);
 
       const listResponse = await charactersClient.getCharacters(authToken);
 
@@ -98,6 +194,14 @@ test.describe(
         'speciesId',
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(
+        createdCharacter.abilityScores,
+        null,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        createdCharacter.abilityScoreRules,
+        null,
+      );
       await charactersAssert.validateClassDetailsPresence(
         createdCharacter.classDetails ?? null,
         false,
@@ -148,6 +252,14 @@ test.describe(
         'speciesId',
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(
+        fetchedCharacter.abilityScores,
+        null,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        fetchedCharacter.abilityScoreRules,
+        null,
+      );
       await charactersAssert.validateClassDetailsPresence(
         fetchedCharacter.classDetails ?? null,
         false,
@@ -201,6 +313,10 @@ test.describe(
         updatedCharacter.missingFields,
         ['speciesId', 'backgroundId'],
       );
+      await charactersAssert.validateAbilityScores(
+        updatedCharacter.abilityScores,
+        null,
+      );
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
         true,
@@ -252,6 +368,7 @@ test.describe(
         'speciesId',
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateClassDetailsPresence(
         character.classDetails ?? null,
         true,
@@ -293,6 +410,7 @@ test.describe(
       await charactersAssert.validateMissingFields(character.missingFields, [
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateSpeciesDetailsPresence(
         character.speciesDetails ?? null,
         true,
@@ -334,6 +452,7 @@ test.describe(
       await charactersAssert.validateMissingFields(character.missingFields, [
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateSpeciesDetailsPresence(
         character.speciesDetails ?? null,
         true,
@@ -379,6 +498,10 @@ test.describe(
       );
       await charactersAssert.validateLevel(updatedCharacter.level, 1);
       await charactersAssert.validateMissingFields(updatedCharacter.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        updatedCharacter.abilityScores,
+        null,
+      );
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
         true,
@@ -413,6 +536,39 @@ test.describe(
           updatedCharacter.backgroundDetails,
         );
       }
+    },
+  );
+
+  test(
+    'Get Soldier Barbarian',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateClassId(character.classId, 1);
+      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 16);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateAbilityScoreRules(
+        character.abilityScoreRules,
+        expectedDetailedBackgrounds.soldier.abilityScores,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        true,
+      );
     },
   );
 
@@ -494,6 +650,108 @@ test.describe(
   );
 
   test(
+    'Get Attribute Options Barbarian',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterAbilityScoreOptions(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const abilityScoreOptions: CharacterAbilityScoreOptionsResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
+        abilityScoreOptions,
+      );
+      await charactersAssert.validateId(
+        abilityScoreOptions.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateBackgroundId(
+        abilityScoreOptions.backgroundId,
+        16,
+      );
+      await charactersAssert.validateName(
+        abilityScoreOptions.backgroundName ?? '',
+        expectedDetailedBackgrounds.soldier.name,
+      );
+      await charactersAssert.validateSelectedAbilityScores(
+        abilityScoreOptions.selectedAbilityScores,
+        null,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        abilityScoreOptions.selectionRules,
+        expectedDetailedBackgrounds.soldier.abilityScores,
+      );
+
+      await test.step('Validate soldier available choices', async () => {
+        expect(abilityScoreOptions.availableChoices).toEqual(
+          expectedDetailedBackgrounds.soldier.abilityScores,
+        );
+      });
+    },
+  );
+
+  test(
+    'Select Scores Barbarian',
+    { tag: ['@put', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacterAbilityScores(
+        createdCharacterId,
+        {
+          abilityScores: barbarianAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const abilityScoreOptions: CharacterAbilityScoreOptionsResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
+        abilityScoreOptions,
+      );
+      await charactersAssert.validateId(
+        abilityScoreOptions.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateBackgroundId(
+        abilityScoreOptions.backgroundId,
+        16,
+      );
+      await charactersAssert.validateName(
+        abilityScoreOptions.backgroundName ?? '',
+        expectedDetailedBackgrounds.soldier.name,
+      );
+      await charactersAssert.validateSelectedAbilityScores(
+        abilityScoreOptions.selectedAbilityScores,
+        barbarianAbilityScores,
+        barbarianAbilityBonuses,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        abilityScoreOptions.selectionRules,
+        expectedDetailedBackgrounds.soldier.abilityScores,
+      );
+
+      await test.step('Validate soldier available choices after selection', async () => {
+        expect(abilityScoreOptions.availableChoices).toEqual(
+          expectedDetailedBackgrounds.soldier.abilityScores,
+        );
+      });
+    },
+  );
+
+  test(
     'Get Complete Barbarian',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -518,6 +776,15 @@ test.describe(
       await charactersAssert.validateBackgroundId(finalCharacter.backgroundId, 16);
       await charactersAssert.validateLevel(finalCharacter.level, 1);
       await charactersAssert.validateMissingFields(finalCharacter.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        finalCharacter.abilityScores,
+        barbarianAbilityScores,
+        barbarianAbilityBonuses,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        finalCharacter.abilityScoreRules,
+        expectedDetailedBackgrounds.soldier.abilityScores,
+      );
       await charactersAssert.validateClassDetailsPresence(
         finalCharacter.classDetails ?? null,
         true,
@@ -578,6 +845,11 @@ test.describe(
   let authToken: string;
   let createdCharacterId: number;
   let createdCharacterName: string;
+  let selectedSpellIds: number[];
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
 
   test(
     'Create Paladin Human Noble',
@@ -585,7 +857,6 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      authToken = await issueDemoToken(request);
       createdCharacterName = `Cedric ${Date.now()}`;
 
       const response = await charactersClient.createCharacter(
@@ -594,7 +865,7 @@ test.describe(
           classId: 7,
           speciesId: 7,
           backgroundId: 12,
-          level: 1,
+          level: 3,
         },
         authToken,
       );
@@ -611,8 +882,16 @@ test.describe(
       await charactersAssert.validateClassId(character.classId, 7);
       await charactersAssert.validateSpeciesId(character.speciesId, 7);
       await charactersAssert.validateBackgroundId(character.backgroundId, 12);
-      await charactersAssert.validateLevel(character.level, 1);
+      await charactersAssert.validateLevel(character.level, 3);
       await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        null,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        character.abilityScoreRules,
+        expectedDetailedBackgrounds.noble.abilityScores,
+      );
       await charactersAssert.validateClassDetailsPresence(
         character.classDetails ?? null,
         true,
@@ -660,6 +939,311 @@ test.describe(
   );
 
   test(
+    'Get Paladin',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateName(character.name, createdCharacterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 7);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 12);
+      await charactersAssert.validateLevel(character.level, 3);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateAbilityScoreRules(
+        character.abilityScoreRules,
+        expectedDetailedBackgrounds.noble.abilityScores,
+      );
+      await charactersAssert.validateClassDetailsPresence(
+        character.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        true,
+      );
+    },
+  );
+
+  test(
+    'Get Attribute Options Paladin',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterAbilityScoreOptions(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const abilityScoreOptions: CharacterAbilityScoreOptionsResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
+        abilityScoreOptions,
+      );
+      await charactersAssert.validateId(
+        abilityScoreOptions.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateBackgroundId(
+        abilityScoreOptions.backgroundId,
+        12,
+      );
+      await charactersAssert.validateName(
+        abilityScoreOptions.backgroundName ?? '',
+        expectedDetailedBackgrounds.noble.name,
+      );
+      await charactersAssert.validateSelectedAbilityScores(
+        abilityScoreOptions.selectedAbilityScores,
+        null,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        abilityScoreOptions.selectionRules,
+        expectedDetailedBackgrounds.noble.abilityScores,
+      );
+
+      await test.step('Validate noble available choices', async () => {
+        expect(abilityScoreOptions.availableChoices).toEqual(
+          expectedDetailedBackgrounds.noble.abilityScores,
+        );
+      });
+    },
+  );
+
+  test(
+    'Select Scores Paladin',
+    { tag: ['@put', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacterAbilityScores(
+        createdCharacterId,
+        {
+          abilityScores: paladinAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const abilityScoreOptions: CharacterAbilityScoreOptionsResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
+        abilityScoreOptions,
+      );
+      await charactersAssert.validateId(
+        abilityScoreOptions.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateBackgroundId(
+        abilityScoreOptions.backgroundId,
+        12,
+      );
+      await charactersAssert.validateName(
+        abilityScoreOptions.backgroundName ?? '',
+        expectedDetailedBackgrounds.noble.name,
+      );
+      await charactersAssert.validateSelectedAbilityScores(
+        abilityScoreOptions.selectedAbilityScores,
+        paladinAbilityScores,
+        paladinAbilityBonuses,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        abilityScoreOptions.selectionRules,
+        expectedDetailedBackgrounds.noble.abilityScores,
+      );
+    },
+  );
+
+  test(
+    'Get Spell Options Paladin',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterSpellOptions(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const spellOptions: CharacterSpellOptionsResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterSpellOptionsSchema(spellOptions);
+      await charactersAssert.validateId(spellOptions.characterId, createdCharacterId);
+      await charactersAssert.validateClassId(spellOptions.classId, 7);
+      await charactersAssert.validateClassName(spellOptions.className, 'Paladin');
+
+      await test.step('Validate paladin spell options are returned', async () => {
+        expect(spellOptions.spells.length).toBeGreaterThan(0);
+      });
+    },
+  );
+
+  test(
+    'Get Spell Selection Paladin',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterSpellSelection(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const spellSelection: CharacterSpellSelectionResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterSpellSelectionSchema(
+        spellSelection,
+      );
+      await charactersAssert.validateId(
+        spellSelection.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateClassId(spellSelection.classId, 7);
+      await charactersAssert.validateClassName(spellSelection.className, 'Paladin');
+      await charactersAssert.validateLevel(spellSelection.level, 3);
+
+      await test.step('Validate paladin spell selection rules', async () => {
+        expect(spellSelection.selectionRules.canSelectSpells).toBe(true);
+        expect(spellSelection.selectionRules.selectionType).not.toBeNull();
+        expect(spellSelection.availableSpells.length).toBeGreaterThan(0);
+        expect(spellSelection.selectedSpells).toEqual([]);
+      });
+
+      const selectedCantripIds = spellSelection.availableSpells
+        .filter((spell) => spell.level === 0)
+        .slice(0, spellSelection.selectionRules.maxCantrips)
+        .map((spell) => spell.id);
+
+      const selectedLeveledSpellIds = spellSelection.availableSpells
+        .filter((spell) => spell.level > 0)
+        .slice(0, spellSelection.selectionRules.maxSpells)
+        .map((spell) => spell.id);
+
+      selectedSpellIds = [...selectedCantripIds, ...selectedLeveledSpellIds];
+
+      await test.step('Choose paladin spells for selection update', async () => {
+        expect(selectedSpellIds).toHaveLength(
+          spellSelection.selectionRules.maxCantrips +
+            spellSelection.selectionRules.maxSpells,
+        );
+      });
+    },
+  );
+
+  test(
+    'Select Spells Paladin',
+    { tag: ['@put', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacterSpells(
+        createdCharacterId,
+        {
+          spellIds: selectedSpellIds,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const spellSelection: CharacterSpellSelectionResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterSpellSelectionSchema(
+        spellSelection,
+      );
+      await charactersAssert.validateId(
+        spellSelection.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateClassId(spellSelection.classId, 7);
+      await charactersAssert.validateClassName(spellSelection.className, 'Paladin');
+      await charactersAssert.validateLevel(spellSelection.level, 3);
+
+      await test.step('Validate selected paladin spells were persisted', async () => {
+        expect(spellSelection.selectedSpells).toHaveLength(selectedSpellIds.length);
+        expect(spellSelection.selectedSpells.map((spell) => spell.id)).toEqual(
+          selectedSpellIds,
+        );
+      });
+    },
+  );
+
+  test(
+    'Get Selected Spells Paladin',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterSpellSelection(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const spellSelection: CharacterSpellSelectionResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterSpellSelectionSchema(
+        spellSelection,
+      );
+      await charactersAssert.validateId(
+        spellSelection.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateClassId(spellSelection.classId, 7);
+      await charactersAssert.validateClassName(spellSelection.className, 'Paladin');
+      await charactersAssert.validateLevel(spellSelection.level, 3);
+
+      await test.step(
+        'Validate selected paladin spells are returned on follow-up get',
+        async () => {
+          expect(spellSelection.selectedSpells).toHaveLength(selectedSpellIds.length);
+          expect(spellSelection.selectedSpells.map((spell) => spell.id)).toEqual(
+            selectedSpellIds,
+          );
+        },
+      );
+    },
+  );
+
+  test(
     'Get Complete Paladin',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -682,8 +1266,17 @@ test.describe(
       await charactersAssert.validateClassId(character.classId, 7);
       await charactersAssert.validateSpeciesId(character.speciesId, 7);
       await charactersAssert.validateBackgroundId(character.backgroundId, 12);
-      await charactersAssert.validateLevel(character.level, 1);
+      await charactersAssert.validateLevel(character.level, 3);
       await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        paladinAbilityScores,
+        paladinAbilityBonuses,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        character.abilityScoreRules,
+        expectedDetailedBackgrounds.noble.abilityScores,
+      );
       await charactersAssert.validateClassDetailsPresence(
         character.classDetails ?? null,
         true,
@@ -743,13 +1336,16 @@ test.describe(
   let createdCharacterName: string;
   let selectedSpellIds: number[];
 
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
   test(
     'List Characters',
     { tag: ['@get', '@smoke', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      authToken = await issueDemoToken(request);
 
       const listResponse = await charactersClient.getCharacters(authToken);
 
@@ -799,6 +1395,14 @@ test.describe(
         'speciesId',
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(
+        createdCharacter.abilityScores,
+        null,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        createdCharacter.abilityScoreRules,
+        null,
+      );
       await charactersAssert.validateClassDetailsPresence(
         createdCharacter.classDetails ?? null,
         false,
@@ -849,6 +1453,14 @@ test.describe(
         'speciesId',
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(
+        fetchedCharacter.abilityScores,
+        null,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        fetchedCharacter.abilityScoreRules,
+        null,
+      );
       await charactersAssert.validateClassDetailsPresence(
         fetchedCharacter.classDetails ?? null,
         false,
@@ -902,6 +1514,10 @@ test.describe(
         updatedCharacter.missingFields,
         ['speciesId', 'backgroundId'],
       );
+      await charactersAssert.validateAbilityScores(
+        updatedCharacter.abilityScores,
+        null,
+      );
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
         true,
@@ -953,6 +1569,7 @@ test.describe(
         'speciesId',
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateSpeciesDetailsPresence(
         character.speciesDetails ?? null,
         false,
@@ -990,6 +1607,7 @@ test.describe(
       await charactersAssert.validateMissingFields(character.missingFields, [
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateSpeciesDetailsPresence(
         character.speciesDetails ?? null,
         true,
@@ -1031,6 +1649,7 @@ test.describe(
       await charactersAssert.validateMissingFields(character.missingFields, [
         'backgroundId',
       ]);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateSpeciesDetailsPresence(
         character.speciesDetails ?? null,
         true,
@@ -1076,6 +1695,10 @@ test.describe(
       );
       await charactersAssert.validateLevel(updatedCharacter.level, 1);
       await charactersAssert.validateMissingFields(updatedCharacter.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        updatedCharacter.abilityScores,
+        null,
+      );
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
         true,
@@ -1099,6 +1722,39 @@ test.describe(
           updatedCharacter.backgroundDetails,
         );
       }
+    },
+  );
+
+  test(
+    'Get Sage Wizard',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateClassId(character.classId, 12);
+      await charactersAssert.validateSpeciesId(character.speciesId, 3);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 13);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateAbilityScoreRules(
+        character.abilityScoreRules,
+        expectedDetailedBackgrounds.sage.abilityScores,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        true,
+      );
     },
   );
 
@@ -1282,6 +1938,108 @@ test.describe(
   );
 
   test(
+    'Get Attribute Options Wizard',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterAbilityScoreOptions(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const abilityScoreOptions: CharacterAbilityScoreOptionsResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
+        abilityScoreOptions,
+      );
+      await charactersAssert.validateId(
+        abilityScoreOptions.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateBackgroundId(
+        abilityScoreOptions.backgroundId,
+        13,
+      );
+      await charactersAssert.validateName(
+        abilityScoreOptions.backgroundName ?? '',
+        expectedDetailedBackgrounds.sage.name,
+      );
+      await charactersAssert.validateSelectedAbilityScores(
+        abilityScoreOptions.selectedAbilityScores,
+        null,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        abilityScoreOptions.selectionRules,
+        expectedDetailedBackgrounds.sage.abilityScores,
+      );
+
+      await test.step('Validate sage available choices', async () => {
+        expect(abilityScoreOptions.availableChoices).toEqual(
+          expectedDetailedBackgrounds.sage.abilityScores,
+        );
+      });
+    },
+  );
+
+  test(
+    'Select Scores Wizard',
+    { tag: ['@put', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacterAbilityScores(
+        createdCharacterId,
+        {
+          abilityScores: wizardAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const abilityScoreOptions: CharacterAbilityScoreOptionsResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
+        abilityScoreOptions,
+      );
+      await charactersAssert.validateId(
+        abilityScoreOptions.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateBackgroundId(
+        abilityScoreOptions.backgroundId,
+        13,
+      );
+      await charactersAssert.validateName(
+        abilityScoreOptions.backgroundName ?? '',
+        expectedDetailedBackgrounds.sage.name,
+      );
+      await charactersAssert.validateSelectedAbilityScores(
+        abilityScoreOptions.selectedAbilityScores,
+        wizardAbilityScores,
+        wizardAbilityBonuses,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        abilityScoreOptions.selectionRules,
+        expectedDetailedBackgrounds.sage.abilityScores,
+      );
+
+      await test.step('Validate sage available choices after selection', async () => {
+        expect(abilityScoreOptions.availableChoices).toEqual(
+          expectedDetailedBackgrounds.sage.abilityScores,
+        );
+      });
+    },
+  );
+
+  test(
     'Get Complete Wizard',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -1306,6 +2064,15 @@ test.describe(
       await charactersAssert.validateBackgroundId(finalCharacter.backgroundId, 13);
       await charactersAssert.validateLevel(finalCharacter.level, 1);
       await charactersAssert.validateMissingFields(finalCharacter.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        finalCharacter.abilityScores,
+        wizardAbilityScores,
+        wizardAbilityBonuses,
+      );
+      await charactersAssert.validateAbilityScoreRules(
+        finalCharacter.abilityScoreRules,
+        expectedDetailedBackgrounds.sage.abilityScores,
+      );
       await charactersAssert.validateClassDetailsPresence(
         finalCharacter.classDetails ?? null,
         true,
@@ -1352,6 +2119,236 @@ test.describe(
           finalCharacter.backgroundDetails,
         );
       }
+    },
+  );
+  },
+);
+
+test.describe(
+  'Characters API - Ability Scores',
+  { tag: ['@characters', '@ability-scores'] },
+  () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let authToken: string;
+  let noScoresCharacterId: number;
+  let withScoresCharacterId: number;
+  let patchScoresCharacterId: number;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
+  test(
+    'Create No Scores',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: `No Scores ${Date.now()}`,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      noScoresCharacterId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Get No Scores',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        noScoresCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Create With Scores',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: `With Scores ${Date.now()}`,
+          abilityScores: patchedDraftAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      withScoresCharacterId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        patchedDraftAbilityScores,
+      );
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Get With Scores',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        withScoresCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        patchedDraftAbilityScores,
+      );
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Patch Scores',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const createResponse = await charactersClient.createCharacter(
+        {
+          name: `Patch Scores ${Date.now()}`,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(createResponse);
+
+      const createdCharacter: CharacterResponseBody = await createResponse.json();
+      patchScoresCharacterId = createdCharacter.id;
+
+      const response = await charactersClient.updateCharacter(
+        patchScoresCharacterId,
+        {
+          abilityScores: patchedDraftAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        patchedDraftAbilityScores,
+      );
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Get Patched Scores',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        patchScoresCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        patchedDraftAbilityScores,
+      );
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Clear Scores',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacter(
+        patchScoresCharacterId,
+        {
+          abilityScores: null,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Get Cleared Scores',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        patchScoresCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateStatus(character.status, 'draft');
     },
   );
   },
@@ -1510,6 +2507,95 @@ test.describe(
       await charactersAssert.badRequest(updateResponse);
 
       const body: { error: string } = await updateResponse.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Invalid character request payload',
+      );
+    },
+  );
+
+  test(
+    'Create character with incomplete scores',
+    { tag: ['@post', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: `Incomplete Scores ${Date.now()}`,
+          abilityScores: {
+            base: {
+              STR: 15,
+            },
+            bonuses: {
+              STR: 2,
+            },
+          } as unknown as CharacterAbilityScoresInput,
+        },
+        token,
+      );
+
+      await charactersAssert.badRequest(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Invalid character request payload',
+      );
+    },
+  );
+
+  test(
+    'Patch character with non-numeric score',
+    { tag: ['@post', '@patch', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const createResponse = await charactersClient.createCharacter(
+        {
+          name: `Invalid Scores ${Date.now()}`,
+        },
+        token,
+      );
+
+      await charactersAssert.created(createResponse);
+
+      const createdCharacter: CharacterResponseBody = await createResponse.json();
+
+      const response = await charactersClient.updateCharacter(
+        createdCharacter.id,
+        {
+          abilityScores: {
+            base: {
+              STR: '15',
+              DEX: 14,
+              CON: 13,
+              INT: 10,
+              WIS: 12,
+              CHA: 8,
+            },
+            bonuses: {
+              STR: 2,
+              DEX: 0,
+              CON: 1,
+              INT: 0,
+              WIS: 0,
+              CHA: 0,
+            },
+          } as unknown as CharacterAbilityScoresInput,
+        },
+        token,
+      );
+
+      await charactersAssert.badRequest(response);
+
+      const body: { error: string } = await response.json();
 
       await charactersAssert.validateErrorResponse(
         body,
