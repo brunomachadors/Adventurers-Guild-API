@@ -1,9 +1,17 @@
 import {
+  CharacterAbilityScores,
+  CharacterAbilityScoresInput,
+  CharacterResolvedAbilityScores,
+  CharacterAbilityScoreBonusRules,
+  CharacterAbilityScoreRuleOption,
+  CharacterAbilityScoreRuleOptionPlusTwoPlusOne,
+  CharacterAbilityScoreRules,
   CharacterClassDetails,
   CharacterMissingField,
   CharacterResponseBody,
   CharacterStatus,
 } from '@/app/types/character';
+import { Attributeshortname } from '@/app/types/attribute';
 import { BackgroundDetail } from '@/app/types/background';
 import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
 import { getSql } from './db';
@@ -162,6 +170,135 @@ function parseSpecialTraits(value: unknown): SpeciesTrait[] {
   return [];
 }
 
+const ABILITY_SCORE_KEYS: Attributeshortname[] = [
+  'STR',
+  'DEX',
+  'CON',
+  'INT',
+  'WIS',
+  'CHA',
+];
+
+function createEmptyAbilityScores(): CharacterAbilityScores {
+  return {
+    STR: 0,
+    DEX: 0,
+    CON: 0,
+    INT: 0,
+    WIS: 0,
+    CHA: 0,
+  };
+}
+
+function addAbilityScores(
+  base: CharacterAbilityScores,
+  bonuses: CharacterAbilityScores,
+): CharacterAbilityScores {
+  return {
+    STR: base.STR + bonuses.STR,
+    DEX: base.DEX + bonuses.DEX,
+    CON: base.CON + bonuses.CON,
+    INT: base.INT + bonuses.INT,
+    WIS: base.WIS + bonuses.WIS,
+    CHA: base.CHA + bonuses.CHA,
+  };
+}
+
+function normalizeAbilityScores(
+  abilityScores: CharacterAbilityScores,
+): CharacterAbilityScores {
+  return {
+    STR: abilityScores.STR,
+    DEX: abilityScores.DEX,
+    CON: abilityScores.CON,
+    INT: abilityScores.INT,
+    WIS: abilityScores.WIS,
+    CHA: abilityScores.CHA,
+  };
+}
+
+export function isCharacterAbilityScores(
+  value: unknown,
+): value is CharacterAbilityScores {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const abilityScores = value as Record<string, unknown>;
+
+  return (
+    ABILITY_SCORE_KEYS.every(
+      (key) => typeof abilityScores[key] === 'number',
+    )
+  );
+}
+
+export function isCharacterAbilityScoresOrNull(
+  value: unknown,
+): value is CharacterAbilityScoresInput | null {
+  return value === null || isCharacterAbilityScoresInput(value);
+}
+
+export function isCharacterAbilityScoresInput(
+  value: unknown,
+): value is CharacterAbilityScoresInput {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'base' in value &&
+    'bonuses' in value &&
+    isCharacterAbilityScores(value.base) &&
+    isCharacterAbilityScores(value.bonuses)
+  );
+}
+
+export function parseCharacterAbilityScores(
+  value: unknown,
+): CharacterResolvedAbilityScores | null {
+  if (isCharacterAbilityScoresInput(value)) {
+    const base = normalizeAbilityScores(value.base);
+    const bonuses = normalizeAbilityScores(value.bonuses);
+
+    return {
+      base,
+      bonuses,
+      final: addAbilityScores(base, bonuses),
+    };
+  }
+
+  if (isCharacterAbilityScores(value)) {
+    const base = normalizeAbilityScores(value);
+    const bonuses = createEmptyAbilityScores();
+
+    return {
+      base,
+      bonuses,
+      final: addAbilityScores(base, bonuses),
+    };
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+
+      return parseCharacterAbilityScores(parsed);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+export function serializeCharacterAbilityScoresInput(
+  value: CharacterAbilityScoresInput,
+): CharacterAbilityScoresInput {
+  return {
+    base: normalizeAbilityScores(value.base),
+    bonuses: normalizeAbilityScores(value.bonuses),
+  };
+}
+
 export async function getCharacterSpeciesDetails(
   speciesId: number | null,
 ): Promise<SpeciesDetail | null> {
@@ -252,6 +389,28 @@ export async function getCharacterBackgroundDetails(
   };
 }
 
+async function getBackgroundAbilityScoreRules(
+  backgroundId: number | null,
+): Promise<unknown> {
+  if (backgroundId === null) {
+    return null;
+  }
+
+  const sql = getSql();
+  const backgroundRows = await sql`
+    SELECT abilityscorerules
+    FROM backgrounds
+    WHERE id = ${backgroundId}
+    LIMIT 1
+  `;
+
+  if (!backgroundRows || backgroundRows.length === 0) {
+    return null;
+  }
+
+  return backgroundRows[0].abilityscorerules ?? null;
+}
+
 export async function formatCharacterResponse(character: {
   id: number | string;
   name: string;
@@ -259,6 +418,7 @@ export async function formatCharacterResponse(character: {
   speciesId: number | string | null;
   backgroundId: number | string | null;
   level: number | string;
+  abilityScores?: CharacterAbilityScores | string | null;
 }): Promise<CharacterResponseBody> {
   const formattedCharacter = {
     id: toNumber(character.id),
@@ -270,25 +430,150 @@ export async function formatCharacterResponse(character: {
     backgroundId:
       character.backgroundId === null ? null : toNumber(character.backgroundId),
     level: toNumber(character.level),
+    abilityScores: parseCharacterAbilityScores(
+      character.abilityScores ?? null,
+    ),
   };
 
   const missingFields = getCharacterMissingFields(formattedCharacter);
-
+  const classDetails = await getCharacterClassDetails(
+    formattedCharacter.classId,
+    formattedCharacter.level,
+  );
+  const speciesDetails = await getCharacterSpeciesDetails(
+    formattedCharacter.speciesId,
+  );
+  const backgroundDetails = await getCharacterBackgroundDetails(
+    formattedCharacter.backgroundId,
+  );
+  const backgroundAbilityScoreRules = await getBackgroundAbilityScoreRules(
+    formattedCharacter.backgroundId,
+  );
+  const abilityScoreRules = getCharacterAbilityScoreRules(
+    backgroundDetails,
+    backgroundAbilityScoreRules,
+  );
   return {
     ...formattedCharacter,
     status: getCharacterStatus(missingFields),
     missingFields,
-    classDetails: await getCharacterClassDetails(
-      formattedCharacter.classId,
-      formattedCharacter.level,
-    ),
-    speciesDetails: await getCharacterSpeciesDetails(
-      formattedCharacter.speciesId,
-    ),
-    backgroundDetails: await getCharacterBackgroundDetails(
-      formattedCharacter.backgroundId,
-    ),
+    abilityScores: formattedCharacter.abilityScores,
+    abilityScoreRules,
+    classDetails,
+    speciesDetails,
+    backgroundDetails,
   };
+}
+
+
+export function getCharacterAbilityScoreRules(
+  backgroundDetails: BackgroundDetail | null,
+  backgroundAbilityScoreRules: unknown = null,
+): CharacterAbilityScoreRules | null {
+  if (
+    !backgroundDetails ||
+    !Array.isArray(backgroundDetails.abilityScores) ||
+    backgroundDetails.abilityScores.length === 0
+  ) {
+    return null;
+  }
+
+  const allowedChoices = backgroundDetails.abilityScores.filter(
+    (abilityScore): abilityScore is Attributeshortname =>
+      ABILITY_SCORE_KEYS.includes(abilityScore as Attributeshortname),
+  );
+
+  if (allowedChoices.length === 0) {
+    return null;
+  }
+
+  return {
+    source: 'background',
+    allowedChoices,
+    bonusRules: parseCharacterAbilityScoreBonusRules(backgroundAbilityScoreRules),
+  };
+}
+
+function parseCharacterAbilityScoreBonusRules(
+  value: unknown,
+): CharacterAbilityScoreBonusRules | null {
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+
+      return parseCharacterAbilityScoreBonusRules(parsed);
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+
+  const rules = value as Record<string, unknown>;
+
+  if (rules.mode !== 'standard_background' || !Array.isArray(rules.options)) {
+    return null;
+  }
+
+  const options = rules.options
+    .map(parseCharacterAbilityScoreRuleOption)
+    .filter((option): option is CharacterAbilityScoreRuleOption => option !== null);
+
+  if (options.length === 0) {
+    return null;
+  }
+
+  return {
+    mode: 'standard_background',
+    options,
+  };
+}
+
+function parseCharacterAbilityScoreRuleOption(
+  value: unknown,
+): CharacterAbilityScoreRuleOption | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+
+  const option = value as Record<string, unknown>;
+
+  if (option.type === 'plus2_plus1' && Array.isArray(option.choices)) {
+    const choices = option.choices.filter(
+      (choice): choice is CharacterAbilityScoreRuleOptionPlusTwoPlusOne['choices'][number] =>
+        typeof choice === 'object' &&
+        choice !== null &&
+        'bonus' in choice &&
+        'count' in choice &&
+        typeof choice.bonus === 'number' &&
+        typeof choice.count === 'number' &&
+        (!('mustBeDifferentFromBonus' in choice) ||
+          typeof choice.mustBeDifferentFromBonus === 'number'),
+    );
+
+    if (choices.length === 0) {
+      return null;
+    }
+
+    return {
+      type: 'plus2_plus1',
+      choices,
+    };
+  }
+
+  if (
+    option.type === 'plus1_each_suggested' &&
+    option.basedOn === 'abilityscores'
+  ) {
+    return {
+      type: 'plus1_each_suggested',
+      basedOn: 'abilityscores',
+    };
+  }
+
+  return null;
 }
 
 type RawClassFeature = {

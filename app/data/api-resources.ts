@@ -87,9 +87,9 @@ export const apiResources: ApiResource[] = [
     name: 'Characters',
     slug: 'characters',
     description:
-      'Protected character management flow with creation, updates, detail retrieval, spell selection, and enriched responses that now include class, species, and background details.',
+      'Protected character management flow with creation, updates, ability score selection, spell selection, and enriched responses that include class, species, and background details.',
     summary:
-      'Introduces authenticated player-oriented workflows with richer character payloads and fully nested progression, ancestry, and background context.',
+      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, and ability score progression support.',
     listFields: [
       'id',
       'name',
@@ -99,6 +99,8 @@ export const apiResources: ApiResource[] = [
       'backgroundId',
       'level',
       'missingFields',
+      'abilityScores',
+      'abilityScoreRules',
       'classDetails',
       'speciesDetails',
       'backgroundDetails',
@@ -108,6 +110,8 @@ export const apiResources: ApiResource[] = [
       'POST /api/characters',
       'GET /api/characters/{id}',
       'PATCH /api/characters/{id}',
+      'GET /api/characters/{id}/ability-score-options',
+      'PUT /api/characters/{id}/ability-scores',
       'GET /api/characters/{id}/spell-options',
       'GET /api/characters/{id}/spell-selection',
       'PUT /api/characters/{id}/spells',
@@ -118,5 +122,5 @@ export const apiResources: ApiResource[] = [
 export const projectHighlights = [
   'Visual entrypoint for the API project',
   'Interactive documentation available in /docs',
-  'Character flows now return class, species, and background-aware responses',
+  'Character flows now cover class, species, background, and ability score progression',
 ];

@@ -1,6 +1,7 @@
 import { APIRequestContext, APIResponse } from '@playwright/test';
 
 import {
+  CharacterAbilityScoresUpdateRequestBody,
   CharacterCreateRequestBody,
   CharacterSpellSelectionUpdateRequestBody,
   CharacterUpdateRequestBody,
@@ -49,6 +50,15 @@ export class CharactersClient {
     });
   }
 
+  async getCharacterAbilityScoreOptions(
+    id: number,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.get(`/api/characters/${id}/ability-score-options`, {
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
   async updateCharacter(
     id: number,
     payload: CharacterUpdateRequestBody,
@@ -66,6 +76,17 @@ export class CharactersClient {
     token?: string,
   ): Promise<APIResponse> {
     return this.request.put(`/api/characters/${id}/spells`, {
+      data: payload,
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
+  async updateCharacterAbilityScores(
+    id: number,
+    payload: CharacterAbilityScoresUpdateRequestBody,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.put(`/api/characters/${id}/ability-scores`, {
       data: payload,
       headers: this.buildAuthHeaders(token),
     });

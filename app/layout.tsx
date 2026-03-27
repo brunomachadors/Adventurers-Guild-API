@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Cinzel, Cormorant_Garamond } from 'next/font/google';
 
 import { SiteHeader } from '@/app/components/site-header';
+import { SiteFooter } from '@/app/components/site-footer';
 
 import './globals.css';
 
@@ -33,6 +34,7 @@ export default function RootLayout({
         <div className="site-shell">
           <SiteHeader />
           {children}
+          <SiteFooter />
         </div>
       </body>
     </html>

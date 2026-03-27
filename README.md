@@ -274,6 +274,7 @@ Request body fields:
 - `speciesId` optional
 - `backgroundId` optional
 - `level` optional, defaults to `1`
+- `abilityScores` optional
 
 Response fields:
 
@@ -285,6 +286,8 @@ Response fields:
 - `backgroundId`
 - `level`
 - `missingFields`
+- `abilityScores`
+- `abilityScoreRules`
 - `classDetails`
 - `speciesDetails`
 - `backgroundDetails`
@@ -318,6 +321,8 @@ Response fields:
 - `backgroundId`
 - `level`
 - `missingFields`
+- `abilityScores`
+- `abilityScoreRules`
 - `classDetails`
 - `speciesDetails`
 - `backgroundDetails`
@@ -341,6 +346,7 @@ Accepted fields:
 - `speciesId`
 - `backgroundId`
 - `level`
+- `abilityScores`
 
 Returns:
 
@@ -349,6 +355,47 @@ Returns:
 - `401` with `{ "error": "Unauthorized" }`
 - `404` with `{ "error": "Character not found" }`
 - `500` with `{ "error": "Failed to update character" }`
+
+### `GET /api/characters/{id}/ability-score-options`
+
+Returns the current ability score selection state for the character.
+
+Requires bearer token.
+
+Response fields:
+
+- `characterId`
+- `backgroundId`
+- `backgroundName`
+- `selectionRules`
+- `selectedAbilityScores`
+- `availableChoices`
+
+Returns:
+
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to fetch character ability score options" }`
+
+### `PUT /api/characters/{id}/ability-scores`
+
+Persists the selected ability scores for the character.
+
+Requires bearer token.
+
+Request body fields:
+
+- `abilityScores.base`
+- `abilityScores.bonuses`
+
+Returns:
+
+- `200` with the updated ability score selection response
+- `400` with `{ "error": "Invalid character ability scores payload" }`
+- `400` with `{ "error": "Ability score selection is not available for this character" }`
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to update character ability scores" }`
 
 ### `GET /api/characters/{id}/spell-options`
 
@@ -439,12 +486,58 @@ Character detail:
 {
   "id": 101,
   "name": "Merien",
-  "status": "draft",
+  "status": "complete",
   "classId": 12,
   "speciesId": 3,
   "backgroundId": 13,
   "level": 1,
   "missingFields": [],
+  "abilityScores": {
+    "base": {
+      "STR": 8,
+      "DEX": 14,
+      "CON": 13,
+      "INT": 15,
+      "WIS": 12,
+      "CHA": 10
+    },
+    "bonuses": {
+      "STR": 0,
+      "DEX": 0,
+      "CON": 0,
+      "INT": 2,
+      "WIS": 1,
+      "CHA": 0
+    },
+    "final": {
+      "STR": 8,
+      "DEX": 14,
+      "CON": 13,
+      "INT": 17,
+      "WIS": 13,
+      "CHA": 10
+    }
+  },
+  "abilityScoreRules": {
+    "source": "background",
+    "allowedChoices": ["CON", "INT", "WIS"],
+    "bonusRules": {
+      "mode": "standard_background",
+      "options": [
+        {
+          "type": "plus2_plus1",
+          "choices": [
+            { "bonus": 2, "count": 1 },
+            { "bonus": 1, "count": 1, "mustBeDifferentFromBonus": 2 }
+          ]
+        },
+        {
+          "type": "plus1_each_suggested",
+          "basedOn": "abilityscores"
+        }
+      ]
+    }
+  },
   "classDetails": {
     "id": 12,
     "name": "Wizard",
@@ -464,7 +557,16 @@ Character detail:
     "spellcasting": {
       "ability": "INT",
       "usesSpellbook": true,
-      "canCastRituals": true
+      "canCastRituals": true,
+      "selection": {
+        "mode": "spellbook_plus_prepared",
+        "selectionType": "prepared",
+        "changesWhen": "long_rest",
+        "cantrips": { "1": 3 },
+        "preparedSpells": { "1": 4 },
+        "spellbookSpells": { "1": 6 },
+        "spellsAddedPerLevel": 2
+      }
     },
     "subclasses": ["Evoker"],
     "featuresByLevel": []
@@ -498,6 +600,63 @@ Character detail:
       "50 GP"
     ]
   }
+}
+```
+
+Character ability score options:
+
+```json
+{
+  "characterId": 101,
+  "backgroundId": 13,
+  "backgroundName": "Sage",
+  "selectionRules": {
+    "source": "background",
+    "allowedChoices": ["CON", "INT", "WIS"],
+    "bonusRules": {
+      "mode": "standard_background",
+      "options": [
+        {
+          "type": "plus2_plus1",
+          "choices": [
+            { "bonus": 2, "count": 1 },
+            { "bonus": 1, "count": 1, "mustBeDifferentFromBonus": 2 }
+          ]
+        },
+        {
+          "type": "plus1_each_suggested",
+          "basedOn": "abilityscores"
+        }
+      ]
+    }
+  },
+  "selectedAbilityScores": {
+    "base": {
+      "STR": 8,
+      "DEX": 14,
+      "CON": 13,
+      "INT": 15,
+      "WIS": 12,
+      "CHA": 10
+    },
+    "bonuses": {
+      "STR": 0,
+      "DEX": 0,
+      "CON": 0,
+      "INT": 2,
+      "WIS": 1,
+      "CHA": 0
+    },
+    "final": {
+      "STR": 8,
+      "DEX": 14,
+      "CON": 13,
+      "INT": 17,
+      "WIS": 13,
+      "CHA": 10
+    }
+  },
+  "availableChoices": ["CON", "INT", "WIS"]
 }
 ```
 

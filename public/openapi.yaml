@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.5.0
+  version: 1.6.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -15,7 +15,7 @@ info:
     - Classes list and detail
     - Spells list and detail
     - Species list and detail
-    - Character management and character spell flows
+    - Character management, ability score flows, and character spell flows
 
 servers:
   - url: http://localhost:3000
@@ -504,6 +504,17 @@ paths:
                       ability: INT
                       usesSpellbook: true
                       canCastRituals: true
+                      selection:
+                        mode: spellbook_plus_prepared
+                        selectionType: prepared
+                        changesWhen: long_rest
+                        cantrips:
+                          '1': 3
+                        preparedSpells:
+                          '1': 4
+                        spellbookSpells:
+                          '1': 6
+                        spellsAddedPerLevel: 2
                     subclasses:
                       - Evoker
                     levelprogression: []
@@ -869,6 +880,28 @@ paths:
                 value:
                   name: Arin
                   classId: 12
+              withAbilityScores:
+                summary: Create character with initial ability scores
+                value:
+                  name: Merien
+                  classId: 12
+                  speciesId: 3
+                  backgroundId: 13
+                  abilityScores:
+                    base:
+                      STR: 8
+                      DEX: 14
+                      CON: 13
+                      INT: 15
+                      WIS: 12
+                      CHA: 10
+                    bonuses:
+                      STR: 0
+                      DEX: 0
+                      CON: 0
+                      INT: 2
+                      WIS: 1
+                      CHA: 0
       responses:
         '201':
           description: Character created successfully
@@ -888,6 +921,8 @@ paths:
                   - classId
                   - speciesId
                   - backgroundId
+                abilityScores: null
+                abilityScoreRules: null
                 classDetails: null
                 speciesDetails: null
                 backgroundDetails: null
@@ -926,6 +961,8 @@ paths:
         Returns a single character owned by the authenticated owner.
 
         When related data exists, the detail payload can include nested:
+        - `abilityScores`
+        - `abilityScoreRules`
         - `classDetails`
         - `speciesDetails`
         - `backgroundDetails`
@@ -943,12 +980,52 @@ paths:
               example:
                 id: 101
                 name: Merien
-                status: draft
+                status: complete
                 classId: 12
                 speciesId: 3
                 backgroundId: 13
                 level: 1
                 missingFields: []
+                abilityScores:
+                  base:
+                    STR: 8
+                    DEX: 14
+                    CON: 13
+                    INT: 15
+                    WIS: 12
+                    CHA: 10
+                  bonuses:
+                    STR: 0
+                    DEX: 0
+                    CON: 0
+                    INT: 2
+                    WIS: 1
+                    CHA: 0
+                  final:
+                    STR: 8
+                    DEX: 14
+                    CON: 13
+                    INT: 17
+                    WIS: 13
+                    CHA: 10
+                abilityScoreRules:
+                  source: background
+                  allowedChoices:
+                    - CON
+                    - INT
+                    - WIS
+                  bonusRules:
+                    mode: standard_background
+                    options:
+                      - type: plus2_plus1
+                        choices:
+                          - bonus: 2
+                            count: 1
+                          - bonus: 1
+                            count: 1
+                            mustBeDifferentFromBonus: 2
+                      - type: plus1_each_suggested
+                        basedOn: abilityscores
                 classDetails:
                   id: 12
                   name: Wizard
@@ -971,6 +1048,17 @@ paths:
                     ability: INT
                     usesSpellbook: true
                     canCastRituals: true
+                    selection:
+                      mode: spellbook_plus_prepared
+                      selectionType: prepared
+                      changesWhen: long_rest
+                      cantrips:
+                        '1': 3
+                      preparedSpells:
+                        '1': 4
+                      spellbookSpells:
+                        '1': 6
+                      spellsAddedPerLevel: 2
                   subclasses:
                     - Evoker
                   featuresByLevel: []
@@ -1032,7 +1120,7 @@ paths:
       operationId: updateCharacter
       summary: Update character
       description: |
-        Updates a single character owned by the authenticated owner and returns the same enriched detail shape, including `classDetails`, `speciesDetails`, and `backgroundDetails` when those relations exist.
+        Updates a single character owned by the authenticated owner and returns the same enriched detail shape, including `abilityScores`, `abilityScoreRules`, `classDetails`, `speciesDetails`, and `backgroundDetails` when those relations exist.
       security:
         - bearerAuth: []
       parameters:
@@ -1053,6 +1141,24 @@ paths:
                 value:
                   name: Merien the Wise
                   level: 2
+              updateAbilityScores:
+                summary: Update selected ability scores
+                value:
+                  abilityScores:
+                    base:
+                      STR: 8
+                      DEX: 14
+                      CON: 13
+                      INT: 15
+                      WIS: 12
+                      CHA: 10
+                    bonuses:
+                      STR: 0
+                      DEX: 0
+                      CON: 0
+                      INT: 2
+                      WIS: 1
+                      CHA: 0
       responses:
         '200':
           description: Character updated successfully
@@ -1092,6 +1198,211 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: Failed to update character
+
+  /api/characters/{id}/ability-score-options:
+    get:
+      tags:
+        - Characters
+      operationId: getCharacterAbilityScoreOptions
+      summary: Get character ability score options
+      description: |
+        Returns the current ability score selection state for the character based on the assigned background.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Character ability score options returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterAbilityScoreOptionsResponseBody'
+              examples:
+                noSelectionYet:
+                  summary: Background selected but no ability scores saved yet
+                  value:
+                    characterId: 101
+                    backgroundId: 13
+                    backgroundName: Sage
+                    selectionRules:
+                      source: background
+                      allowedChoices:
+                        - CON
+                        - INT
+                        - WIS
+                      bonusRules:
+                        mode: standard_background
+                        options:
+                          - type: plus2_plus1
+                            choices:
+                              - bonus: 2
+                                count: 1
+                              - bonus: 1
+                                count: 1
+                                mustBeDifferentFromBonus: 2
+                          - type: plus1_each_suggested
+                            basedOn: abilityscores
+                    selectedAbilityScores: null
+                    availableChoices:
+                      - CON
+                      - INT
+                      - WIS
+                selectedScores:
+                  summary: Ability scores already selected
+                  value:
+                    characterId: 101
+                    backgroundId: 13
+                    backgroundName: Sage
+                    selectionRules:
+                      source: background
+                      allowedChoices:
+                        - CON
+                        - INT
+                        - WIS
+                      bonusRules:
+                        mode: standard_background
+                        options:
+                          - type: plus2_plus1
+                            choices:
+                              - bonus: 2
+                                count: 1
+                              - bonus: 1
+                                count: 1
+                                mustBeDifferentFromBonus: 2
+                          - type: plus1_each_suggested
+                            basedOn: abilityscores
+                    selectedAbilityScores:
+                      base:
+                        STR: 8
+                        DEX: 14
+                        CON: 13
+                        INT: 15
+                        WIS: 12
+                        CHA: 10
+                      bonuses:
+                        STR: 0
+                        DEX: 0
+                        CON: 0
+                        INT: 2
+                        WIS: 1
+                        CHA: 0
+                      final:
+                        STR: 8
+                        DEX: 14
+                        CON: 13
+                        INT: 17
+                        WIS: 13
+                        CHA: 10
+                    availableChoices:
+                      - CON
+                      - INT
+                      - WIS
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to fetch character ability score options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch character ability score options
+
+  /api/characters/{id}/ability-scores:
+    put:
+      tags:
+        - Characters
+      operationId: updateCharacterAbilityScores
+      summary: Update character ability scores
+      description: |
+        Persists the selected ability scores for the character and returns the updated ability score selection state.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterAbilityScoresUpdateRequestBody'
+            example:
+              abilityScores:
+                base:
+                  STR: 8
+                  DEX: 14
+                  CON: 13
+                  INT: 15
+                  WIS: 12
+                  CHA: 10
+                bonuses:
+                  STR: 0
+                  DEX: 0
+                  CON: 0
+                  INT: 2
+                  WIS: 1
+                  CHA: 0
+      responses:
+        '200':
+          description: Character ability scores updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterAbilityScoreOptionsResponseBody'
+        '400':
+          description: Invalid character ability scores payload or unavailable selection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidPayload:
+                  summary: Invalid payload
+                  value:
+                    error: Invalid character ability scores payload
+                unavailableSelection:
+                  summary: Background does not support ability score selection
+                  value:
+                    error: Ability score selection is not available for this character
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to update character ability scores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to update character ability scores
 
   /api/characters/{id}/spell-options:
     get:
@@ -1562,6 +1873,56 @@ components:
         canCastRituals:
           type: boolean
           example: true
+        selection:
+          $ref: '#/components/schemas/ClassSpellSelection'
+
+    ClassSpellSelectionType:
+      type: string
+      enum:
+        - known
+        - prepared
+      example: prepared
+
+    ClassSpellSelection:
+      type: object
+      required:
+        - selectionType
+      properties:
+        selectionType:
+          $ref: '#/components/schemas/ClassSpellSelectionType'
+        cantrips:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            '1': 3
+        spells:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            '1': 2
+        preparedSpells:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            '1': 4
+        spellbookSpells:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            '1': 6
+        spellsAddedPerLevel:
+          type: integer
+          example: 2
+        mode:
+          type: string
+          example: spellbook_plus_prepared
+        changesWhen:
+          type: string
+          example: long_rest
 
     ClassFeatureItem:
       type: object
@@ -1891,6 +2252,150 @@ components:
           type: integer
           example: 1
 
+    CharacterAbilityScores:
+      type: object
+      required:
+        - STR
+        - DEX
+        - CON
+        - INT
+        - WIS
+        - CHA
+      properties:
+        STR:
+          type: integer
+          example: 15
+        DEX:
+          type: integer
+          example: 14
+        CON:
+          type: integer
+          example: 13
+        INT:
+          type: integer
+          example: 12
+        WIS:
+          type: integer
+          example: 10
+        CHA:
+          type: integer
+          example: 8
+
+    CharacterAbilityScoresInput:
+      type: object
+      required:
+        - base
+        - bonuses
+      properties:
+        base:
+          $ref: '#/components/schemas/CharacterAbilityScores'
+        bonuses:
+          $ref: '#/components/schemas/CharacterAbilityScores'
+
+    CharacterResolvedAbilityScores:
+      type: object
+      required:
+        - base
+        - bonuses
+        - final
+      properties:
+        base:
+          $ref: '#/components/schemas/CharacterAbilityScores'
+        bonuses:
+          $ref: '#/components/schemas/CharacterAbilityScores'
+        final:
+          $ref: '#/components/schemas/CharacterAbilityScores'
+
+    CharacterAbilityScoreBonusChoice:
+      type: object
+      required:
+        - bonus
+        - count
+      properties:
+        bonus:
+          type: integer
+          example: 2
+        count:
+          type: integer
+          example: 1
+        mustBeDifferentFromBonus:
+          type: integer
+          example: 2
+
+    CharacterAbilityScoreRuleOptionPlusTwoPlusOne:
+      type: object
+      required:
+        - type
+        - choices
+      properties:
+        type:
+          type: string
+          enum:
+            - plus2_plus1
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterAbilityScoreBonusChoice'
+
+    CharacterAbilityScoreRuleOptionPlusOneEachSuggested:
+      type: object
+      required:
+        - type
+        - basedOn
+      properties:
+        type:
+          type: string
+          enum:
+            - plus1_each_suggested
+        basedOn:
+          type: string
+          enum:
+            - abilityscores
+
+    CharacterAbilityScoreRuleOption:
+      oneOf:
+        - $ref: '#/components/schemas/CharacterAbilityScoreRuleOptionPlusTwoPlusOne'
+        - $ref: '#/components/schemas/CharacterAbilityScoreRuleOptionPlusOneEachSuggested'
+
+    CharacterAbilityScoreBonusRules:
+      type: object
+      required:
+        - mode
+        - options
+      properties:
+        mode:
+          type: string
+          enum:
+            - standard_background
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterAbilityScoreRuleOption'
+
+    CharacterAbilityScoreRules:
+      type: object
+      required:
+        - source
+        - allowedChoices
+        - bonusRules
+      properties:
+        source:
+          type: string
+          enum:
+            - background
+        allowedChoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeShortname'
+          example:
+            - CON
+            - INT
+            - WIS
+        bonusRules:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterAbilityScoreBonusRules'
+
     CharacterCreateRequestBody:
       type: object
       required:
@@ -1919,6 +2424,10 @@ components:
           nullable: true
           minimum: 1
           example: 1
+        abilityScores:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterAbilityScoresInput'
 
     CharacterUpdateRequestBody:
       type: object
@@ -1946,6 +2455,10 @@ components:
           nullable: true
           minimum: 1
           example: 2
+        abilityScores:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterAbilityScoresInput'
 
     CharacterClassFeatureItem:
       type: object
@@ -2058,6 +2571,8 @@ components:
         - backgroundId
         - level
         - missingFields
+        - abilityScores
+        - abilityScoreRules
         - classDetails
         - speciesDetails
         - backgroundDetails
@@ -2092,6 +2607,14 @@ components:
           example:
             - speciesId
             - backgroundId
+        abilityScores:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterResolvedAbilityScores'
+        abilityScoreRules:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterAbilityScoreRules'
         classDetails:
           nullable: true
           allOf:
@@ -2125,6 +2648,52 @@ components:
         levelLabel:
           type: string
           example: Cantrip
+
+    CharacterAbilityScoreOptionsResponseBody:
+      type: object
+      required:
+        - characterId
+        - backgroundId
+        - backgroundName
+        - selectionRules
+        - selectedAbilityScores
+        - availableChoices
+      properties:
+        characterId:
+          type: integer
+          example: 101
+        backgroundId:
+          type: integer
+          nullable: true
+          example: 13
+        backgroundName:
+          type: string
+          nullable: true
+          example: Sage
+        selectionRules:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterAbilityScoreRules'
+        selectedAbilityScores:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterResolvedAbilityScores'
+        availableChoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributeShortname'
+          example:
+            - CON
+            - INT
+            - WIS
+
+    CharacterAbilityScoresUpdateRequestBody:
+      type: object
+      required:
+        - abilityScores
+      properties:
+        abilityScores:
+          $ref: '#/components/schemas/CharacterAbilityScoresInput'
 
     CharacterSpellOptionsResponseBody:
       type: object

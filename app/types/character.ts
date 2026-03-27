@@ -1,3 +1,5 @@
+import { Attributeshortname } from './attribute';
+
 export type CharacterStatus = 'draft' | 'complete';
 
 export type CharacterMissingField =
@@ -30,12 +32,64 @@ export interface CharacterClassDetails {
   featuresByLevel: CharacterClassProgressionItem[];
 }
 
+export interface CharacterAbilityScores {
+  STR: number;
+  DEX: number;
+  CON: number;
+  INT: number;
+  WIS: number;
+  CHA: number;
+}
+
+export interface CharacterAbilityScoresInput {
+  base: CharacterAbilityScores;
+  bonuses: CharacterAbilityScores;
+}
+
+export interface CharacterResolvedAbilityScores {
+  base: CharacterAbilityScores;
+  bonuses: CharacterAbilityScores;
+  final: CharacterAbilityScores;
+}
+
+export interface CharacterAbilityScoreBonusChoice {
+  bonus: number;
+  count: number;
+  mustBeDifferentFromBonus?: number;
+}
+
+export interface CharacterAbilityScoreRuleOptionPlusTwoPlusOne {
+  type: 'plus2_plus1';
+  choices: CharacterAbilityScoreBonusChoice[];
+}
+
+export interface CharacterAbilityScoreRuleOptionPlusOneEachSuggested {
+  type: 'plus1_each_suggested';
+  basedOn: 'abilityscores';
+}
+
+export type CharacterAbilityScoreRuleOption =
+  | CharacterAbilityScoreRuleOptionPlusTwoPlusOne
+  | CharacterAbilityScoreRuleOptionPlusOneEachSuggested;
+
+export interface CharacterAbilityScoreBonusRules {
+  mode: 'standard_background';
+  options: CharacterAbilityScoreRuleOption[];
+}
+
+export interface CharacterAbilityScoreRules {
+  source: 'background';
+  allowedChoices: Attributeshortname[];
+  bonusRules: CharacterAbilityScoreBonusRules | null;
+}
+
 export interface CharacterCreateRequestBody {
   name: string;
   classId?: number | null;
   speciesId?: number | null;
   backgroundId?: number | null;
   level?: number | null;
+  abilityScores?: CharacterAbilityScoresInput | null;
 }
 
 export interface CharacterUpdateRequestBody {
@@ -44,6 +98,7 @@ export interface CharacterUpdateRequestBody {
   speciesId?: number | null;
   backgroundId?: number | null;
   level?: number | null;
+  abilityScores?: CharacterAbilityScoresInput | null;
 }
 
 export interface CharacterListItem {
@@ -62,6 +117,8 @@ export interface CharacterResponseBody {
   backgroundId: number | null;
   level: number;
   missingFields: CharacterMissingField[];
+  abilityScores: CharacterResolvedAbilityScores | null;
+  abilityScoreRules: CharacterAbilityScoreRules | null;
   classDetails?: CharacterClassDetails | null;
   speciesDetails?: import('./species').SpeciesDetail | null;
   backgroundDetails?: import('./background').BackgroundDetail | null;
@@ -106,4 +163,17 @@ export interface CharacterSpellSelectionResponseBody {
 
 export interface CharacterSpellSelectionUpdateRequestBody {
   spellIds: number[];
+}
+
+export interface CharacterAbilityScoreOptionsResponseBody {
+  characterId: number;
+  backgroundId: number | null;
+  backgroundName: string | null;
+  selectionRules: CharacterAbilityScoreRules | null;
+  selectedAbilityScores: CharacterResolvedAbilityScores | null;
+  availableChoices: Attributeshortname[];
+}
+
+export interface CharacterAbilityScoresUpdateRequestBody {
+  abilityScores: CharacterAbilityScoresInput;
 }
