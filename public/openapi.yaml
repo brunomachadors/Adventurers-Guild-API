@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.6.0
+  version: 1.7.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -15,7 +15,7 @@ info:
     - Classes list and detail
     - Spells list and detail
     - Species list and detail
-    - Character management, ability score flows, and character spell flows
+    - Character management, ability score flows, character skill flows, and character spell flows
 
 servers:
   - url: http://localhost:3000
@@ -39,7 +39,7 @@ tags:
   - name: Species
     description: Species list and species detail endpoints.
   - name: Characters
-    description: Protected character management and character spell selection endpoints.
+    description: Protected character management plus derived ability, skill, and spell endpoints.
 
 x-tagGroups:
   - name: Access
@@ -887,6 +887,9 @@ paths:
                   classId: 12
                   speciesId: 3
                   backgroundId: 13
+                  skillProficiencies:
+                    - Arcana
+                    - History
                   abilityScores:
                     base:
                       STR: 8
@@ -923,6 +926,7 @@ paths:
                   - backgroundId
                 abilityScores: null
                 abilityModifiers: null
+                skillProficiencies: []
                 abilityScoreRules: null
                 classDetails: null
                 speciesDetails: null
@@ -964,6 +968,7 @@ paths:
         When related data exists, the detail payload can include nested:
         - `abilityScores`
         - `abilityModifiers`
+        - `skillProficiencies`
         - `abilityScoreRules`
         - `classDetails`
         - `speciesDetails`
@@ -988,6 +993,9 @@ paths:
                 backgroundId: 13
                 level: 1
                 missingFields: []
+                skillProficiencies:
+                  - Arcana
+                  - History
                 abilityScores:
                   base:
                     STR: 8
@@ -1129,7 +1137,7 @@ paths:
       operationId: updateCharacter
       summary: Update character
       description: |
-        Updates a single character owned by the authenticated owner and returns the same enriched detail shape, including `abilityScores`, `abilityScoreRules`, `classDetails`, `speciesDetails`, and `backgroundDetails` when those relations exist.
+        Updates a single character owned by the authenticated owner and returns the same enriched detail shape, including `abilityScores`, `abilityModifiers`, `skillProficiencies`, `abilityScoreRules`, `classDetails`, `speciesDetails`, and `backgroundDetails` when those relations exist.
       security:
         - bearerAuth: []
       parameters:
@@ -1168,6 +1176,12 @@ paths:
                       INT: 2
                       WIS: 1
                       CHA: 0
+              updateSkillProficiencies:
+                summary: Update character skill proficiencies
+                value:
+                  skillProficiencies:
+                    - Arcana
+                    - History
       responses:
         '200':
           description: Character updated successfully
@@ -1207,6 +1221,72 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: Failed to update character
+
+  /api/characters/{id}/skills:
+    get:
+      tags:
+        - Characters
+      operationId: getCharacterSkills
+      summary: Get calculated character skills
+      description: |
+        Returns the calculated skill list for the character based on:
+        - current `skillProficiencies`
+        - current level
+        - derived ability modifiers
+
+        This endpoint is a derived view, not a raw persisted payload.
+
+        When the character has no saved ability scores yet, ability-based values are currently returned as `0`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Character skills returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CharacterSkillItem'
+              example:
+                - name: Arcana
+                  ability: INT
+                  isProficient: true
+                  abilityModifier: 3
+                  proficiencyBonus: 2
+                  total: 5
+                - name: Stealth
+                  ability: DEX
+                  isProficient: false
+                  abilityModifier: 2
+                  proficiencyBonus: 0
+                  total: 2
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to fetch character skills
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch character skills
 
   /api/characters/{id}/ability-score-options:
     get:
@@ -2466,6 +2546,13 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CharacterAbilityScoresInput'
+        skillProficiencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Arcana
+            - History
 
     CharacterUpdateRequestBody:
       type: object
@@ -2497,6 +2584,13 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CharacterAbilityScoresInput'
+        skillProficiencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Arcana
+            - History
 
     CharacterClassFeatureItem:
       type: object
@@ -2611,6 +2705,7 @@ components:
         - missingFields
         - abilityScores
         - abilityModifiers
+        - skillProficiencies
         - abilityScoreRules
         - classDetails
         - speciesDetails
@@ -2654,6 +2749,13 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CharacterAbilityModifiers'
+        skillProficiencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Arcana
+            - History
         abilityScoreRules:
           nullable: true
           allOf:
@@ -2691,6 +2793,33 @@ components:
         levelLabel:
           type: string
           example: Cantrip
+
+    CharacterSkillItem:
+      type: object
+      required:
+        - name
+        - ability
+        - isProficient
+        - abilityModifier
+        - proficiencyBonus
+        - total
+      properties:
+        name:
+          $ref: '#/components/schemas/SkillName'
+        ability:
+          $ref: '#/components/schemas/AttributeShortname'
+        isProficient:
+          type: boolean
+          example: true
+        abilityModifier:
+          type: integer
+          example: 3
+        proficiencyBonus:
+          type: integer
+          example: 2
+        total:
+          type: integer
+          example: 5
 
     CharacterAbilityScoreOptionsResponseBody:
       type: object

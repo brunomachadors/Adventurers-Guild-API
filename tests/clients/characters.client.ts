@@ -59,6 +59,12 @@ export class CharactersClient {
     });
   }
 
+  async getCharacterSkills(id: number, token?: string): Promise<APIResponse> {
+    return this.request.get(`/api/characters/${id}/skills`, {
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
   async updateCharacter(
     id: number,
     payload: CharacterUpdateRequestBody,

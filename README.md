@@ -275,6 +275,7 @@ Request body fields:
 - `backgroundId` optional
 - `level` optional, defaults to `1`
 - `abilityScores` optional
+- `skillProficiencies` optional
 
 Response fields:
 
@@ -288,6 +289,7 @@ Response fields:
 - `missingFields`
 - `abilityScores`
 - `abilityModifiers`
+- `skillProficiencies`
 - `abilityScoreRules`
 - `classDetails`
 - `speciesDetails`
@@ -322,6 +324,7 @@ Response fields:
 - `backgroundId`
 - `level`
 - `missingFields`
+- `skillProficiencies`
 - `abilityScores`
 - `abilityModifiers`
 - `abilityScoreRules`
@@ -349,6 +352,7 @@ Accepted fields:
 - `backgroundId`
 - `level`
 - `abilityScores`
+- `skillProficiencies`
 
 Returns:
 
@@ -357,6 +361,29 @@ Returns:
 - `401` with `{ "error": "Unauthorized" }`
 - `404` with `{ "error": "Character not found" }`
 - `500` with `{ "error": "Failed to update character" }`
+
+### `GET /api/characters/{id}/skills`
+
+Returns the calculated skill list for the character.
+
+Requires bearer token.
+
+Each item includes:
+
+- `name`
+- `ability`
+- `isProficient`
+- `abilityModifier`
+- `proficiencyBonus`
+- `total`
+
+This is a derived view, not a raw persisted payload. The values are derived from the character's current `skillProficiencies`, level, and resolved ability scores. When the character has no saved ability scores yet, ability-based values are currently calculated as `0`.
+
+Returns:
+
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to fetch character skills" }`
 
 ### `GET /api/characters/{id}/ability-score-options`
 
@@ -494,6 +521,7 @@ Character detail:
   "backgroundId": 13,
   "level": 1,
   "missingFields": [],
+  "skillProficiencies": ["Arcana", "History"],
   "abilityScores": {
     "base": {
       "STR": 8,
@@ -611,6 +639,29 @@ Character detail:
     ]
   }
 }
+```
+
+Character skills:
+
+```json
+[
+  {
+    "name": "Arcana",
+    "ability": "INT",
+    "isProficient": true,
+    "abilityModifier": 3,
+    "proficiencyBonus": 2,
+    "total": 5
+  },
+  {
+    "name": "Stealth",
+    "ability": "DEX",
+    "isProficient": false,
+    "abilityModifier": 2,
+    "proficiencyBonus": 0,
+    "total": 2
+  }
+]
 ```
 
 Character ability score options:

@@ -5,6 +5,7 @@ import {
   CharacterResolvedAbilityScores,
   CharacterClassDetails,
   CharacterListItem,
+  CharacterSkillItem,
   CharacterSpellOptionsResponseBody,
   CharacterSpellSelectionResponseBody,
   CharacterResponseBody,
@@ -55,6 +56,26 @@ export class CharactersAssert {
       WIS: this.calculateAbilityModifier(finalAbilityScores.WIS),
       CHA: this.calculateAbilityModifier(finalAbilityScores.CHA),
     };
+  }
+
+  private getProficiencyBonus(level: number): number {
+    if (level >= 17) {
+      return 6;
+    }
+
+    if (level >= 13) {
+      return 5;
+    }
+
+    if (level >= 9) {
+      return 4;
+    }
+
+    if (level >= 5) {
+      return 3;
+    }
+
+    return 2;
   }
 
   async created(response: { status(): number; ok(): boolean }) {
@@ -144,6 +165,30 @@ export class CharactersAssert {
         expect(typeof spell.name).toBe('string');
         expect(typeof spell.level).toBe('number');
         expect(typeof spell.levelLabel).toBe('string');
+      });
+    }
+  }
+
+  async validateCharacterSkillsSchema(skills: CharacterSkillItem[]) {
+    await test.step('Validate character skills schema', async () => {
+      expect(Array.isArray(skills)).toBe(true);
+    });
+
+    for (const skill of skills) {
+      await test.step(`Validate character skill schema for ${skill.name}`, async () => {
+        expect(skill).toHaveProperty('name');
+        expect(skill).toHaveProperty('ability');
+        expect(skill).toHaveProperty('isProficient');
+        expect(skill).toHaveProperty('abilityModifier');
+        expect(skill).toHaveProperty('proficiencyBonus');
+        expect(skill).toHaveProperty('total');
+
+        expect(typeof skill.name).toBe('string');
+        expect(typeof skill.ability).toBe('string');
+        expect(typeof skill.isProficient).toBe('boolean');
+        expect(typeof skill.abilityModifier).toBe('number');
+        expect(typeof skill.proficiencyBonus).toBe('number');
+        expect(typeof skill.total).toBe('number');
       });
     }
   }
@@ -278,6 +323,7 @@ export class CharactersAssert {
       expect(character).toHaveProperty('missingFields');
       expect(character).toHaveProperty('abilityScores');
       expect(character).toHaveProperty('abilityModifiers');
+      expect(character).toHaveProperty('skillProficiencies');
       expect(character).toHaveProperty('abilityScoreRules');
       expect(character).toHaveProperty('classDetails');
       expect(character).toHaveProperty('speciesDetails');
@@ -306,6 +352,7 @@ export class CharactersAssert {
         character.abilityModifiers === null ||
           typeof character.abilityModifiers === 'object',
       ).toBe(true);
+      expect(Array.isArray(character.skillProficiencies)).toBe(true);
       expect(
         character.abilityScoreRules === null ||
           typeof character.abilityScoreRules === 'object',
@@ -328,6 +375,15 @@ export class CharactersAssert {
       await test.step(`Validate missing field schema for ${missingField}`, async () => {
         expect(typeof missingField).toBe('string');
       });
+    }
+
+    for (const skillProficiency of character.skillProficiencies) {
+      await test.step(
+        `Validate skill proficiency schema for ${skillProficiency}`,
+        async () => {
+          expect(typeof skillProficiency).toBe('string');
+        },
+      );
     }
 
     if (character.abilityScores) {
@@ -793,6 +849,42 @@ export class CharactersAssert {
         });
       });
     }
+  }
+
+  async validateSkillProficiencies(
+    skillProficiencies: CharacterResponseBody['skillProficiencies'],
+    expectedSkillProficiencies: string[],
+  ) {
+    await test.step('Validate Skill Proficiencies', async () => {
+      expect(skillProficiencies).toEqual(expectedSkillProficiencies);
+    });
+  }
+
+  async validateCharacterSkillCalculation(
+    skills: CharacterSkillItem[],
+    expected: {
+      name: string;
+      ability: string;
+      isProficient: boolean;
+      abilityModifier: number;
+      level: number;
+    },
+  ) {
+    await test.step(`Validate calculated skill for ${expected.name}`, async () => {
+      const skill = skills.find((item) => item.name === expected.name);
+
+      expect(skill).toBeDefined();
+      expect(skill?.ability).toBe(expected.ability);
+      expect(skill?.isProficient).toBe(expected.isProficient);
+      expect(skill?.abilityModifier).toBe(expected.abilityModifier);
+
+      const proficiencyBonus = expected.isProficient
+        ? this.getProficiencyBonus(expected.level)
+        : 0;
+
+      expect(skill?.proficiencyBonus).toBe(proficiencyBonus);
+      expect(skill?.total).toBe(expected.abilityModifier + proficiencyBonus);
+    });
   }
 
   async validateClassDetailsPresence(
