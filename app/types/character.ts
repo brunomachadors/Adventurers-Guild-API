@@ -52,6 +52,15 @@ export interface CharacterResolvedAbilityScores {
   final: CharacterAbilityScores;
 }
 
+export interface CharacterAbilityModifiers {
+  STR: number;
+  DEX: number;
+  CON: number;
+  INT: number;
+  WIS: number;
+  CHA: number;
+}
+
 export interface CharacterAbilityScoreBonusChoice {
   bonus: number;
   count: number;
@@ -118,6 +127,7 @@ export interface CharacterResponseBody {
   level: number;
   missingFields: CharacterMissingField[];
   abilityScores: CharacterResolvedAbilityScores | null;
+  abilityModifiers: CharacterAbilityModifiers | null;
   abilityScoreRules: CharacterAbilityScoreRules | null;
   classDetails?: CharacterClassDetails | null;
   speciesDetails?: import('./species').SpeciesDetail | null;

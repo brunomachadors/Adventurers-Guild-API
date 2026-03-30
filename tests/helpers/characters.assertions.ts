@@ -1,5 +1,6 @@
 import {
   CharacterAbilityScoreOptionsResponseBody,
+  CharacterAbilityModifiers,
   CharacterAbilityScores,
   CharacterResolvedAbilityScores,
   CharacterClassDetails,
@@ -36,6 +37,23 @@ export class CharactersAssert {
       INT: base.INT + bonuses.INT,
       WIS: base.WIS + bonuses.WIS,
       CHA: base.CHA + bonuses.CHA,
+    };
+  }
+
+  private calculateAbilityModifier(score: number): number {
+    return Math.floor((score - 10) / 2);
+  }
+
+  private createAbilityModifiers(
+    finalAbilityScores: CharacterAbilityScores,
+  ): CharacterAbilityModifiers {
+    return {
+      STR: this.calculateAbilityModifier(finalAbilityScores.STR),
+      DEX: this.calculateAbilityModifier(finalAbilityScores.DEX),
+      CON: this.calculateAbilityModifier(finalAbilityScores.CON),
+      INT: this.calculateAbilityModifier(finalAbilityScores.INT),
+      WIS: this.calculateAbilityModifier(finalAbilityScores.WIS),
+      CHA: this.calculateAbilityModifier(finalAbilityScores.CHA),
     };
   }
 
@@ -259,6 +277,7 @@ export class CharactersAssert {
       expect(character).toHaveProperty('level');
       expect(character).toHaveProperty('missingFields');
       expect(character).toHaveProperty('abilityScores');
+      expect(character).toHaveProperty('abilityModifiers');
       expect(character).toHaveProperty('abilityScoreRules');
       expect(character).toHaveProperty('classDetails');
       expect(character).toHaveProperty('speciesDetails');
@@ -282,6 +301,10 @@ export class CharactersAssert {
       expect(
         character.abilityScores === null ||
           typeof character.abilityScores === 'object',
+      ).toBe(true);
+      expect(
+        character.abilityModifiers === null ||
+          typeof character.abilityModifiers === 'object',
       ).toBe(true);
       expect(
         character.abilityScoreRules === null ||
@@ -310,6 +333,26 @@ export class CharactersAssert {
     if (character.abilityScores) {
       await this.validateResolvedAbilityScoresSchema(character.abilityScores);
     }
+
+    if (character.abilityModifiers) {
+      await this.validateAbilityModifiersSchema(character.abilityModifiers);
+    }
+
+    await test.step(
+      'Validate ability modifiers consistency with final ability scores',
+      async () => {
+        if (character.abilityScores === null) {
+          expect(character.abilityModifiers).toBeNull();
+
+          return;
+        }
+
+        expect(character.abilityModifiers).not.toBeNull();
+        expect(character.abilityModifiers).toEqual(
+          this.createAbilityModifiers(character.abilityScores.final),
+        );
+      },
+    );
 
     if (character.abilityScoreRules) {
       await this.validateAbilityScoreRulesSchema(character.abilityScoreRules);
@@ -481,6 +524,26 @@ export class CharactersAssert {
     await this.validateAbilityScoresSchema(abilityScores.base);
     await this.validateAbilityScoresSchema(abilityScores.bonuses);
     await this.validateAbilityScoresSchema(abilityScores.final);
+  }
+
+  async validateAbilityModifiersSchema(
+    abilityModifiers: CharacterAbilityModifiers,
+  ) {
+    await test.step('Validate ability modifiers schema', async () => {
+      expect(abilityModifiers).toHaveProperty('STR');
+      expect(abilityModifiers).toHaveProperty('DEX');
+      expect(abilityModifiers).toHaveProperty('CON');
+      expect(abilityModifiers).toHaveProperty('INT');
+      expect(abilityModifiers).toHaveProperty('WIS');
+      expect(abilityModifiers).toHaveProperty('CHA');
+
+      expect(typeof abilityModifiers.STR).toBe('number');
+      expect(typeof abilityModifiers.DEX).toBe('number');
+      expect(typeof abilityModifiers.CON).toBe('number');
+      expect(typeof abilityModifiers.INT).toBe('number');
+      expect(typeof abilityModifiers.WIS).toBe('number');
+      expect(typeof abilityModifiers.CHA).toBe('number');
+    });
   }
 
   async validateAbilityScoreRulesSchema(

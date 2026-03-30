@@ -287,6 +287,7 @@ Response fields:
 - `level`
 - `missingFields`
 - `abilityScores`
+- `abilityModifiers`
 - `abilityScoreRules`
 - `classDetails`
 - `speciesDetails`
@@ -322,6 +323,7 @@ Response fields:
 - `level`
 - `missingFields`
 - `abilityScores`
+- `abilityModifiers`
 - `abilityScoreRules`
 - `classDetails`
 - `speciesDetails`
@@ -517,6 +519,14 @@ Character detail:
       "WIS": 13,
       "CHA": 10
     }
+  },
+  "abilityModifiers": {
+    "STR": -1,
+    "DEX": 2,
+    "CON": 1,
+    "INT": 3,
+    "WIS": 1,
+    "CHA": 0
   },
   "abilityScoreRules": {
     "source": "background",
