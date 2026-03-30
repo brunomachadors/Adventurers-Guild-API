@@ -4,6 +4,7 @@ export type ApiResource = {
   description: string;
   summary: string;
   listFields: string[];
+  previewFields?: string[];
   endpoints: string[];
 };
 
@@ -87,9 +88,9 @@ export const apiResources: ApiResource[] = [
     name: 'Characters',
     slug: 'characters',
     description:
-      'Protected character management flow with creation, updates, ability score selection, spell selection, and enriched responses that include class, species, background, and derived ability modifier details.',
+      'Protected character management flow with creation, updates, ability score selection, character skill calculation, spell selection, and enriched responses that include class, species, background, derived ability modifier details, and selected skill proficiencies.',
     summary:
-      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, ability score progression, and derived modifier data.',
+      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, ability score progression, derived modifier data, and calculated skill totals.',
     listFields: [
       'id',
       'name',
@@ -101,9 +102,17 @@ export const apiResources: ApiResource[] = [
       'missingFields',
       'abilityScores',
       'abilityModifiers',
+      'skillProficiencies',
       'abilityScoreRules',
       'classDetails',
       'speciesDetails',
+      'backgroundDetails',
+    ],
+    previewFields: [
+      'status',
+      'abilityScores',
+      'abilityModifiers',
+      'skillProficiencies',
       'backgroundDetails',
     ],
     endpoints: [
@@ -113,6 +122,7 @@ export const apiResources: ApiResource[] = [
       'PATCH /api/characters/{id}',
       'GET /api/characters/{id}/ability-score-options',
       'PUT /api/characters/{id}/ability-scores',
+      'GET /api/characters/{id}/skills',
       'GET /api/characters/{id}/spell-options',
       'GET /api/characters/{id}/spell-selection',
       'PUT /api/characters/{id}/spells',
@@ -123,5 +133,5 @@ export const apiResources: ApiResource[] = [
 export const projectHighlights = [
   'Visual entrypoint for the API project',
   'Interactive documentation available in /docs',
-  'Character flows now cover class, species, background, ability scores, and derived modifiers',
+  'Character flows now expose calculated skills, derived modifiers, and richer detail payloads',
 ];

@@ -1,4 +1,5 @@
 import { Attributeshortname } from './attribute';
+import { SkillName } from './skill';
 
 export type CharacterStatus = 'draft' | 'complete';
 
@@ -99,6 +100,7 @@ export interface CharacterCreateRequestBody {
   backgroundId?: number | null;
   level?: number | null;
   abilityScores?: CharacterAbilityScoresInput | null;
+  skillProficiencies?: SkillName[];
 }
 
 export interface CharacterUpdateRequestBody {
@@ -108,6 +110,7 @@ export interface CharacterUpdateRequestBody {
   backgroundId?: number | null;
   level?: number | null;
   abilityScores?: CharacterAbilityScoresInput | null;
+  skillProficiencies?: SkillName[];
 }
 
 export interface CharacterListItem {
@@ -128,6 +131,7 @@ export interface CharacterResponseBody {
   missingFields: CharacterMissingField[];
   abilityScores: CharacterResolvedAbilityScores | null;
   abilityModifiers: CharacterAbilityModifiers | null;
+  skillProficiencies: SkillName[];
   abilityScoreRules: CharacterAbilityScoreRules | null;
   classDetails?: CharacterClassDetails | null;
   speciesDetails?: import('./species').SpeciesDetail | null;
@@ -186,4 +190,13 @@ export interface CharacterAbilityScoreOptionsResponseBody {
 
 export interface CharacterAbilityScoresUpdateRequestBody {
   abilityScores: CharacterAbilityScoresInput;
+}
+
+export interface CharacterSkillItem {
+  name: SkillName;
+  ability: Attributeshortname;
+  isProficient: boolean;
+  abilityModifier: number;
+  proficiencyBonus: number;
+  total: number;
 }

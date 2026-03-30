@@ -15,6 +15,7 @@ import {
 import { Attributeshortname } from '@/app/types/attribute';
 import { BackgroundDetail } from '@/app/types/background';
 import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
+import { SKILL_NAMES, SkillName } from '@/app/types/skill';
 import { getSql } from './db';
 
 function toNumber(value: number | string): number {
@@ -209,21 +210,73 @@ function getAbilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);
 }
 
-function getCharacterAbilityModifiers(
-  abilityScores: CharacterResolvedAbilityScores | null,
+export function getCharacterAbilityModifiers(
+  abilityScores: CharacterResolvedAbilityScores | CharacterAbilityScoresInput | CharacterAbilityScores | string | null,
 ): CharacterAbilityModifiers | null {
-  if (!abilityScores) {
+  const resolvedAbilityScores = parseCharacterAbilityScores(abilityScores);
+
+  if (!resolvedAbilityScores) {
     return null;
   }
 
   return {
-    STR: getAbilityModifier(abilityScores.final.STR),
-    DEX: getAbilityModifier(abilityScores.final.DEX),
-    CON: getAbilityModifier(abilityScores.final.CON),
-    INT: getAbilityModifier(abilityScores.final.INT),
-    WIS: getAbilityModifier(abilityScores.final.WIS),
-    CHA: getAbilityModifier(abilityScores.final.CHA),
+    STR: getAbilityModifier(resolvedAbilityScores.final.STR),
+    DEX: getAbilityModifier(resolvedAbilityScores.final.DEX),
+    CON: getAbilityModifier(resolvedAbilityScores.final.CON),
+    INT: getAbilityModifier(resolvedAbilityScores.final.INT),
+    WIS: getAbilityModifier(resolvedAbilityScores.final.WIS),
+    CHA: getAbilityModifier(resolvedAbilityScores.final.CHA),
   };
+}
+
+function isSkillName(value: unknown): value is SkillName {
+  return typeof value === 'string' && SKILL_NAMES.includes(value as SkillName);
+}
+
+export function isSkillProficiencies(value: unknown): value is SkillName[] {
+  return Array.isArray(value) && value.every(isSkillName);
+}
+
+export function parseSkillProficiencies(value: unknown): SkillName[] {
+  if (isSkillProficiencies(value)) {
+    return [...new Set(value)];
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+
+      return isSkillProficiencies(parsed) ? [...new Set(parsed)] : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+export function serializeSkillProficiencies(value: SkillName[]): string {
+  return JSON.stringify([...new Set(value)]);
+}
+
+export function getProficiencyBonus(level: number): number {
+  if (level >= 17) {
+    return 6;
+  }
+
+  if (level >= 13) {
+    return 5;
+  }
+
+  if (level >= 9) {
+    return 4;
+  }
+
+  if (level >= 5) {
+    return 3;
+  }
+
+  return 2;
 }
 
 function normalizeAbilityScores(
@@ -440,7 +493,13 @@ export async function formatCharacterResponse(character: {
   speciesId: number | string | null;
   backgroundId: number | string | null;
   level: number | string;
-  abilityScores?: CharacterAbilityScores | string | null;
+  abilityScores?:
+    | CharacterAbilityScores
+    | CharacterAbilityScoresInput
+    | CharacterResolvedAbilityScores
+    | string
+    | null;
+  skillProficiencies?: SkillName[] | string | null;
 }): Promise<CharacterResponseBody> {
   const formattedCharacter = {
     id: toNumber(character.id),
@@ -454,6 +513,9 @@ export async function formatCharacterResponse(character: {
     level: toNumber(character.level),
     abilityScores: parseCharacterAbilityScores(
       character.abilityScores ?? null,
+    ),
+    skillProficiencies: parseSkillProficiencies(
+      character.skillProficiencies ?? [],
     ),
   };
 
@@ -484,6 +546,7 @@ export async function formatCharacterResponse(character: {
     missingFields,
     abilityScores: formattedCharacter.abilityScores,
     abilityModifiers,
+    skillProficiencies: formattedCharacter.skillProficiencies,
     abilityScoreRules,
     classDetails,
     speciesDetails,

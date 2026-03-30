@@ -5,6 +5,9 @@ import {
   getCharacterStatus,
   isCharacterAbilityScoresOrNull,
   isNullablePositiveInteger,
+  isSkillProficiencies,
+  serializeCharacterAbilityScoresInput,
+  serializeSkillProficiencies,
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
 import {
@@ -31,7 +34,9 @@ function isCharacterCreateRequestBody(
       isNullablePositiveInteger(value.backgroundId)) &&
     (!('level' in value) || isNullablePositiveInteger(value.level)) &&
     (!('abilityScores' in value) ||
-      isCharacterAbilityScoresOrNull(value.abilityScores))
+      isCharacterAbilityScoresOrNull(value.abilityScores)) &&
+    (!('skillProficiencies' in value) ||
+      isSkillProficiencies(value.skillProficiencies))
   );
 }
 
@@ -132,7 +137,13 @@ export async function POST(request: Request) {
     const speciesId = body.speciesId ?? null;
     const backgroundId = body.backgroundId ?? null;
     const level = body.level ?? 1;
-    const abilityScores = body.abilityScores ?? null;
+    const abilityScores =
+      body.abilityScores === undefined || body.abilityScores === null
+        ? null
+        : serializeCharacterAbilityScoresInput(body.abilityScores);
+    const skillProficiencies = serializeSkillProficiencies(
+      body.skillProficiencies ?? [],
+    );
     const status =
       classId !== null && speciesId !== null && backgroundId !== null
         ? 'complete'
@@ -148,7 +159,8 @@ export async function POST(request: Request) {
         speciesid,
         backgroundid,
         level,
-        abilityscores
+        abilityscores,
+        skillproficiencies
       )
       VALUES (
         ${authenticatedOwner.id},
@@ -158,9 +170,10 @@ export async function POST(request: Request) {
         ${speciesId},
         ${backgroundId},
         ${level},
-        ${abilityScores}
+        ${abilityScores},
+        ${skillProficiencies}::jsonb
       )
-      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores
+      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, skillproficiencies
     `;
 
     const character = characterRows[0];
@@ -172,6 +185,7 @@ export async function POST(request: Request) {
       backgroundId: character.backgroundid,
       level: character.level,
       abilityScores: character.abilityscores,
+      skillProficiencies: character.skillproficiencies,
     });
 
     return NextResponse.json(responseBody, { status: 201 });

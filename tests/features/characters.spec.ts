@@ -3,11 +3,13 @@ import {
   CharacterAbilityScoreOptionsResponseBody,
   CharacterAbilityScoresInput,
   CharacterAbilityScores,
+  CharacterSkillItem,
   CharacterListItem,
   CharacterResponseBody,
   CharacterSpellOptionsResponseBody,
   CharacterSpellSelectionResponseBody,
 } from '@/app/types/character';
+import { SkillName } from '@/app/types/skill';
 import { APIRequestContext, expect, test } from '@playwright/test';
 
 import { AuthClient } from '../clients/auth.client';
@@ -106,6 +108,20 @@ const patchedDraftAbilityScoresInput: CharacterAbilityScoresInput = {
     CHA: 0,
   },
 };
+
+const barbarianSkillProficiencies: SkillName[] = [
+  'Athletics',
+  'Intimidation',
+  'Perception',
+  'Survival',
+];
+
+const wizardSkillProficiencies: SkillName[] = [
+  'Arcana',
+  'History',
+  'Investigation',
+  'Religion',
+];
 
 async function issueDemoToken(request: APIRequestContext) {
   const authClient = new AuthClient(request);
@@ -752,6 +768,98 @@ test.describe(
   );
 
   test(
+    'Add Skills Barbarian',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacter(
+        createdCharacterId,
+        {
+          skillProficiencies: barbarianSkillProficiencies,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const updatedCharacter: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(updatedCharacter);
+      await charactersAssert.validateId(updatedCharacter.id, createdCharacterId);
+      await charactersAssert.validateSkillProficiencies(
+        updatedCharacter.skillProficiencies,
+        barbarianSkillProficiencies,
+      );
+      await charactersAssert.validateAbilityScores(
+        updatedCharacter.abilityScores,
+        barbarianAbilityScores,
+        barbarianAbilityBonuses,
+      );
+    },
+  );
+
+  test(
+    'Get Skilled Barbarian',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateSkillProficiencies(
+        character.skillProficiencies,
+        barbarianSkillProficiencies,
+      );
+    },
+  );
+
+  test(
+    'Get Skills Barbarian',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterSkills(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const skills: CharacterSkillItem[] = await response.json();
+
+      await charactersAssert.validateCharacterSkillsSchema(skills);
+      await charactersAssert.validateCharacterSkillCalculation(skills, {
+        name: 'Athletics',
+        ability: 'STR',
+        isProficient: true,
+        abilityModifier: 3,
+        level: 1,
+      });
+      await charactersAssert.validateCharacterSkillCalculation(skills, {
+        name: 'Stealth',
+        ability: 'DEX',
+        isProficient: false,
+        abilityModifier: 1,
+        level: 1,
+      });
+    },
+  );
+
+  test(
     'Get Complete Barbarian',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -784,6 +892,10 @@ test.describe(
       await charactersAssert.validateAbilityScoreRules(
         finalCharacter.abilityScoreRules,
         expectedDetailedBackgrounds.soldier.abilityScores,
+      );
+      await charactersAssert.validateSkillProficiencies(
+        finalCharacter.skillProficiencies,
+        barbarianSkillProficiencies,
       );
       await charactersAssert.validateClassDetailsPresence(
         finalCharacter.classDetails ?? null,
@@ -2040,6 +2152,98 @@ test.describe(
   );
 
   test(
+    'Add Skills Wizard',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacter(
+        createdCharacterId,
+        {
+          skillProficiencies: wizardSkillProficiencies,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const updatedCharacter: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(updatedCharacter);
+      await charactersAssert.validateId(updatedCharacter.id, createdCharacterId);
+      await charactersAssert.validateSkillProficiencies(
+        updatedCharacter.skillProficiencies,
+        wizardSkillProficiencies,
+      );
+      await charactersAssert.validateAbilityScores(
+        updatedCharacter.abilityScores,
+        wizardAbilityScores,
+        wizardAbilityBonuses,
+      );
+    },
+  );
+
+  test(
+    'Get Skilled Wizard',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateSkillProficiencies(
+        character.skillProficiencies,
+        wizardSkillProficiencies,
+      );
+    },
+  );
+
+  test(
+    'Get Skills Wizard',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterSkills(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const skills: CharacterSkillItem[] = await response.json();
+
+      await charactersAssert.validateCharacterSkillsSchema(skills);
+      await charactersAssert.validateCharacterSkillCalculation(skills, {
+        name: 'Arcana',
+        ability: 'INT',
+        isProficient: true,
+        abilityModifier: 3,
+        level: 1,
+      });
+      await charactersAssert.validateCharacterSkillCalculation(skills, {
+        name: 'Stealth',
+        ability: 'DEX',
+        isProficient: false,
+        abilityModifier: 2,
+        level: 1,
+      });
+    },
+  );
+
+  test(
     'Get Complete Wizard',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -2072,6 +2276,10 @@ test.describe(
       await charactersAssert.validateAbilityScoreRules(
         finalCharacter.abilityScoreRules,
         expectedDetailedBackgrounds.sage.abilityScores,
+      );
+      await charactersAssert.validateSkillProficiencies(
+        finalCharacter.skillProficiencies,
+        wizardSkillProficiencies,
       );
       await charactersAssert.validateClassDetailsPresence(
         finalCharacter.classDetails ?? null,
