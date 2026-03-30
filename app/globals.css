@@ -451,7 +451,7 @@ li {
   padding: 28px;
   border-radius: 28px;
   background:
-    linear-gradient(180deg, rgba(250, 241, 222, 0.9), rgba(240, 223, 190, 0.82));
+    linear-gradient(180deg, rgba(242, 228, 198, 0.92), rgba(228, 205, 166, 0.84));
 }
 
 .section-block--narrow .section-heading h1,
@@ -476,17 +476,35 @@ li {
 .resource-card,
 .info-card,
 .support-list__item {
+  position: relative;
   border-radius: 24px;
-  border: 1px solid rgba(94, 54, 30, 0.16);
+  border: 1px solid rgba(255, 221, 176, 0.14);
   background:
-    linear-gradient(180deg, rgba(255, 250, 241, 0.95), rgba(238, 220, 188, 0.92));
+    radial-gradient(circle at top, rgba(164, 104, 67, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(90, 42, 26, 0.98), rgba(61, 25, 15, 0.98));
   padding: 22px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 238, 211, 0.08),
+    0 10px 24px rgba(87, 49, 25, 0.16);
 }
 
 .resource-card {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.resource-card h3,
+.info-card h2,
+.support-list__item h3 {
+  color: #fff5e3;
+}
+
+.resource-card p,
+.info-card p,
+.support-list__item p {
+  color: #ecd8b8;
+  font-family: var(--font-body), sans-serif;
 }
 
 .resource-card__header,
@@ -500,8 +518,8 @@ li {
 .resource-badge {
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(122, 62, 33, 0.1);
-  color: #7a3e21;
+  background: rgba(255, 239, 214, 0.1);
+  color: #ffd5a0;
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -514,7 +532,7 @@ li {
 
 .resource-fields {
   margin: 0;
-  color: #714c34;
+  color: #e4c6a0;
   font-size: 1.02rem;
   font-style: italic;
 }
@@ -532,16 +550,18 @@ li {
   min-height: 36px;
   padding: 0 12px;
   border-radius: 999px;
-  background: #5e2f1d;
-  color: #f5e7cb;
+  background: rgba(255, 243, 219, 0.14);
+  color: #fff3d9;
+  border: 1px solid rgba(255, 228, 189, 0.2);
   font-size: 0.88rem;
   font-weight: 600;
   letter-spacing: 0.03em;
 }
 
 .endpoint-pill--muted {
-  background: rgba(94, 47, 29, 0.08);
-  color: #5b3925;
+  background: rgba(255, 243, 219, 0.08);
+  color: #f0d3ab;
+  border-color: rgba(255, 228, 189, 0.14);
 }
 
 .support-list {

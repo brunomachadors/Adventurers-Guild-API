@@ -87,9 +87,9 @@ export const apiResources: ApiResource[] = [
     name: 'Characters',
     slug: 'characters',
     description:
-      'Protected character management flow with creation, updates, ability score selection, spell selection, and enriched responses that include class, species, and background details.',
+      'Protected character management flow with creation, updates, ability score selection, spell selection, and enriched responses that include class, species, background, and derived ability modifier details.',
     summary:
-      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, and ability score progression support.',
+      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, ability score progression, and derived modifier data.',
     listFields: [
       'id',
       'name',
@@ -100,6 +100,7 @@ export const apiResources: ApiResource[] = [
       'level',
       'missingFields',
       'abilityScores',
+      'abilityModifiers',
       'abilityScoreRules',
       'classDetails',
       'speciesDetails',
@@ -122,5 +123,5 @@ export const apiResources: ApiResource[] = [
 export const projectHighlights = [
   'Visual entrypoint for the API project',
   'Interactive documentation available in /docs',
-  'Character flows now cover class, species, background, and ability score progression',
+  'Character flows now cover class, species, background, ability scores, and derived modifiers',
 ];

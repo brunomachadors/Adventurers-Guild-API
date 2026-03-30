@@ -1,4 +1,5 @@
 import {
+  CharacterAbilityModifiers,
   CharacterAbilityScores,
   CharacterAbilityScoresInput,
   CharacterResolvedAbilityScores,
@@ -201,6 +202,27 @@ function addAbilityScores(
     INT: base.INT + bonuses.INT,
     WIS: base.WIS + bonuses.WIS,
     CHA: base.CHA + bonuses.CHA,
+  };
+}
+
+function getAbilityModifier(score: number): number {
+  return Math.floor((score - 10) / 2);
+}
+
+function getCharacterAbilityModifiers(
+  abilityScores: CharacterResolvedAbilityScores | null,
+): CharacterAbilityModifiers | null {
+  if (!abilityScores) {
+    return null;
+  }
+
+  return {
+    STR: getAbilityModifier(abilityScores.final.STR),
+    DEX: getAbilityModifier(abilityScores.final.DEX),
+    CON: getAbilityModifier(abilityScores.final.CON),
+    INT: getAbilityModifier(abilityScores.final.INT),
+    WIS: getAbilityModifier(abilityScores.final.WIS),
+    CHA: getAbilityModifier(abilityScores.final.CHA),
   };
 }
 
@@ -453,11 +475,15 @@ export async function formatCharacterResponse(character: {
     backgroundDetails,
     backgroundAbilityScoreRules,
   );
+  const abilityModifiers = getCharacterAbilityModifiers(
+    formattedCharacter.abilityScores,
+  );
   return {
     ...formattedCharacter,
     status: getCharacterStatus(missingFields),
     missingFields,
     abilityScores: formattedCharacter.abilityScores,
+    abilityModifiers,
     abilityScoreRules,
     classDetails,
     speciesDetails,

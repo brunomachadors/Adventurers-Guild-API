@@ -922,6 +922,7 @@ paths:
                   - speciesId
                   - backgroundId
                 abilityScores: null
+                abilityModifiers: null
                 abilityScoreRules: null
                 classDetails: null
                 speciesDetails: null
@@ -962,6 +963,7 @@ paths:
 
         When related data exists, the detail payload can include nested:
         - `abilityScores`
+        - `abilityModifiers`
         - `abilityScoreRules`
         - `classDetails`
         - `speciesDetails`
@@ -1008,6 +1010,13 @@ paths:
                     INT: 17
                     WIS: 13
                     CHA: 10
+                abilityModifiers:
+                  STR: -1
+                  DEX: 2
+                  CON: 1
+                  INT: 3
+                  WIS: 1
+                  CHA: 0
                 abilityScoreRules:
                   source: background
                   allowedChoices:
@@ -2306,6 +2315,35 @@ components:
         final:
           $ref: '#/components/schemas/CharacterAbilityScores'
 
+    CharacterAbilityModifiers:
+      type: object
+      required:
+        - STR
+        - DEX
+        - CON
+        - INT
+        - WIS
+        - CHA
+      properties:
+        STR:
+          type: integer
+          example: -1
+        DEX:
+          type: integer
+          example: 2
+        CON:
+          type: integer
+          example: 1
+        INT:
+          type: integer
+          example: 3
+        WIS:
+          type: integer
+          example: 1
+        CHA:
+          type: integer
+          example: 0
+
     CharacterAbilityScoreBonusChoice:
       type: object
       required:
@@ -2572,6 +2610,7 @@ components:
         - level
         - missingFields
         - abilityScores
+        - abilityModifiers
         - abilityScoreRules
         - classDetails
         - speciesDetails
@@ -2611,6 +2650,10 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CharacterResolvedAbilityScores'
+        abilityModifiers:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterAbilityModifiers'
         abilityScoreRules:
           nullable: true
           allOf:
