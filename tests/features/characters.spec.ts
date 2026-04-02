@@ -2563,6 +2563,122 @@ test.describe(
 );
 
 test.describe(
+  'Characters API - Delete Flow',
+  { tag: ['@characters', '@flow', '@delete'] },
+  () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let authToken: string;
+  let createdCharacterId: number;
+  let createdCharacterName: string;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
+  test(
+    'Create Rogue Orc Criminal',
+    { tag: ['@post', '@smoke', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      createdCharacterName = `Shade ${Date.now()}`;
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: createdCharacterName,
+          classId: 9,
+          speciesId: 8,
+          backgroundId: 5,
+          level: 1,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      createdCharacterId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateName(character.name, createdCharacterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 9);
+      await charactersAssert.validateSpeciesId(character.speciesId, 8);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 5);
+      await charactersAssert.validateLevel(character.level, 1);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+    },
+  );
+
+  test(
+    'Delete Rogue Orc Criminal',
+    { tag: ['@delete', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.deleteCharacter(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const body: { message: string } = await response.json();
+
+      await charactersAssert.validateMessageResponse(
+        body,
+        'Character deleted successfully',
+      );
+    },
+  );
+
+  test(
+    'Get Deleted Character',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Character not found');
+    },
+  );
+
+  test(
+    'List Without Deleted Character',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacters(authToken);
+
+      await charactersAssert.success(response);
+
+      const characters: CharacterListItem[] = await response.json();
+
+      await charactersAssert.validateCharacterListSchema(characters);
+
+      await test.step('Validate deleted character is absent from list', async () => {
+        expect(characters.some((character) => character.id === createdCharacterId)).toBe(false);
+      });
+    },
+  );
+  },
+);
+
+test.describe(
   'Characters API - Negative',
   { tag: ['@characters', '@negative'] },
   () => {
@@ -2620,6 +2736,23 @@ test.describe(
   );
 
   test(
+    'Delete character without token',
+    { tag: ['@delete', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.deleteCharacter(1);
+
+      await charactersAssert.unauthorized(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Unauthorized');
+    },
+  );
+
+  test(
     'Get non-existent character',
     { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
@@ -2650,6 +2783,24 @@ test.describe(
         { classId: 1 },
         token,
       );
+
+      await charactersAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Character not found');
+    },
+  );
+
+  test(
+    'Delete non-existent character',
+    { tag: ['@delete', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.deleteCharacter(999999, token);
 
       await charactersAssert.notFound(response);
 

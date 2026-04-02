@@ -936,4 +936,15 @@ export class CharactersAssert {
       expect(errorResponse.error).toBe(expectedError);
     });
   }
+
+  async validateMessageResponse(
+    responseBody: { message: string },
+    expectedMessage: string,
+  ) {
+    await test.step('Validate message response schema', async () => {
+      expect(responseBody).toHaveProperty('message');
+      expect(typeof responseBody.message).toBe('string');
+      expect(responseBody.message).toBe(expectedMessage);
+    });
+  }
 }

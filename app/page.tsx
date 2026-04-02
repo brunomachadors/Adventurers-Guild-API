@@ -97,12 +97,19 @@ export default function HomePage() {
               </p>
 
               <div className="endpoint-stack">
-                {resource.endpoints.slice(0, 3).map((endpoint) => (
+                {(resource.previewEndpoints ?? resource.endpoints.slice(0, 3)).map(
+                  (endpoint) => (
                   <span className="endpoint-pill" key={endpoint}>
                     {endpoint}
                   </span>
-                ))}
-                {resource.endpoints.length > 3 ? (
+                  ),
+                )}
+                {resource.previewEndpoints ? (
+                  <span className="endpoint-pill endpoint-pill--muted">
+                    +{resource.endpoints.length - resource.previewEndpoints.length}{' '}
+                    more endpoints
+                  </span>
+                ) : resource.endpoints.length > 3 ? (
                   <span className="endpoint-pill endpoint-pill--muted">
                     +{resource.endpoints.length - 3} more endpoints
                   </span>

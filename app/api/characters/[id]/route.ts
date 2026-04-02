@@ -208,3 +208,58 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     );
   }
 }
+
+export async function DELETE(request: Request, { params }: RouteContext) {
+  const { id } = await params;
+  const parsedId = Number(id);
+  const authenticatedOwner = getAuthenticatedOwnerFromRequest(request);
+
+  if (!authenticatedOwner) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!Number.isInteger(parsedId) || parsedId <= 0) {
+    return NextResponse.json({ error: 'Character not found' }, { status: 404 });
+  }
+
+  try {
+    const sql = getSql();
+    const existingRows = await sql`
+      SELECT id
+      FROM characters
+      WHERE id = ${parsedId}
+        AND ownerid = ${authenticatedOwner.id}
+      LIMIT 1
+    `;
+
+    if (!existingRows || existingRows.length === 0) {
+      return NextResponse.json(
+        { error: 'Character not found' },
+        { status: 404 },
+      );
+    }
+
+    await sql`
+      DELETE FROM characterspells
+      WHERE characterid = ${parsedId}
+    `;
+
+    await sql`
+      DELETE FROM characters
+      WHERE id = ${parsedId}
+        AND ownerid = ${authenticatedOwner.id}
+    `;
+
+    return NextResponse.json(
+      { message: 'Character deleted successfully' },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error('Failed to delete character:', error);
+
+    return NextResponse.json(
+      { error: 'Failed to delete character' },
+      { status: 500 },
+    );
+  }
+}
