@@ -98,6 +98,12 @@ export class CharactersClient {
     });
   }
 
+  async deleteCharacter(id: number, token?: string): Promise<APIResponse> {
+    return this.request.delete(`/api/characters/${id}`, {
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
   private buildAuthHeaders(token?: string): Record<string, string> | undefined {
     if (!token) {
       return undefined;

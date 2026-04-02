@@ -5,6 +5,7 @@ export type ApiResource = {
   summary: string;
   listFields: string[];
   previewFields?: string[];
+  previewEndpoints?: string[];
   endpoints: string[];
 };
 
@@ -88,7 +89,7 @@ export const apiResources: ApiResource[] = [
     name: 'Characters',
     slug: 'characters',
     description:
-      'Protected character management flow with creation, updates, ability score selection, character skill calculation, spell selection, and enriched responses that include class, species, background, derived ability modifier details, and selected skill proficiencies.',
+      'Protected character management flow with creation, updates, deletion, ability score selection, character skill calculation, spell selection, and enriched responses that include class, species, background, derived ability modifier details, and selected skill proficiencies.',
     summary:
       'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, ability score progression, derived modifier data, and calculated skill totals.',
     listFields: [
@@ -115,11 +116,17 @@ export const apiResources: ApiResource[] = [
       'skillProficiencies',
       'backgroundDetails',
     ],
+    previewEndpoints: [
+      'POST /api/characters',
+      'PATCH /api/characters/{id}',
+      'DELETE /api/characters/{id}',
+    ],
     endpoints: [
       'GET /api/characters',
       'POST /api/characters',
       'GET /api/characters/{id}',
       'PATCH /api/characters/{id}',
+      'DELETE /api/characters/{id}',
       'GET /api/characters/{id}/ability-score-options',
       'PUT /api/characters/{id}/ability-scores',
       'GET /api/characters/{id}/skills',
@@ -133,5 +140,5 @@ export const apiResources: ApiResource[] = [
 export const projectHighlights = [
   'Visual entrypoint for the API project',
   'Interactive documentation available in /docs',
-  'Character flows now expose calculated skills, derived modifiers, and richer detail payloads',
+  'Character flows now support creation, updates, deletion, calculated skills, and richer detail payloads',
 ];

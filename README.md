@@ -362,6 +362,19 @@ Returns:
 - `404` with `{ "error": "Character not found" }`
 - `500` with `{ "error": "Failed to update character" }`
 
+### `DELETE /api/characters/{id}`
+
+Deletes the authenticated owner's character.
+
+Requires bearer token.
+
+Returns:
+
+- `200` with `{ "message": "Character deleted successfully" }`
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to delete character" }`
+
 ### `GET /api/characters/{id}/skills`
 
 Returns the calculated skill list for the character.

@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.7.0
+  version: 1.8.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -15,7 +15,7 @@ info:
     - Classes list and detail
     - Spells list and detail
     - Species list and detail
-    - Character management, ability score flows, character skill flows, and character spell flows
+    - Character management, deletion, ability score flows, character skill flows, and character spell flows
 
 servers:
   - url: http://localhost:3000
@@ -39,7 +39,7 @@ tags:
   - name: Species
     description: Species list and species detail endpoints.
   - name: Characters
-    description: Protected character management plus derived ability, skill, and spell endpoints.
+    description: Protected character management, deletion, and derived ability, skill, and spell endpoints.
 
 x-tagGroups:
   - name: Access
@@ -1221,6 +1221,50 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: Failed to update character
+    delete:
+      tags:
+        - Characters
+      operationId: deleteCharacter
+      summary: Delete character
+      description: |
+        Deletes a single character owned by the authenticated owner.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Character deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                message: Character deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to delete character
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to delete character
 
   /api/characters/{id}/skills:
     get:
@@ -1750,6 +1794,15 @@ components:
         token:
           type: string
           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwib3duZXJJZCI6MSwidXNlcm5hbWUiOiJkZW1vIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDAwMDM2MDB9.signature
+
+    MessageResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Character deleted successfully
 
     AttributeShortname:
       type: string
