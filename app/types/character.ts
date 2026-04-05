@@ -62,6 +62,14 @@ export interface CharacterAbilityModifiers {
   CHA: number;
 }
 
+export interface CharacterCurrency {
+  cp: number;
+  sp: number;
+  ep: number;
+  gp: number;
+  pp: number;
+}
+
 export interface CharacterAbilityScoreBonusChoice {
   bonus: number;
   count: number;
@@ -100,6 +108,7 @@ export interface CharacterCreateRequestBody {
   backgroundId?: number | null;
   level?: number | null;
   abilityScores?: CharacterAbilityScoresInput | null;
+  currency?: CharacterCurrency | null;
   skillProficiencies?: SkillName[];
 }
 
@@ -110,6 +119,7 @@ export interface CharacterUpdateRequestBody {
   backgroundId?: number | null;
   level?: number | null;
   abilityScores?: CharacterAbilityScoresInput | null;
+  currency?: CharacterCurrency | null;
   skillProficiencies?: SkillName[];
 }
 
@@ -131,6 +141,7 @@ export interface CharacterResponseBody {
   missingFields: CharacterMissingField[];
   abilityScores: CharacterResolvedAbilityScores | null;
   abilityModifiers: CharacterAbilityModifiers | null;
+  currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
   abilityScoreRules: CharacterAbilityScoreRules | null;
   classDetails?: CharacterClassDetails | null;

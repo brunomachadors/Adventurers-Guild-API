@@ -25,7 +25,8 @@ export default function SupportPage() {
               Adventurers Guild API is a fantasy-themed REST API built to
               support backend practice, documentation, automation, and contract
               validation while also offering a more atmospheric and welcoming
-              frontend for new visitors.
+              frontend for new visitors, with growing coverage for reference
+              catalogs like equipment and richer character management flows.
             </p>
           </article>
 

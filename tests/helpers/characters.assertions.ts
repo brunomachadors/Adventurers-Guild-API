@@ -2,6 +2,7 @@ import {
   CharacterAbilityScoreOptionsResponseBody,
   CharacterAbilityModifiers,
   CharacterAbilityScores,
+  CharacterCurrency,
   CharacterResolvedAbilityScores,
   CharacterClassDetails,
   CharacterListItem,
@@ -55,6 +56,16 @@ export class CharactersAssert {
       INT: this.calculateAbilityModifier(finalAbilityScores.INT),
       WIS: this.calculateAbilityModifier(finalAbilityScores.WIS),
       CHA: this.calculateAbilityModifier(finalAbilityScores.CHA),
+    };
+  }
+
+  private createEmptyCurrency(): CharacterCurrency {
+    return {
+      cp: 0,
+      sp: 0,
+      ep: 0,
+      gp: 0,
+      pp: 0,
     };
   }
 
@@ -323,6 +334,7 @@ export class CharactersAssert {
       expect(character).toHaveProperty('missingFields');
       expect(character).toHaveProperty('abilityScores');
       expect(character).toHaveProperty('abilityModifiers');
+      expect(character).toHaveProperty('currency');
       expect(character).toHaveProperty('skillProficiencies');
       expect(character).toHaveProperty('abilityScoreRules');
       expect(character).toHaveProperty('classDetails');
@@ -351,6 +363,9 @@ export class CharactersAssert {
       expect(
         character.abilityModifiers === null ||
           typeof character.abilityModifiers === 'object',
+      ).toBe(true);
+      expect(
+        character.currency === null || typeof character.currency === 'object',
       ).toBe(true);
       expect(Array.isArray(character.skillProficiencies)).toBe(true);
       expect(
@@ -392,6 +407,10 @@ export class CharactersAssert {
 
     if (character.abilityModifiers) {
       await this.validateAbilityModifiersSchema(character.abilityModifiers);
+    }
+
+    if (character.currency) {
+      await this.validateCurrencySchema(character.currency);
     }
 
     await test.step(
@@ -602,6 +621,22 @@ export class CharactersAssert {
     });
   }
 
+  async validateCurrencySchema(currency: CharacterCurrency) {
+    await test.step('Validate currency schema', async () => {
+      expect(currency).toHaveProperty('cp');
+      expect(currency).toHaveProperty('sp');
+      expect(currency).toHaveProperty('ep');
+      expect(currency).toHaveProperty('gp');
+      expect(currency).toHaveProperty('pp');
+
+      expect(typeof currency.cp).toBe('number');
+      expect(typeof currency.sp).toBe('number');
+      expect(typeof currency.ep).toBe('number');
+      expect(typeof currency.gp).toBe('number');
+      expect(typeof currency.pp).toBe('number');
+    });
+  }
+
   async validateAbilityScoreRulesSchema(
     abilityScoreRules: CharacterResponseBody['abilityScoreRules'],
   ) {
@@ -765,6 +800,26 @@ export class CharactersAssert {
 
     if (abilityScores) {
       await this.validateResolvedAbilityScoresSchema(abilityScores);
+    }
+  }
+
+  async validateCurrency(
+    currency: CharacterResponseBody['currency'],
+    expectedCurrency: CharacterCurrency | null,
+  ) {
+    await test.step('Validate Currency', async () => {
+      if (expectedCurrency === null) {
+        expect(currency).toBeNull();
+
+        return;
+      }
+
+      expect(currency).not.toBeNull();
+      expect(currency).toEqual(expectedCurrency);
+    });
+
+    if (currency) {
+      await this.validateCurrencySchema(currency);
     }
   }
 

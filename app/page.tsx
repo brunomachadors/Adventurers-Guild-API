@@ -69,8 +69,8 @@ export default function HomePage() {
           <h2>Resources currently open in the realm</h2>
           <p>
             Each card reads like a compact ledger entry, showing what is already
-            implemented and where to inspect the list and detail routes for that
-            resource.
+            implemented across the growing reference catalogs and authenticated
+            character workflows, plus where to inspect the related routes.
           </p>
         </div>
 

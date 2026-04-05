@@ -32,6 +32,25 @@ export const apiResources: ApiResource[] = [
     ],
   },
   {
+    name: 'Equipment',
+    slug: 'equipment',
+    description:
+      'Equipment catalog with list and detail endpoints covering weapons, armor, shields, and generic adventuring gear.',
+    summary:
+      'Provides lightweight listing plus richer detail payloads with typed equipment-specific fields.',
+    listFields: [
+      'id',
+      'name',
+      'category',
+      'type',
+      'cost',
+      'weight',
+      'isMagical',
+    ],
+    previewFields: ['category', 'type', 'cost', 'details'],
+    endpoints: ['GET /api/equipment', 'GET /api/equipment/{identifier}'],
+  },
+  {
     name: 'Skills',
     slug: 'skills',
     description:
@@ -140,5 +159,6 @@ export const apiResources: ApiResource[] = [
 export const projectHighlights = [
   'Visual entrypoint for the API project',
   'Interactive documentation available in /docs',
+  'Catalog coverage now includes equipment alongside classes, spells, species, and backgrounds',
   'Character flows now support creation, updates, deletion, calculated skills, and richer detail payloads',
 ];

@@ -98,6 +98,57 @@ Returns:
 - `404` with `{ "error": "Background not found" }` when the background does not exist
 - `500` with `{ "error": "Failed to fetch background detail" }` if the query fails
 
+### `GET /api/equipment`
+
+Returns a lightweight equipment list with:
+
+- `id`
+- `name`
+- `category`
+- `type`
+- `cost`
+- `weight`
+- `isMagical`
+
+Returns `500` with `{ "error": "Failed to fetch equipment" }` if the query fails.
+
+### `GET /api/equipment/{identifier}`
+
+Returns detailed information for a single equipment item.
+
+Supported identifiers:
+
+- numeric id, for example `/api/equipment/1`
+- slug, for example `/api/equipment/chain-mail`
+- exact name in a case-insensitive form, for example `/api/equipment/shield`
+
+Top-level response fields:
+
+- `id`
+- `name`
+- `slug`
+- `category`
+- `type`
+- `description`
+- `cost`
+- `weight`
+- `isMagical`
+- `modifiers`
+- `effects`
+- `details`
+
+The `details.kind` field currently distinguishes:
+
+- `weapon`
+- `armor`
+- `shield`
+- `generic`
+
+Returns:
+
+- `404` with `{ "error": "Equipment not found" }` when the item does not exist
+- `500` with `{ "error": "Failed to fetch equipment detail" }` if the query fails
+
 ### `GET /api/skills`
 
 Returns a lightweight skills list with:
@@ -776,6 +827,49 @@ Background detail:
     "Calligrapher's Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP",
     "50 GP"
   ]
+}
+```
+
+Equipment detail:
+
+```json
+{
+  "id": 1,
+  "name": "Club",
+  "slug": "club",
+  "category": "Weapon",
+  "type": "Weapon",
+  "description": "A simple melee weapon.",
+  "cost": "1 sp",
+  "weight": 2,
+  "isMagical": false,
+  "modifiers": [],
+  "effects": [],
+  "details": {
+    "kind": "weapon",
+    "weaponCategory": "Simple",
+    "attackType": "Melee",
+    "damage": {
+      "formula": "1d4",
+      "dice": [{ "count": 1, "value": 4 }],
+      "bonus": 0,
+      "damageType": "Bludgeoning"
+    },
+    "versatileDamage": null,
+    "properties": [
+      {
+        "name": "Light",
+        "slug": "light"
+      }
+    ],
+    "mastery": {
+      "name": "Slow",
+      "slug": "slow"
+    },
+    "range": null,
+    "proficiencyType": "Simple Weapons",
+    "ammunitionType": null
+  }
 }
 ```
 
