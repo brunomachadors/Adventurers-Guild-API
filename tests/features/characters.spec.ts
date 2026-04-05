@@ -3,6 +3,7 @@ import {
   CharacterAbilityScoreOptionsResponseBody,
   CharacterAbilityScoresInput,
   CharacterAbilityScores,
+  CharacterCurrency,
   CharacterSkillItem,
   CharacterListItem,
   CharacterResponseBody,
@@ -107,6 +108,22 @@ const patchedDraftAbilityScoresInput: CharacterAbilityScoresInput = {
     WIS: 0,
     CHA: 0,
   },
+};
+
+const initialCurrency: CharacterCurrency = {
+  cp: 0,
+  sp: 5,
+  ep: 0,
+  gp: 12,
+  pp: 0,
+};
+
+const patchedCurrency: CharacterCurrency = {
+  cp: 10,
+  sp: 4,
+  ep: 0,
+  gp: 25,
+  pp: 1,
 };
 
 const barbarianSkillProficiencies: SkillName[] = [
@@ -2333,8 +2350,8 @@ test.describe(
 );
 
 test.describe(
-  'Characters API - Ability Scores',
-  { tag: ['@characters', '@ability-scores'] },
+  'Characters API - Ability Scores And Currency',
+  { tag: ['@characters', '@ability-scores', '@currency'] },
   () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -2342,6 +2359,9 @@ test.describe(
   let noScoresCharacterId: number;
   let withScoresCharacterId: number;
   let patchScoresCharacterId: number;
+  let noCurrencyCharacterId: number;
+  let withCurrencyCharacterId: number;
+  let patchCurrencyCharacterId: number;
 
   test.beforeAll(async ({ request }) => {
     authToken = await issueDemoToken(request);
@@ -2368,6 +2388,7 @@ test.describe(
 
       await charactersAssert.validateCharacterResponseSchema(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'draft');
     },
   );
@@ -2390,6 +2411,7 @@ test.describe(
 
       await charactersAssert.validateCharacterResponseSchema(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'draft');
     },
   );
@@ -2419,6 +2441,7 @@ test.describe(
         character.abilityScores,
         patchedDraftAbilityScores,
       );
+      await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'draft');
     },
   );
@@ -2444,6 +2467,7 @@ test.describe(
         character.abilityScores,
         patchedDraftAbilityScores,
       );
+      await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'draft');
     },
   );
@@ -2484,6 +2508,7 @@ test.describe(
         character.abilityScores,
         patchedDraftAbilityScores,
       );
+      await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'draft');
     },
   );
@@ -2509,6 +2534,7 @@ test.describe(
         character.abilityScores,
         patchedDraftAbilityScores,
       );
+      await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'draft');
     },
   );
@@ -2534,6 +2560,7 @@ test.describe(
 
       await charactersAssert.validateCharacterResponseSchema(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'draft');
     },
   );
@@ -2556,6 +2583,208 @@ test.describe(
 
       await charactersAssert.validateCharacterResponseSchema(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateCurrency(character.currency, null);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Create No Currency',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: `No Currency ${Date.now()}`,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      noCurrencyCharacterId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateCurrency(character.currency, null);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Get No Currency',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        noCurrencyCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateCurrency(character.currency, null);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Create With Currency',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: `With Currency ${Date.now()}`,
+          currency: initialCurrency,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      withCurrencyCharacterId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateCurrency(character.currency, initialCurrency);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Get With Currency',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        withCurrencyCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateCurrency(character.currency, initialCurrency);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Patch Currency',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const createResponse = await charactersClient.createCharacter(
+        {
+          name: `Patch Currency ${Date.now()}`,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(createResponse);
+
+      const createdCharacter: CharacterResponseBody = await createResponse.json();
+      patchCurrencyCharacterId = createdCharacter.id;
+
+      const response = await charactersClient.updateCharacter(
+        patchCurrencyCharacterId,
+        {
+          currency: patchedCurrency,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateCurrency(character.currency, patchedCurrency);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Get Patched Currency',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        patchCurrencyCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateCurrency(character.currency, patchedCurrency);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Clear Currency',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacter(
+        patchCurrencyCharacterId,
+        {
+          currency: null,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateCurrency(character.currency, null);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Get Cleared Currency',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        patchCurrencyCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'draft');
     },
   );
@@ -2948,6 +3177,79 @@ test.describe(
               CHA: 0,
             },
           } as unknown as CharacterAbilityScoresInput,
+        },
+        token,
+      );
+
+      await charactersAssert.badRequest(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Invalid character request payload',
+      );
+    },
+  );
+
+  test(
+    'Create character with incomplete currency',
+    { tag: ['@post', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: `Incomplete Currency ${Date.now()}`,
+          currency: {
+            gp: 10,
+          } as unknown as CharacterCurrency,
+        },
+        token,
+      );
+
+      await charactersAssert.badRequest(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Invalid character request payload',
+      );
+    },
+  );
+
+  test(
+    'Patch character with non-numeric currency',
+    { tag: ['@post', '@patch', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const createResponse = await charactersClient.createCharacter(
+        {
+          name: `Invalid Currency ${Date.now()}`,
+        },
+        token,
+      );
+
+      await charactersAssert.created(createResponse);
+
+      const createdCharacter: CharacterResponseBody = await createResponse.json();
+
+      const response = await charactersClient.updateCharacter(
+        createdCharacter.id,
+        {
+          currency: {
+            cp: 0,
+            sp: '5',
+            ep: 0,
+            gp: 12,
+            pp: 0,
+          } as unknown as CharacterCurrency,
         },
         token,
       );

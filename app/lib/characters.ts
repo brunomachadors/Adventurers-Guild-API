@@ -6,6 +6,7 @@ import {
   CharacterAbilityScoreBonusRules,
   CharacterAbilityScoreRuleOption,
   CharacterAbilityScoreRuleOptionPlusTwoPlusOne,
+  CharacterCurrency,
   CharacterAbilityScoreRules,
   CharacterClassDetails,
   CharacterMissingField,
@@ -259,6 +260,64 @@ export function serializeSkillProficiencies(value: SkillName[]): string {
   return JSON.stringify([...new Set(value)]);
 }
 
+export function isCharacterCurrency(value: unknown): value is CharacterCurrency {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const currency = value as Record<string, unknown>;
+
+  return (
+    typeof currency.cp === 'number' &&
+    typeof currency.sp === 'number' &&
+    typeof currency.ep === 'number' &&
+    typeof currency.gp === 'number' &&
+    typeof currency.pp === 'number'
+  );
+}
+
+export function isCharacterCurrencyOrNull(
+  value: unknown,
+): value is CharacterCurrency | null {
+  return value === null || isCharacterCurrency(value);
+}
+
+export function parseCharacterCurrency(value: unknown): CharacterCurrency | null {
+  if (isCharacterCurrency(value)) {
+    return {
+      cp: value.cp,
+      sp: value.sp,
+      ep: value.ep,
+      gp: value.gp,
+      pp: value.pp,
+    };
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+
+      return parseCharacterCurrency(parsed);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+export function serializeCharacterCurrency(
+  value: CharacterCurrency,
+): CharacterCurrency {
+  return {
+    cp: value.cp,
+    sp: value.sp,
+    ep: value.ep,
+    gp: value.gp,
+    pp: value.pp,
+  };
+}
+
 export function getProficiencyBonus(level: number): number {
   if (level >= 17) {
     return 6;
@@ -499,6 +558,7 @@ export async function formatCharacterResponse(character: {
     | CharacterResolvedAbilityScores
     | string
     | null;
+  currency?: CharacterCurrency | string | null;
   skillProficiencies?: SkillName[] | string | null;
 }): Promise<CharacterResponseBody> {
   const formattedCharacter = {
@@ -514,6 +574,7 @@ export async function formatCharacterResponse(character: {
     abilityScores: parseCharacterAbilityScores(
       character.abilityScores ?? null,
     ),
+    currency: parseCharacterCurrency(character.currency ?? null),
     skillProficiencies: parseSkillProficiencies(
       character.skillProficiencies ?? [],
     ),
@@ -546,6 +607,7 @@ export async function formatCharacterResponse(character: {
     missingFields,
     abilityScores: formattedCharacter.abilityScores,
     abilityModifiers,
+    currency: formattedCharacter.currency,
     skillProficiencies: formattedCharacter.skillProficiencies,
     abilityScoreRules,
     classDetails,

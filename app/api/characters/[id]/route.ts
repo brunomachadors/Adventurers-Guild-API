@@ -2,9 +2,11 @@ import { getAuthenticatedOwnerFromRequest } from '@/app/lib/auth';
 import {
   formatCharacterResponse,
   isCharacterAbilityScoresOrNull,
+  isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
   isSkillProficiencies,
   serializeCharacterAbilityScoresInput,
+  serializeCharacterCurrency,
   serializeSkillProficiencies,
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
@@ -31,6 +33,7 @@ function isCharacterUpdateRequestBody(
     (!('level' in value) || isNullablePositiveInteger(value.level)) &&
     (!('abilityScores' in value) ||
       isCharacterAbilityScoresOrNull(value.abilityScores)) &&
+    (!('currency' in value) || isCharacterCurrencyOrNull(value.currency)) &&
     (!('skillProficiencies' in value) ||
       isSkillProficiencies(value.skillProficiencies))
   );
@@ -53,7 +56,7 @@ export async function GET(request: Request, { params }: RouteContext) {
 
   try {
     const characterRows = await sql`
-      SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, skillproficiencies
+      SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
       FROM characters
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
@@ -76,6 +79,7 @@ export async function GET(request: Request, { params }: RouteContext) {
       backgroundId: character.backgroundid,
       level: character.level,
       abilityScores: character.abilityscores,
+      currency: character.currency,
       skillProficiencies: character.skillproficiencies,
     });
 
@@ -115,7 +119,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
     const sql = getSql();
     const existingRows = await sql`
-      SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, skillproficiencies
+      SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
       FROM characters
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
@@ -158,6 +162,12 @@ export async function PATCH(request: Request, { params }: RouteContext) {
           ? null
           : serializeCharacterAbilityScoresInput(body.abilityScores)
         : existingCharacter.abilityscores;
+    const nextCurrency =
+      body.currency !== undefined
+        ? body.currency === null
+          ? null
+          : serializeCharacterCurrency(body.currency)
+        : existingCharacter.currency;
     const nextSkillProficiencies =
       body.skillProficiencies !== undefined
         ? serializeSkillProficiencies(body.skillProficiencies)
@@ -179,11 +189,12 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         backgroundid = ${nextBackgroundId},
         level = ${nextLevel},
         abilityscores = ${nextAbilityScores},
+        currency = ${nextCurrency},
         skillproficiencies = ${nextSkillProficiencies}::jsonb,
         updatedat = NOW()
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
-      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, skillproficiencies
+      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
     `;
 
     const character = characterRows[0];
@@ -195,6 +206,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       backgroundId: character.backgroundid,
       level: character.level,
       abilityScores: character.abilityscores,
+      currency: character.currency,
       skillProficiencies: character.skillproficiencies,
     });
 

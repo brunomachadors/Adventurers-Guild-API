@@ -4,9 +4,11 @@ import {
   getCharacterMissingFields,
   getCharacterStatus,
   isCharacterAbilityScoresOrNull,
+  isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
   isSkillProficiencies,
   serializeCharacterAbilityScoresInput,
+  serializeCharacterCurrency,
   serializeSkillProficiencies,
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
@@ -35,6 +37,7 @@ function isCharacterCreateRequestBody(
     (!('level' in value) || isNullablePositiveInteger(value.level)) &&
     (!('abilityScores' in value) ||
       isCharacterAbilityScoresOrNull(value.abilityScores)) &&
+    (!('currency' in value) || isCharacterCurrencyOrNull(value.currency)) &&
     (!('skillProficiencies' in value) ||
       isSkillProficiencies(value.skillProficiencies))
   );
@@ -141,6 +144,10 @@ export async function POST(request: Request) {
       body.abilityScores === undefined || body.abilityScores === null
         ? null
         : serializeCharacterAbilityScoresInput(body.abilityScores);
+    const currency =
+      body.currency === undefined || body.currency === null
+        ? null
+        : serializeCharacterCurrency(body.currency);
     const skillProficiencies = serializeSkillProficiencies(
       body.skillProficiencies ?? [],
     );
@@ -160,6 +167,7 @@ export async function POST(request: Request) {
         backgroundid,
         level,
         abilityscores,
+        currency,
         skillproficiencies
       )
       VALUES (
@@ -171,9 +179,10 @@ export async function POST(request: Request) {
         ${backgroundId},
         ${level},
         ${abilityScores},
+        ${currency},
         ${skillProficiencies}::jsonb
       )
-      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, skillproficiencies
+      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
     `;
 
     const character = characterRows[0];
@@ -185,6 +194,7 @@ export async function POST(request: Request) {
       backgroundId: character.backgroundid,
       level: character.level,
       abilityScores: character.abilityscores,
+      currency: character.currency,
       skillProficiencies: character.skillproficiencies,
     });
 

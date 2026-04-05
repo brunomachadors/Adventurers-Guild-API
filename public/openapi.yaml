@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.8.0
+  version: 1.9.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -11,6 +11,7 @@ info:
     - Auth token issuance
     - Attributes list
     - Backgrounds list and detail
+    - Equipment list and detail
     - Skills list and detail
     - Classes list and detail
     - Spells list and detail
@@ -30,6 +31,8 @@ tags:
     description: Core RPG attributes such as Strength, Dexterity, and Wisdom.
   - name: Backgrounds
     description: Character backgrounds list and detail endpoints.
+  - name: Equipment
+    description: Equipment list and detail endpoints for weapons, armor, shields, and generic gear.
   - name: Skills
     description: Skills list and skill detail endpoints.
   - name: Classes
@@ -49,6 +52,7 @@ x-tagGroups:
     tags:
       - Attributes
       - Backgrounds
+      - Equipment
       - Skills
       - Classes
       - Spells
@@ -273,6 +277,137 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: Failed to fetch background detail
+
+  /api/equipment:
+    get:
+      tags:
+        - Equipment
+      operationId: getEquipment
+      summary: List all equipment
+      description: |
+        Returns a lightweight list of equipment items.
+      responses:
+        '200':
+          description: Equipment returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EquipmentListItem'
+              example:
+                - id: 1
+                  name: Club
+                  category: Weapon
+                  type: Weapon
+                  cost: 1 sp
+                  weight: 2
+                  isMagical: false
+                - id: 58
+                  name: Chain Mail
+                  category: Armor
+                  type: Armor
+                  cost: 75 gp
+                  weight: 55
+                  isMagical: false
+        '500':
+          description: Failed to fetch equipment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch equipment
+
+  /api/equipment/{identifier}:
+    get:
+      tags:
+        - Equipment
+      operationId: getEquipmentByIdentifier
+      summary: Get equipment detail by identifier
+      description: |
+        Returns detailed information about a single equipment item.
+
+        Supported identifiers:
+        - numeric id, for example `/api/equipment/1`
+        - slug, for example `/api/equipment/chain-mail`
+        - exact name in case-insensitive form, for example `/api/equipment/shield`
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          description: Equipment id, slug, or exact name.
+          schema:
+            oneOf:
+              - type: integer
+                minimum: 1
+              - type: string
+          examples:
+            byId:
+              summary: Lookup by id
+              value: 1
+            bySlug:
+              summary: Lookup by slug
+              value: chain-mail
+            byName:
+              summary: Lookup by name
+              value: Shield
+      responses:
+        '200':
+          description: Equipment found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentDetail'
+              example:
+                id: 1
+                name: Club
+                slug: club
+                category: Weapon
+                type: Weapon
+                description: A simple melee weapon.
+                cost: 1 sp
+                weight: 2
+                isMagical: false
+                modifiers: []
+                effects: []
+                details:
+                  kind: weapon
+                  weaponCategory: Simple
+                  attackType: Melee
+                  damage:
+                    formula: 1d4
+                    dice:
+                      - count: 1
+                        value: 4
+                    bonus: 0
+                    damageType: Bludgeoning
+                  versatileDamage: null
+                  properties:
+                    - name: Light
+                      slug: light
+                  mastery:
+                    name: Slow
+                    slug: slow
+                  range: null
+                  proficiencyType: Simple Weapons
+                  ammunitionType: null
+        '404':
+          description: Equipment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Equipment not found
+        '500':
+          description: Failed to fetch equipment detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch equipment detail
 
   /api/skills:
     get:
@@ -1933,6 +2068,389 @@ components:
           example:
             - Calligrapher's Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP
             - 50 GP
+
+    EquipmentListItem:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - type
+        - cost
+        - weight
+        - isMagical
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Club
+        category:
+          type: string
+          example: Weapon
+        type:
+          type: string
+          example: Weapon
+        cost:
+          type: string
+          example: 1 sp
+        weight:
+          type: number
+          nullable: true
+          example: 2
+        isMagical:
+          type: boolean
+          example: false
+
+    EquipmentDamageDie:
+      type: object
+      required:
+        - count
+        - value
+      properties:
+        count:
+          type: integer
+          example: 1
+        value:
+          type: integer
+          example: 4
+
+    EquipmentDamage:
+      type: object
+      required:
+        - formula
+        - dice
+        - bonus
+        - damageType
+      properties:
+        formula:
+          type: string
+          example: 1d4
+        dice:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentDamageDie'
+        bonus:
+          type: integer
+          example: 0
+        damageType:
+          type: string
+          example: Bludgeoning
+
+    EquipmentRange:
+      type: object
+      required:
+        - normal
+        - long
+        - unit
+      properties:
+        normal:
+          type: integer
+          nullable: true
+          example: 20
+        long:
+          type: integer
+          nullable: true
+          example: 60
+        unit:
+          type: string
+          enum:
+            - ft
+          example: ft
+
+    EquipmentProperty:
+      type: object
+      required:
+        - name
+        - slug
+      properties:
+        name:
+          type: string
+          example: Thrown
+        slug:
+          type: string
+          example: thrown
+        range:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/EquipmentRange'
+        ammunitionType:
+          type: string
+          nullable: true
+          example: Arrow
+        damage:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/EquipmentDamage'
+        note:
+          type: string
+          nullable: true
+          example: unless mounted
+
+    EquipmentMastery:
+      type: object
+      required:
+        - name
+        - slug
+      properties:
+        name:
+          type: string
+          example: Slow
+        slug:
+          type: string
+          example: slow
+
+    EquipmentArmorClass:
+      type: object
+      required:
+        - base
+        - dexModifier
+      properties:
+        base:
+          type: integer
+          example: 16
+        dexModifier:
+          type: object
+          required:
+            - applies
+            - max
+          properties:
+            applies:
+              type: boolean
+              example: false
+            max:
+              type: integer
+              nullable: true
+              example: null
+
+    EquipmentModifier:
+      type: object
+      required:
+        - type
+        - value
+        - target
+        - condition
+      properties:
+        type:
+          type: string
+          enum:
+            - attackBonus
+            - damageBonus
+            - armorClassBonus
+            - abilityScoreBonus
+            - skillBonus
+            - savingThrowBonus
+            - speedBonus
+          example: armorClassBonus
+        value:
+          type: integer
+          example: 1
+        target:
+          type: string
+          nullable: true
+          example: AC
+        condition:
+          type: string
+          nullable: true
+          example: while equipped
+
+    EquipmentEffect:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          example: Stealth Disadvantage
+        description:
+          type: string
+          example: You have disadvantage on Dexterity (Stealth) checks while wearing this armor.
+
+    EquipmentWeaponDetails:
+      type: object
+      required:
+        - kind
+        - weaponCategory
+        - attackType
+        - damage
+        - versatileDamage
+        - properties
+        - mastery
+        - range
+        - proficiencyType
+        - ammunitionType
+      properties:
+        kind:
+          type: string
+          enum:
+            - weapon
+        weaponCategory:
+          type: string
+          example: Simple
+        attackType:
+          type: string
+          example: Melee
+        damage:
+          $ref: '#/components/schemas/EquipmentDamage'
+        versatileDamage:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/EquipmentDamage'
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentProperty'
+        mastery:
+          $ref: '#/components/schemas/EquipmentMastery'
+        range:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/EquipmentRange'
+        proficiencyType:
+          type: string
+          example: Simple Weapons
+        ammunitionType:
+          type: string
+          nullable: true
+          example: null
+
+    EquipmentArmorDetails:
+      type: object
+      required:
+        - kind
+        - armorType
+        - trainingType
+        - armorClass
+        - strengthRequirement
+        - stealthDisadvantage
+        - donTime
+        - doffTime
+      properties:
+        kind:
+          type: string
+          enum:
+            - armor
+        armorType:
+          type: string
+          example: Heavy Armor
+        trainingType:
+          type: string
+          example: Heavy Armor
+        armorClass:
+          $ref: '#/components/schemas/EquipmentArmorClass'
+        strengthRequirement:
+          type: integer
+          nullable: true
+          example: 13
+        stealthDisadvantage:
+          type: boolean
+          example: true
+        donTime:
+          type: string
+          example: 5 minutes
+        doffTime:
+          type: string
+          example: 1 minute
+
+    EquipmentShieldDetails:
+      type: object
+      required:
+        - kind
+        - trainingType
+        - armorClassBonus
+        - donTime
+        - doffTime
+      properties:
+        kind:
+          type: string
+          enum:
+            - shield
+        trainingType:
+          type: string
+          example: Shield
+        armorClassBonus:
+          type: integer
+          example: 2
+        donTime:
+          type: string
+          example: 1 action
+        doffTime:
+          type: string
+          example: 1 action
+
+    EquipmentGenericDetails:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum:
+            - generic
+
+    EquipmentDetails:
+      oneOf:
+        - $ref: '#/components/schemas/EquipmentWeaponDetails'
+        - $ref: '#/components/schemas/EquipmentArmorDetails'
+        - $ref: '#/components/schemas/EquipmentShieldDetails'
+        - $ref: '#/components/schemas/EquipmentGenericDetails'
+
+    EquipmentDetail:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - category
+        - type
+        - description
+        - cost
+        - weight
+        - isMagical
+        - modifiers
+        - effects
+        - details
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Club
+        slug:
+          type: string
+          example: club
+        category:
+          type: string
+          example: Weapon
+        type:
+          type: string
+          example: Weapon
+        description:
+          type: string
+          example: A simple melee weapon.
+        cost:
+          type: string
+          example: 1 sp
+        weight:
+          type: number
+          nullable: true
+          example: 2
+        isMagical:
+          type: boolean
+          example: false
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentModifier'
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentEffect'
+        details:
+          $ref: '#/components/schemas/EquipmentDetails'
 
     SkillListItem:
       type: object
