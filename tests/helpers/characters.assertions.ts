@@ -13,10 +13,13 @@ import {
   CharacterListItem,
   CharacterMovement,
   CharacterPassivePerception,
+  CharacterSelectedSpellDetail,
   CharacterSavingThrow,
+  CharacterSpellcastingSummary,
   CharacterSkillItem,
   CharacterSpellOptionsResponseBody,
   CharacterSpellSelectionResponseBody,
+  CharacterSpellSlot,
   CharacterResponseBody,
   CharacterStatus,
   CharacterWeaponAttack,
@@ -577,6 +580,9 @@ export class CharactersAssert {
       expect(character).toHaveProperty('passivePerception');
       expect(character).toHaveProperty('movement');
       expect(character).toHaveProperty('inventoryWeight');
+      expect(character).toHaveProperty('spellcastingSummary');
+      expect(character).toHaveProperty('spellSlots');
+      expect(character).toHaveProperty('selectedSpells');
       expect(character).toHaveProperty('currency');
       expect(character).toHaveProperty('skillProficiencies');
       expect(character).toHaveProperty('abilityScoreRules');
@@ -624,6 +630,9 @@ export class CharactersAssert {
         character.movement === null || typeof character.movement === 'object',
       ).toBe(true);
       expect(typeof character.inventoryWeight).toBe('object');
+      expect(typeof character.spellcastingSummary).toBe('object');
+      expect(Array.isArray(character.spellSlots)).toBe(true);
+      expect(Array.isArray(character.selectedSpells)).toBe(true);
       expect(
         character.currency === null || typeof character.currency === 'object',
       ).toBe(true);
@@ -691,6 +700,9 @@ export class CharactersAssert {
     }
 
     await this.validateInventoryWeightSchema(character.inventoryWeight);
+    await this.validateSpellcastingSummarySchema(character.spellcastingSummary);
+    await this.validateSpellSlotsSchema(character.spellSlots);
+    await this.validateSelectedSpellsSchema(character.selectedSpells);
 
     if (character.currency) {
       await this.validateCurrencySchema(character.currency);
@@ -1355,6 +1367,138 @@ export class CharactersAssert {
     });
 
     await this.validateInventoryWeightSchema(inventoryWeight);
+  }
+
+  async validateSpellcastingSummarySchema(
+    spellcastingSummary: CharacterSpellcastingSummary,
+  ) {
+    await test.step('Validate spellcasting summary schema', async () => {
+      expect(spellcastingSummary).toHaveProperty('canCastSpells');
+      expect(spellcastingSummary).toHaveProperty('ability');
+      expect(spellcastingSummary).toHaveProperty('abilityModifier');
+      expect(spellcastingSummary).toHaveProperty('spellSaveDc');
+      expect(spellcastingSummary).toHaveProperty('spellAttackBonus');
+      expect(spellcastingSummary).toHaveProperty('selectedSpellsCount');
+      expect(spellcastingSummary).toHaveProperty('selectedCantripsCount');
+
+      expect(typeof spellcastingSummary.canCastSpells).toBe('boolean');
+      expect(
+        spellcastingSummary.ability === null ||
+          typeof spellcastingSummary.ability === 'string',
+      ).toBe(true);
+      expect(
+        spellcastingSummary.abilityModifier === null ||
+          typeof spellcastingSummary.abilityModifier === 'number',
+      ).toBe(true);
+      expect(
+        spellcastingSummary.spellSaveDc === null ||
+          typeof spellcastingSummary.spellSaveDc === 'number',
+      ).toBe(true);
+      expect(
+        spellcastingSummary.spellAttackBonus === null ||
+          typeof spellcastingSummary.spellAttackBonus === 'number',
+      ).toBe(true);
+      expect(typeof spellcastingSummary.selectedSpellsCount).toBe('number');
+      expect(typeof spellcastingSummary.selectedCantripsCount).toBe('number');
+    });
+  }
+
+  async validateSpellcastingSummary(
+    spellcastingSummary: CharacterSpellcastingSummary,
+    expectedSummary: CharacterSpellcastingSummary,
+  ) {
+    await test.step('Validate spellcasting summary', async () => {
+      expect(spellcastingSummary).toEqual(expectedSummary);
+
+      if (
+        expectedSummary.canCastSpells &&
+        expectedSummary.abilityModifier !== null
+      ) {
+        expect(spellcastingSummary.spellSaveDc).toBe(
+          8 + 2 + expectedSummary.abilityModifier,
+        );
+        expect(spellcastingSummary.spellAttackBonus).toBe(
+          2 + expectedSummary.abilityModifier,
+        );
+      }
+    });
+
+    await this.validateSpellcastingSummarySchema(spellcastingSummary);
+  }
+
+  async validateSpellSlotsSchema(spellSlots: CharacterSpellSlot[]) {
+    await test.step('Validate spell slots schema', async () => {
+      expect(Array.isArray(spellSlots)).toBe(true);
+    });
+
+    for (const spellSlot of spellSlots) {
+      await test.step(`Validate spell slot schema for level ${spellSlot.level}`, async () => {
+        expect(spellSlot).toHaveProperty('level');
+        expect(spellSlot).toHaveProperty('max');
+        expect(spellSlot).toHaveProperty('used');
+        expect(spellSlot).toHaveProperty('available');
+
+        expect(typeof spellSlot.level).toBe('number');
+        expect(typeof spellSlot.max).toBe('number');
+        expect(typeof spellSlot.used).toBe('number');
+        expect(typeof spellSlot.available).toBe('number');
+        expect(spellSlot.available).toBe(spellSlot.max - spellSlot.used);
+      });
+    }
+  }
+
+  async validateSpellSlot(
+    spellSlots: CharacterSpellSlot[],
+    expectedSpellSlot: CharacterSpellSlot,
+  ) {
+    await test.step(`Validate spell slot level ${expectedSpellSlot.level}`, async () => {
+      expect(spellSlots).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ ...expectedSpellSlot }),
+        ]),
+      );
+      expect(expectedSpellSlot.available).toBe(
+        expectedSpellSlot.max - expectedSpellSlot.used,
+      );
+    });
+
+    await this.validateSpellSlotsSchema(spellSlots);
+  }
+
+  async validateSelectedSpellsSchema(
+    selectedSpells: CharacterSelectedSpellDetail[],
+  ) {
+    await test.step('Validate selected spells schema', async () => {
+      expect(Array.isArray(selectedSpells)).toBe(true);
+    });
+
+    for (const spell of selectedSpells) {
+      await test.step(`Validate selected spell detail schema for ${spell.name}`, async () => {
+        expect(spell).toHaveProperty('id');
+        expect(spell).toHaveProperty('name');
+        expect(spell).toHaveProperty('slug');
+        expect(spell).toHaveProperty('level');
+        expect(spell).toHaveProperty('levelLabel');
+        expect(spell).toHaveProperty('school');
+        expect(spell).toHaveProperty('castingTime');
+        expect(spell).toHaveProperty('range');
+        expect(spell).toHaveProperty('components');
+        expect(spell).toHaveProperty('duration');
+        expect(spell).toHaveProperty('selectionType');
+
+        expect(typeof spell.id).toBe('number');
+        expect(typeof spell.name).toBe('string');
+        expect(typeof spell.slug).toBe('string');
+        expect(typeof spell.level).toBe('number');
+        expect(typeof spell.levelLabel).toBe('string');
+        expect(typeof spell.school).toBe('string');
+        expect(typeof spell.castingTime).toBe('string');
+        expect(typeof spell.range).toBe('string');
+        expect(Array.isArray(spell.components)).toBe(true);
+        expect(typeof spell.duration).toBe('string');
+        expect(typeof spell.selectionType).toBe('string');
+      });
+    }
   }
 
   async validateCurrencySchema(currency: CharacterCurrency) {

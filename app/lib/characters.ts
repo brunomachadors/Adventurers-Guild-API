@@ -26,6 +26,11 @@ import {
 import { getCharacterHitPoints } from './character-hit-points';
 import { getCharacterInitiative } from './character-initiative';
 import { getCharacterSavingThrows } from './character-saving-throws';
+import {
+  getCharacterSelectedSpellDetails,
+  getCharacterSpellcastingSummary,
+  getCharacterSpellSlots,
+} from './character-spellcasting';
 import { getCharacterWeaponAttacks } from './character-weapon-attacks';
 import { getSql } from './db';
 
@@ -633,6 +638,19 @@ export async function formatCharacterResponse(character: {
     abilityModifiers,
   );
   const initiative = getCharacterInitiative(abilityModifiers);
+  const selectedSpells = await getCharacterSelectedSpellDetails(
+    formattedCharacter.id,
+  );
+  const spellcastingSummary = getCharacterSpellcastingSummary(
+    classDetails,
+    formattedCharacter.level,
+    abilityModifiers,
+    selectedSpells,
+  );
+  const spellSlots = getCharacterSpellSlots(
+    classDetails,
+    formattedCharacter.level,
+  );
   const skills = getCharacterSkillItems(
     formattedCharacter.level,
     abilityModifiers,
@@ -660,6 +678,9 @@ export async function formatCharacterResponse(character: {
     passivePerception,
     movement,
     inventoryWeight,
+    spellcastingSummary,
+    spellSlots,
+    selectedSpells,
     currency: formattedCharacter.currency,
     skillProficiencies: formattedCharacter.skillProficiencies,
     abilityScoreRules,

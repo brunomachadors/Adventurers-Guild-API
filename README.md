@@ -349,6 +349,9 @@ Response fields:
 - `passivePerception`
 - `movement`
 - `inventoryWeight`
+- `spellcastingSummary`
+- `spellSlots`
+- `selectedSpells`
 - `currency`
 - `skillProficiencies`
 - `abilityScoreRules`
@@ -396,6 +399,9 @@ Response fields:
 - `passivePerception`
 - `movement`
 - `inventoryWeight`
+- `spellcastingSummary`
+- `spellSlots`
+- `selectedSpells`
 - `currency`
 - `abilityScoreRules`
 - `classDetails`
@@ -423,6 +429,12 @@ Returns:
 `movement` is derived from `speciesDetails.speed` and currently uses `ft` as the unit. It is returned as `null` until species details with a numeric speed are available.
 
 `inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
+
+`spellcastingSummary` is derived from the character class spellcasting metadata, character level, resolved spellcasting ability modifier, and selected spells. For non-casters, `canCastSpells` is `false`, spellcasting ability values are `null`, and selected spell counts are `0`.
+
+`spellSlots` is derived from class spellcasting progression and character level. It is returned as an empty array for non-casters or classes without supported slot progression; `used` currently starts at `0`, and `available` is `max - used`.
+
+`selectedSpells` contains enriched spell details for the character's selected spells, ordered by spell level and spell id. It is returned as an empty array when no spells are selected.
 
 ### `PATCH /api/characters/{id}`
 
@@ -888,6 +900,38 @@ Character detail:
       }
     ]
   },
+  "spellcastingSummary": {
+    "canCastSpells": true,
+    "ability": "INT",
+    "abilityModifier": 3,
+    "spellSaveDc": 13,
+    "spellAttackBonus": 5,
+    "selectedSpellsCount": 0,
+    "selectedCantripsCount": 1
+  },
+  "spellSlots": [
+    {
+      "level": 1,
+      "max": 2,
+      "used": 0,
+      "available": 2
+    }
+  ],
+  "selectedSpells": [
+    {
+      "id": 1,
+      "name": "Acid Splash",
+      "slug": "acid-splash",
+      "level": 0,
+      "levelLabel": "Cantrip",
+      "school": "Evocation",
+      "castingTime": "Action",
+      "range": "60 feet",
+      "components": ["V", "S"],
+      "duration": "Instantaneous",
+      "selectionType": "cantrip"
+    }
+  ],
   "currency": {
     "cp": 0,
     "sp": 0,
