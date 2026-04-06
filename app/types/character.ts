@@ -115,6 +115,21 @@ export interface CharacterHitPoints {
   calculation: string;
 }
 
+export interface CharacterSavingThrowSource {
+  type: 'abilityModifier' | 'classProficiency' | 'bonus';
+  value: number;
+}
+
+export interface CharacterSavingThrow {
+  ability: Attributeshortname;
+  isProficient: boolean;
+  abilityModifier: number;
+  proficiencyBonus: number;
+  bonus: number;
+  total: number;
+  sources: CharacterSavingThrowSource[];
+}
+
 export interface CharacterAbilityScoreBonusChoice {
   bonus: number;
   count: number;
@@ -189,6 +204,7 @@ export interface CharacterResponseBody {
   armorClass: CharacterArmorClass;
   weaponAttacks: CharacterWeaponAttack[];
   hitPoints: CharacterHitPoints | null;
+  savingThrows: CharacterSavingThrow[];
   currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
   abilityScoreRules: CharacterAbilityScoreRules | null;

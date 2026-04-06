@@ -80,6 +80,15 @@ const gimliAbilityScores: CharacterAbilityScores = {
   CHA: 10,
 };
 
+const yenneferAbilityScores: CharacterAbilityScores = {
+  STR: 8,
+  DEX: 14,
+  CON: 15,
+  INT: 12,
+  WIS: 10,
+  CHA: 15,
+};
+
 const barbarianAbilityBonuses: CharacterAbilityScores = {
   STR: 2,
   DEX: 0,
@@ -134,6 +143,15 @@ const gimliAbilityBonuses: CharacterAbilityScores = {
   CHA: 0,
 };
 
+const yenneferAbilityBonuses: CharacterAbilityScores = {
+  STR: 0,
+  DEX: 0,
+  CON: 0,
+  INT: 0,
+  WIS: 1,
+  CHA: 2,
+};
+
 const barbarianAbilityScoresInput: CharacterAbilityScoresInput = {
   base: barbarianAbilityScores,
   bonuses: barbarianAbilityBonuses,
@@ -162,6 +180,11 @@ const drizztAbilityScoresInput: CharacterAbilityScoresInput = {
 const gimliAbilityScoresInput: CharacterAbilityScoresInput = {
   base: gimliAbilityScores,
   bonuses: gimliAbilityBonuses,
+};
+
+const yenneferAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: yenneferAbilityScores,
+  bonuses: yenneferAbilityBonuses,
 };
 
 const patchedCurrency: CharacterCurrency = {
@@ -292,6 +315,15 @@ const fighterHitPoints: CharacterHitPoints = {
   hitDie: 10,
   conModifier: 2,
   calculation: '10 + 2',
+};
+
+const sorcererHitPoints: CharacterHitPoints = {
+  max: 8,
+  current: 8,
+  temporary: 0,
+  hitDie: 6,
+  conModifier: 2,
+  calculation: '6 + 2',
 };
 
 const barbarianSkillProficiencies: SkillName[] = [
@@ -443,6 +475,9 @@ test.describe(
         null,
       );
       await charactersAssert.validateHitPoints(createdCharacter.hitPoints, null);
+      await test.step('Validate draft character has no saving throws', async () => {
+        expect(createdCharacter.savingThrows).toEqual([]);
+      });
       await charactersAssert.validateClassDetailsPresence(
         createdCharacter.classDetails ?? null,
         false,
@@ -559,6 +594,12 @@ test.describe(
         null,
       );
       await charactersAssert.validateHitPoints(updatedCharacter.hitPoints, null);
+      await test.step(
+        'Validate character without scores has no saving throws',
+        async () => {
+          expect(updatedCharacter.savingThrows).toEqual([]);
+        },
+      );
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
         true,
@@ -1204,6 +1245,31 @@ test.describe(
         finalCharacter.hitPoints,
         barbarianHitPoints,
       );
+      await charactersAssert.validateSavingThrowOrder(finalCharacter.savingThrows);
+      await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
+        ability: 'STR',
+        isProficient: true,
+        abilityModifier: 3,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 5,
+      });
+      await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
+        ability: 'CON',
+        isProficient: true,
+        abilityModifier: 2,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 4,
+      });
+      await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
+        ability: 'DEX',
+        isProficient: false,
+        abilityModifier: 1,
+        proficiencyBonus: 0,
+        bonus: 0,
+        total: 1,
+      });
       await charactersAssert.validateWeaponAttack(finalCharacter.weaponAttacks, {
         name: 'Greataxe',
         attackType: 'melee',
@@ -1333,6 +1399,12 @@ test.describe(
       await charactersAssert.validateMissingFields(character.missingFields, []);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateHitPoints(character.hitPoints, null);
+      await test.step(
+        'Validate monk without scores has no saving throws',
+        async () => {
+          expect(character.savingThrows).toEqual([]);
+        },
+      );
       await charactersAssert.validateCurrency(character.currency, acolyteCurrency);
       await charactersAssert.validateAbilityScoreRules(
         character.abilityScoreRules,
@@ -1987,6 +2059,31 @@ test.describe(
         character.hitPoints,
         paladinHitPoints,
       );
+      await charactersAssert.validateSavingThrowOrder(character.savingThrows);
+      await charactersAssert.validateSavingThrow(character.savingThrows, {
+        ability: 'WIS',
+        isProficient: true,
+        abilityModifier: 1,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 3,
+      });
+      await charactersAssert.validateSavingThrow(character.savingThrows, {
+        ability: 'CHA',
+        isProficient: true,
+        abilityModifier: 2,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 4,
+      });
+      await charactersAssert.validateSavingThrow(character.savingThrows, {
+        ability: 'DEX',
+        isProficient: false,
+        abilityModifier: 0,
+        proficiencyBonus: 0,
+        bonus: 0,
+        total: 0,
+      });
       await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
         name: 'Longsword',
         attackType: 'melee',
@@ -3004,6 +3101,31 @@ test.describe(
         finalCharacter.hitPoints,
         wizardHitPoints,
       );
+      await charactersAssert.validateSavingThrowOrder(finalCharacter.savingThrows);
+      await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
+        ability: 'INT',
+        isProficient: true,
+        abilityModifier: 3,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 5,
+      });
+      await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
+        ability: 'WIS',
+        isProficient: true,
+        abilityModifier: 1,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 3,
+      });
+      await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
+        ability: 'STR',
+        isProficient: false,
+        abilityModifier: -1,
+        proficiencyBonus: 0,
+        bonus: 0,
+        total: -1,
+      });
       await charactersAssert.validateWeaponAttack(finalCharacter.weaponAttacks, {
         name: 'Quarterstaff',
         attackType: 'melee',
@@ -3566,6 +3688,128 @@ test.describe(
 );
 
 test.describe(
+  'Characters API - Yennefer The Sorcerer Saving Throws Flow',
+  { tag: ['@characters', '@saving-throws', '@sorcerer', '@human'] },
+  () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let authToken: string;
+  let createdCharacterId: number;
+  let createdCharacterName: string;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
+  test(
+    'Create Yennefer The Sorcerer For Saving Throws',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      createdCharacterName = `Yennefer The Sorcerer ${Date.now()}`;
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: createdCharacterName,
+          classId: 10,
+          speciesId: 7,
+          backgroundId: 1,
+          level: 1,
+          abilityScores: yenneferAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      createdCharacterId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateName(character.name, createdCharacterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 10);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 1);
+      await charactersAssert.validateLevel(character.level, 1);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        yenneferAbilityScores,
+        yenneferAbilityBonuses,
+      );
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        sorcererHitPoints,
+      );
+    },
+  );
+
+  test(
+    'Get Yennefer Sorcerer Saving Throws',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateName(character.name, createdCharacterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 10);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 1);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        yenneferAbilityScores,
+        yenneferAbilityBonuses,
+      );
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        sorcererHitPoints,
+      );
+      await charactersAssert.validateSavingThrowOrder(character.savingThrows);
+      await charactersAssert.validateSavingThrow(character.savingThrows, {
+        ability: 'CON',
+        isProficient: true,
+        abilityModifier: 2,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 4,
+      });
+      await charactersAssert.validateSavingThrow(character.savingThrows, {
+        ability: 'CHA',
+        isProficient: true,
+        abilityModifier: 3,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 5,
+      });
+      await charactersAssert.validateSavingThrow(character.savingThrows, {
+        ability: 'DEX',
+        isProficient: false,
+        abilityModifier: 2,
+        proficiencyBonus: 0,
+        bonus: 0,
+        total: 2,
+      });
+    },
+  );
+  },
+);
+
+test.describe(
   'Characters API - Gimli The Fighter Equipment Flow',
   { tag: ['@characters', '@equipment', '@fighter', '@dwarf'] },
   () => {
@@ -3822,6 +4066,31 @@ test.describe(
         character.hitPoints,
         fighterHitPoints,
       );
+      await charactersAssert.validateSavingThrowOrder(character.savingThrows);
+      await charactersAssert.validateSavingThrow(character.savingThrows, {
+        ability: 'STR',
+        isProficient: true,
+        abilityModifier: 3,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 5,
+      });
+      await charactersAssert.validateSavingThrow(character.savingThrows, {
+        ability: 'CON',
+        isProficient: true,
+        abilityModifier: 2,
+        proficiencyBonus: 2,
+        bonus: 0,
+        total: 4,
+      });
+      await charactersAssert.validateSavingThrow(character.savingThrows, {
+        ability: 'DEX',
+        isProficient: false,
+        abilityModifier: 1,
+        proficiencyBonus: 0,
+        bonus: 0,
+        total: 1,
+      });
       await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
         equipmentId: greataxeEquipmentId,
         name: 'Greataxe',
