@@ -3,6 +3,7 @@ import { APIRequestContext, APIResponse } from '@playwright/test';
 import {
   CharacterAbilityScoresUpdateRequestBody,
   CharacterCreateRequestBody,
+  CharacterEquipmentAddRequestBody,
   CharacterSpellSelectionUpdateRequestBody,
   CharacterUpdateRequestBody,
 } from '@/app/types/character';
@@ -61,6 +62,26 @@ export class CharactersClient {
 
   async getCharacterSkills(id: number, token?: string): Promise<APIResponse> {
     return this.request.get(`/api/characters/${id}/skills`, {
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
+  async getCharacterEquipment(
+    id: number,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.get(`/api/characters/${id}/equipment`, {
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
+  async addCharacterEquipment(
+    id: number,
+    payload: CharacterEquipmentAddRequestBody,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.post(`/api/characters/${id}/equipment`, {
+      data: payload,
       headers: this.buildAuthHeaders(token),
     });
   }

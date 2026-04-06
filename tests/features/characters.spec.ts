@@ -4,17 +4,20 @@ import {
   CharacterAbilityScoresInput,
   CharacterAbilityScores,
   CharacterCurrency,
+  CharacterEquipmentResponseBody,
   CharacterSkillItem,
   CharacterListItem,
   CharacterResponseBody,
   CharacterSpellOptionsResponseBody,
   CharacterSpellSelectionResponseBody,
 } from '@/app/types/character';
+import { EquipmentDetail } from '@/app/types/equipment';
 import { SkillName } from '@/app/types/skill';
 import { APIRequestContext, expect, test } from '@playwright/test';
 
 import { AuthClient } from '../clients/auth.client';
 import { CharactersClient } from '../clients/characters.client';
+import { EquipmentClient } from '../clients/equipment.client';
 import { AuthAssert } from '../helpers/auth.assertions';
 import { CharactersAssert } from '../helpers/characters.assertions';
 import { expectedDetailedBackgrounds } from '../data/backgrounds.expected';
@@ -126,6 +129,30 @@ const patchedCurrency: CharacterCurrency = {
   pp: 1,
 };
 
+const soldierCurrency: CharacterCurrency = {
+  cp: 0,
+  sp: 0,
+  ep: 0,
+  gp: 14,
+  pp: 0,
+};
+
+const sageCurrency: CharacterCurrency = {
+  cp: 0,
+  sp: 0,
+  ep: 0,
+  gp: 8,
+  pp: 0,
+};
+
+const nobleCurrency: CharacterCurrency = {
+  cp: 0,
+  sp: 0,
+  ep: 0,
+  gp: 29,
+  pp: 0,
+};
+
 const barbarianSkillProficiencies: SkillName[] = [
   'Athletics',
   'Intimidation',
@@ -156,6 +183,45 @@ async function issueDemoToken(request: APIRequestContext) {
   await authAssert.validateTokenResponse(tokenBody);
 
   return tokenBody.token;
+}
+
+async function addCharacterEquipmentBySlug(
+  request: APIRequestContext,
+  characterId: number,
+  authToken: string,
+  equipmentItems: { slug: string; quantity: number; isEquipped: boolean }[],
+) {
+  const equipmentClient = new EquipmentClient(request);
+  const charactersClient = new CharactersClient(request);
+  const charactersAssert = new CharactersAssert();
+  let characterEquipment: CharacterEquipmentResponseBody | null = null;
+
+  for (const equipmentItem of equipmentItems) {
+    const equipmentResponse = await equipmentClient.getEquipmentDetail(
+      equipmentItem.slug,
+    );
+
+    expect(equipmentResponse.status()).toBe(200);
+
+    const equipment: EquipmentDetail = await equipmentResponse.json();
+    const response = await charactersClient.addCharacterEquipment(
+      characterId,
+      {
+        equipmentId: equipment.id,
+        quantity: equipmentItem.quantity,
+        isEquipped: equipmentItem.isEquipped,
+      },
+      authToken,
+    );
+
+    await charactersAssert.created(response);
+
+    characterEquipment = await response.json();
+  }
+
+  expect(characterEquipment).not.toBeNull();
+
+  return characterEquipment!;
 }
 
 test.describe(
@@ -606,6 +672,35 @@ test.describe(
   );
 
   test(
+    'Add Currency Soldier',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacter(
+        createdCharacterId,
+        {
+          currency: soldierCurrency,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateClassId(character.classId, 1);
+      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 16);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateCurrency(character.currency, soldierCurrency);
+    },
+  );
+
+  test(
     'Get character spell options',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -877,6 +972,58 @@ test.describe(
   );
 
   test(
+    'Add Equipment Barbarian',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersAssert = new CharactersAssert();
+
+      const characterEquipment = await addCharacterEquipmentBySlug(
+        request,
+        createdCharacterId,
+        authToken,
+        [{ slug: 'greataxe', quantity: 1, isEquipped: true }],
+      );
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Greataxe', quantity: 1, isEquipped: true },
+      ]);
+    },
+  );
+
+  test(
+    'Get Equipment Barbarian',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterEquipment(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Greataxe', quantity: 1, isEquipped: true },
+      ]);
+    },
+  );
+
+  test(
     'Get Complete Barbarian',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -909,6 +1056,10 @@ test.describe(
       await charactersAssert.validateAbilityScoreRules(
         finalCharacter.abilityScoreRules,
         expectedDetailedBackgrounds.soldier.abilityScores,
+      );
+      await charactersAssert.validateCurrency(
+        finalCharacter.currency,
+        soldierCurrency,
       );
       await charactersAssert.validateSkillProficiencies(
         finalCharacter.skillProficiencies,
@@ -995,6 +1146,7 @@ test.describe(
           speciesId: 7,
           backgroundId: 12,
           level: 3,
+          currency: nobleCurrency,
         },
         authToken,
       );
@@ -1017,6 +1169,7 @@ test.describe(
         character.abilityScores,
         null,
       );
+      await charactersAssert.validateCurrency(character.currency, nobleCurrency);
       await charactersAssert.validateAbilityScoreRules(
         character.abilityScoreRules,
         expectedDetailedBackgrounds.noble.abilityScores,
@@ -1093,6 +1246,7 @@ test.describe(
       await charactersAssert.validateLevel(character.level, 3);
       await charactersAssert.validateMissingFields(character.missingFields, []);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateCurrency(character.currency, nobleCurrency);
       await charactersAssert.validateAbilityScoreRules(
         character.abilityScoreRules,
         expectedDetailedBackgrounds.noble.abilityScores,
@@ -1373,6 +1527,66 @@ test.describe(
   );
 
   test(
+    'Add Equipment Paladin',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersAssert = new CharactersAssert();
+
+      const characterEquipment = await addCharacterEquipmentBySlug(
+        request,
+        createdCharacterId,
+        authToken,
+        [
+          { slug: 'chain-mail', quantity: 1, isEquipped: true },
+          { slug: 'longsword', quantity: 1, isEquipped: true },
+          { slug: 'shield', quantity: 1, isEquipped: true },
+        ],
+      );
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Chain Mail', quantity: 1, isEquipped: true },
+        { name: 'Longsword', quantity: 1, isEquipped: true },
+        { name: 'Shield', quantity: 1, isEquipped: true },
+      ]);
+    },
+  );
+
+  test(
+    'Get Equipment Paladin',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterEquipment(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Chain Mail', quantity: 1, isEquipped: true },
+        { name: 'Longsword', quantity: 1, isEquipped: true },
+        { name: 'Shield', quantity: 1, isEquipped: true },
+      ]);
+    },
+  );
+
+  test(
     'Get Complete Paladin',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -1402,6 +1616,7 @@ test.describe(
         paladinAbilityScores,
         paladinAbilityBonuses,
       );
+      await charactersAssert.validateCurrency(character.currency, nobleCurrency);
       await charactersAssert.validateAbilityScoreRules(
         character.abilityScoreRules,
         expectedDetailedBackgrounds.noble.abilityScores,
@@ -1888,6 +2103,35 @@ test.describe(
   );
 
   test(
+    'Add Currency Sage',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacter(
+        createdCharacterId,
+        {
+          currency: sageCurrency,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateClassId(character.classId, 12);
+      await charactersAssert.validateSpeciesId(character.speciesId, 3);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 13);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateCurrency(character.currency, sageCurrency);
+    },
+  );
+
+  test(
     'Get character spell options',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -2261,6 +2505,72 @@ test.describe(
   );
 
   test(
+    'Add Equipment Wizard',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersAssert = new CharactersAssert();
+
+      const characterEquipment = await addCharacterEquipmentBySlug(
+        request,
+        createdCharacterId,
+        authToken,
+        [
+          { slug: 'quarterstaff', quantity: 1, isEquipped: true },
+          { slug: 'calligraphers-supplies', quantity: 1, isEquipped: false },
+          { slug: 'book', quantity: 1, isEquipped: false },
+          { slug: 'parchment', quantity: 8, isEquipped: false },
+          { slug: 'robe', quantity: 1, isEquipped: true },
+        ],
+      );
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Quarterstaff', quantity: 1, isEquipped: true },
+        { name: "Calligrapher's Supplies", quantity: 1, isEquipped: false },
+        { name: 'Book', quantity: 1, isEquipped: false },
+        { name: 'Parchment', quantity: 8, isEquipped: false },
+        { name: 'Robe', quantity: 1, isEquipped: true },
+      ]);
+    },
+  );
+
+  test(
+    'Get Equipment Wizard',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterEquipment(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        createdCharacterId,
+      );
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Quarterstaff', quantity: 1, isEquipped: true },
+        { name: "Calligrapher's Supplies", quantity: 1, isEquipped: false },
+        { name: 'Book', quantity: 1, isEquipped: false },
+        { name: 'Parchment', quantity: 8, isEquipped: false },
+        { name: 'Robe', quantity: 1, isEquipped: true },
+      ]);
+    },
+  );
+
+  test(
     'Get Complete Wizard',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
@@ -2293,6 +2603,10 @@ test.describe(
       await charactersAssert.validateAbilityScoreRules(
         finalCharacter.abilityScoreRules,
         expectedDetailedBackgrounds.sage.abilityScores,
+      );
+      await charactersAssert.validateCurrency(
+        finalCharacter.currency,
+        sageCurrency,
       );
       await charactersAssert.validateSkillProficiencies(
         finalCharacter.skillProficiencies,
@@ -2792,6 +3106,220 @@ test.describe(
 );
 
 test.describe(
+  'Characters API - Equipment',
+  { tag: ['@characters', '@equipment'] },
+  () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let authToken: string;
+  let characterWithoutEquipmentId: number;
+  let characterWithEquipmentId: number;
+  let longswordEquipmentId: number;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+
+    const equipmentClient = new EquipmentClient(request);
+    const equipmentResponse = await equipmentClient.getEquipmentDetail('longsword');
+    expect(equipmentResponse.status()).toBe(200);
+    const equipment: EquipmentDetail = await equipmentResponse.json();
+    expect(equipment.name).toBe('Longsword');
+    longswordEquipmentId = equipment.id;
+  });
+
+  test(
+    'Create Character Without Equipment',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: `No Equipment ${Date.now()}`,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      characterWithoutEquipmentId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Get Empty Equipment',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterEquipment(
+        characterWithoutEquipmentId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        characterWithoutEquipmentId,
+      );
+
+      await test.step('Validate character has no equipment', async () => {
+        expect(characterEquipment.equipment).toEqual([]);
+      });
+    },
+  );
+
+  test(
+    'Create Character With Equipment',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: `With Equipment ${Date.now()}`,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      characterWithEquipmentId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateStatus(character.status, 'draft');
+    },
+  );
+
+  test(
+    'Add Longsword Equipment',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.addCharacterEquipment(
+        characterWithEquipmentId,
+        {
+          equipmentId: longswordEquipmentId,
+          quantity: 1,
+          isEquipped: true,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        characterWithEquipmentId,
+      );
+      await test.step('Validate character equipment items are returned', async () => {
+        const longsword = characterEquipment.equipment.find(
+          (item) => item.id === longswordEquipmentId,
+        );
+
+        expect(longsword).toBeDefined();
+        expect(longsword?.name).toBe('Longsword');
+        expect(longsword?.quantity).toBe(1);
+        expect(longsword?.isEquipped).toBe(true);
+      });
+    },
+  );
+
+  test(
+    'Get Added Equipment',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterEquipment(
+        characterWithEquipmentId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        characterWithEquipmentId,
+      );
+      await test.step('Validate added equipment is returned', async () => {
+        const longsword = characterEquipment.equipment.find(
+          (item) => item.id === longswordEquipmentId,
+        );
+
+        expect(longsword).toBeDefined();
+        expect(longsword?.quantity).toBe(1);
+        expect(longsword?.isEquipped).toBe(true);
+      });
+    },
+  );
+
+  test(
+    'Add Longsword Again',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.addCharacterEquipment(
+        characterWithEquipmentId,
+        {
+          equipmentId: longswordEquipmentId,
+          quantity: 2,
+          isEquipped: false,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        characterWithEquipmentId,
+      );
+      await test.step('Validate quantity increments and equipped state updates', async () => {
+        const longsword = characterEquipment.equipment.find(
+          (item) => item.id === longswordEquipmentId,
+        );
+
+        expect(longsword).toBeDefined();
+        expect(longsword?.quantity).toBe(3);
+        expect(longsword?.isEquipped).toBe(false);
+      });
+    },
+  );
+  },
+);
+
+test.describe(
   'Characters API - Delete Flow',
   { tag: ['@characters', '@flow', '@delete'] },
   () => {
@@ -2982,6 +3510,44 @@ test.describe(
   );
 
   test(
+    'Get character equipment without token',
+    { tag: ['@get', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterEquipment(1);
+
+      await charactersAssert.unauthorized(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Unauthorized');
+    },
+  );
+
+  test(
+    'Add character equipment without token',
+    { tag: ['@post', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.addCharacterEquipment(1, {
+        equipmentId: 1,
+        quantity: 1,
+        isEquipped: true,
+      });
+
+      await charactersAssert.unauthorized(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Unauthorized');
+    },
+  );
+
+  test(
     'Get non-existent character',
     { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
@@ -3036,6 +3602,127 @@ test.describe(
       const body: { error: string } = await response.json();
 
       await charactersAssert.validateErrorResponse(body, 'Character not found');
+    },
+  );
+
+  test(
+    'Get non-existent character equipment',
+    { tag: ['@get', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.getCharacterEquipment(999999, token);
+
+      await charactersAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Character not found');
+    },
+  );
+
+  test(
+    'Add equipment to non-existent character',
+    { tag: ['@post', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.addCharacterEquipment(
+        999999,
+        {
+          equipmentId: 1,
+          quantity: 1,
+          isEquipped: true,
+        },
+        token,
+      );
+
+      await charactersAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Character not found');
+    },
+  );
+
+  test(
+    'Add non-existent equipment to character',
+    { tag: ['@post', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const createResponse = await charactersClient.createCharacter(
+        {
+          name: `Invalid Equipment ${Date.now()}`,
+        },
+        token,
+      );
+
+      await charactersAssert.created(createResponse);
+
+      const createdCharacter: CharacterResponseBody = await createResponse.json();
+
+      const response = await charactersClient.addCharacterEquipment(
+        createdCharacter.id,
+        {
+          equipmentId: 999999,
+          quantity: 1,
+          isEquipped: true,
+        },
+        token,
+      );
+
+      await charactersAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Equipment not found');
+    },
+  );
+
+  test(
+    'Add character equipment with invalid payload',
+    { tag: ['@post', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const createResponse = await charactersClient.createCharacter(
+        {
+          name: `Invalid Equipment Payload ${Date.now()}`,
+        },
+        token,
+      );
+
+      await charactersAssert.created(createResponse);
+
+      const createdCharacter: CharacterResponseBody = await createResponse.json();
+
+      const response = await charactersClient.addCharacterEquipment(
+        createdCharacter.id,
+        {
+          equipmentId: 1,
+          quantity: 0,
+          isEquipped: true,
+        },
+        token,
+      );
+
+      await charactersAssert.badRequest(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Invalid character equipment request payload',
+      );
     },
   );
 

@@ -449,6 +449,57 @@ Returns:
 - `404` with `{ "error": "Character not found" }`
 - `500` with `{ "error": "Failed to fetch character skills" }`
 
+### `GET /api/characters/{id}/equipment`
+
+Returns the character's current equipment list.
+
+Requires bearer token.
+
+Response fields:
+
+- `characterId`
+- `equipment`
+
+Each equipment item includes:
+
+- `id`
+- `name`
+- `category`
+- `type`
+- `quantity`
+- `isEquipped`
+
+If the character has no equipment, `equipment` is returned as an empty array.
+
+Returns:
+
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `500` with `{ "error": "Failed to fetch character equipment" }`
+
+### `POST /api/characters/{id}/equipment`
+
+Adds equipment to the character and returns the updated character equipment list.
+
+Requires bearer token.
+
+Request body fields:
+
+- `equipmentId` required
+- `quantity` optional, defaults to `1`
+- `isEquipped` optional, defaults to `false`
+
+If the same equipment already exists for the character, the API increments the existing quantity and updates `isEquipped` with the latest submitted value.
+
+Returns:
+
+- `201` with the updated character equipment response
+- `400` with `{ "error": "Invalid character equipment request payload" }`
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `404` with `{ "error": "Equipment not found" }`
+- `500` with `{ "error": "Failed to add character equipment" }`
+
 ### `GET /api/characters/{id}/ability-score-options`
 
 Returns the current ability score selection state for the character.
@@ -726,6 +777,24 @@ Character skills:
     "total": 2
   }
 ]
+```
+
+Character equipment:
+
+```json
+{
+  "characterId": 101,
+  "equipment": [
+    {
+      "id": 42,
+      "name": "Longsword",
+      "category": "Weapon",
+      "type": "Weapon",
+      "quantity": 3,
+      "isEquipped": false
+    }
+  ]
+}
 ```
 
 Character ability score options:

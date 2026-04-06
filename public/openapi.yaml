@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.9.0
+  version: 1.10.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -16,7 +16,7 @@ info:
     - Classes list and detail
     - Spells list and detail
     - Species list and detail
-    - Character management, deletion, ability score flows, character skill flows, and character spell flows
+    - Character management, deletion, equipment flows, ability score flows, character skill flows, and character spell flows
 
 servers:
   - url: http://localhost:3000
@@ -42,7 +42,7 @@ tags:
   - name: Species
     description: Species list and species detail endpoints.
   - name: Characters
-    description: Protected character management, deletion, and derived ability, skill, and spell endpoints.
+    description: Protected character management, deletion, equipment tracking, and derived ability, skill, and spell endpoints.
 
 x-tagGroups:
   - name: Access
@@ -1466,6 +1466,147 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: Failed to fetch character skills
+
+  /api/characters/{id}/equipment:
+    get:
+      tags:
+        - Characters
+      operationId: getCharacterEquipment
+      summary: Get character equipment
+      description: |
+        Returns the character's current equipment list.
+
+        If the character has no equipment, `equipment` is returned as an empty array.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      responses:
+        '200':
+          description: Character equipment returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterEquipmentResponseBody'
+              examples:
+                empty:
+                  summary: Character without equipment
+                  value:
+                    characterId: 101
+                    equipment: []
+                withEquipment:
+                  summary: Character with equipment
+                  value:
+                    characterId: 101
+                    equipment:
+                      - id: 42
+                        name: Longsword
+                        category: Weapon
+                        type: Weapon
+                        quantity: 3
+                        isEquipped: false
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Character not found
+        '500':
+          description: Failed to fetch character equipment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to fetch character equipment
+    post:
+      tags:
+        - Characters
+      operationId: addCharacterEquipment
+      summary: Add character equipment
+      description: |
+        Adds equipment to the character and returns the updated character equipment list.
+
+        If the same equipment already exists for the character, the API increments the existing quantity and updates `isEquipped` with the latest submitted value.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterEquipmentAddRequestBody'
+            example:
+              equipmentId: 42
+              quantity: 1
+              isEquipped: true
+      responses:
+        '201':
+          description: Character equipment added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterEquipmentResponseBody'
+              example:
+                characterId: 101
+                equipment:
+                  - id: 42
+                    name: Longsword
+                    category: Weapon
+                    type: Weapon
+                    quantity: 1
+                    isEquipped: true
+        '400':
+          description: Invalid character equipment request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid character equipment request payload
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character or equipment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                characterNotFound:
+                  summary: Character not found
+                  value:
+                    error: Character not found
+                equipmentNotFound:
+                  summary: Equipment not found
+                  value:
+                    error: Equipment not found
+        '500':
+          description: Failed to add character equipment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to add character equipment
 
   /api/characters/{id}/ability-score-options:
     get:
@@ -3391,6 +3532,69 @@ components:
         total:
           type: integer
           example: 5
+
+    CharacterEquipmentItem:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - type
+        - quantity
+        - isEquipped
+      properties:
+        id:
+          type: integer
+          example: 42
+        name:
+          type: string
+          example: Longsword
+        category:
+          type: string
+          example: Weapon
+        type:
+          type: string
+          example: Weapon
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+        isEquipped:
+          type: boolean
+          example: true
+
+    CharacterEquipmentResponseBody:
+      type: object
+      required:
+        - characterId
+        - equipment
+      properties:
+        characterId:
+          type: integer
+          example: 101
+        equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterEquipmentItem'
+
+    CharacterEquipmentAddRequestBody:
+      type: object
+      required:
+        - equipmentId
+      properties:
+        equipmentId:
+          type: integer
+          minimum: 1
+          example: 42
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+          example: 1
+        isEquipped:
+          type: boolean
+          default: false
+          example: true
 
     CharacterAbilityScoreOptionsResponseBody:
       type: object

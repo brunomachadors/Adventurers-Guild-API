@@ -108,9 +108,9 @@ export const apiResources: ApiResource[] = [
     name: 'Characters',
     slug: 'characters',
     description:
-      'Protected character management flow with creation, updates, deletion, ability score selection, character skill calculation, spell selection, and enriched responses that include class, species, background, derived ability modifier details, and selected skill proficiencies.',
+      'Protected character management flow with creation, updates, deletion, equipment management, ability score selection, character skill calculation, spell selection, and enriched responses that include class, species, background, derived ability modifier details, and selected skill proficiencies.',
     summary:
-      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, ability score progression, derived modifier data, and calculated skill totals.',
+      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, ability score progression, derived modifier data, calculated skill totals, and character equipment tracking.',
     listFields: [
       'id',
       'name',
@@ -122,6 +122,7 @@ export const apiResources: ApiResource[] = [
       'missingFields',
       'abilityScores',
       'abilityModifiers',
+      'currency',
       'skillProficiencies',
       'abilityScoreRules',
       'classDetails',
@@ -132,13 +133,14 @@ export const apiResources: ApiResource[] = [
       'status',
       'abilityScores',
       'abilityModifiers',
+      'currency',
       'skillProficiencies',
-      'backgroundDetails',
+      'character equipment',
     ],
     previewEndpoints: [
       'POST /api/characters',
-      'PATCH /api/characters/{id}',
-      'DELETE /api/characters/{id}',
+      'GET /api/characters/{id}/equipment',
+      'POST /api/characters/{id}/equipment',
     ],
     endpoints: [
       'GET /api/characters',
@@ -149,6 +151,8 @@ export const apiResources: ApiResource[] = [
       'GET /api/characters/{id}/ability-score-options',
       'PUT /api/characters/{id}/ability-scores',
       'GET /api/characters/{id}/skills',
+      'GET /api/characters/{id}/equipment',
+      'POST /api/characters/{id}/equipment',
       'GET /api/characters/{id}/spell-options',
       'GET /api/characters/{id}/spell-selection',
       'PUT /api/characters/{id}/spells',
@@ -160,5 +164,5 @@ export const projectHighlights = [
   'Visual entrypoint for the API project',
   'Interactive documentation available in /docs',
   'Catalog coverage now includes equipment alongside classes, spells, species, and backgrounds',
-  'Character flows now support creation, updates, deletion, calculated skills, and richer detail payloads',
+  'Character flows now support equipment tracking, currency, calculated skills, and richer detail payloads',
 ];
