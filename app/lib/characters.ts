@@ -19,6 +19,7 @@ import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
 import { SKILL_NAMES, SkillName } from '@/app/types/skill';
 import { getCharacterArmorClass } from './character-armor-class';
 import { getCharacterHitPoints } from './character-hit-points';
+import { getCharacterInitiative } from './character-initiative';
 import { getCharacterSavingThrows } from './character-saving-throws';
 import { getCharacterWeaponAttacks } from './character-weapon-attacks';
 import { getSql } from './db';
@@ -626,6 +627,7 @@ export async function formatCharacterResponse(character: {
     formattedCharacter.level,
     abilityModifiers,
   );
+  const initiative = getCharacterInitiative(abilityModifiers);
 
   return {
     ...formattedCharacter,
@@ -637,6 +639,7 @@ export async function formatCharacterResponse(character: {
     weaponAttacks,
     hitPoints,
     savingThrows,
+    initiative,
     currency: formattedCharacter.currency,
     skillProficiencies: formattedCharacter.skillProficiencies,
     abilityScoreRules,
