@@ -345,6 +345,10 @@ Response fields:
 - `weaponAttacks`
 - `hitPoints`
 - `savingThrows`
+- `initiative`
+- `passivePerception`
+- `movement`
+- `inventoryWeight`
 - `currency`
 - `skillProficiencies`
 - `abilityScoreRules`
@@ -388,6 +392,10 @@ Response fields:
 - `weaponAttacks`
 - `hitPoints`
 - `savingThrows`
+- `initiative`
+- `passivePerception`
+- `movement`
+- `inventoryWeight`
 - `currency`
 - `abilityScoreRules`
 - `classDetails`
@@ -407,6 +415,14 @@ Returns:
 `hitPoints` is derived from the character's class hit die, level, and resolved CON modifier. It is returned as `null` until class details and ability modifiers are available; when calculated, `current` starts equal to `max` and `temporary` starts at `0`.
 
 `savingThrows` is derived from class saving throw proficiencies, character level, and resolved ability modifiers. It is returned as an empty array until class details and ability modifiers are available; when calculated, it is ordered as `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.
+
+`initiative` is derived from the resolved DEX modifier plus the current static bonus (`0`). It is returned as `null` until ability modifiers are available.
+
+`passivePerception` is derived from the calculated Perception skill total. Its current formula is `10 + skillModifier + bonus`, with `bonus` currently `0`. It is returned as `null` until ability modifiers are available.
+
+`movement` is derived from `speciesDetails.speed` and currently uses `ft` as the unit. It is returned as `null` until species details with a numeric speed are available.
+
+`inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
 
 ### `PATCH /api/characters/{id}`
 
@@ -835,6 +851,43 @@ Character detail:
       "sources": [{ "type": "abilityModifier", "value": 0 }]
     }
   ],
+  "initiative": {
+    "ability": "DEX",
+    "abilityModifier": 2,
+    "bonus": 0,
+    "total": 2,
+    "sources": [{ "type": "abilityModifier", "ability": "DEX", "value": 2 }]
+  },
+  "passivePerception": {
+    "skill": "Perception",
+    "ability": "WIS",
+    "base": 10,
+    "skillModifier": 1,
+    "bonus": 0,
+    "total": 11,
+    "sources": [
+      { "type": "base", "value": 10 },
+      { "type": "skillModifier", "value": 1 }
+    ]
+  },
+  "movement": {
+    "baseSpeed": 30,
+    "unit": "ft",
+    "sources": [{ "type": "species", "name": "Human", "value": 30 }]
+  },
+  "inventoryWeight": {
+    "total": 2,
+    "unit": "lb",
+    "sources": [
+      {
+        "equipmentId": 42,
+        "name": "Shortbow",
+        "quantity": 1,
+        "weight": 2,
+        "total": 2
+      }
+    ]
+  },
   "currency": {
     "cp": 0,
     "sp": 0,

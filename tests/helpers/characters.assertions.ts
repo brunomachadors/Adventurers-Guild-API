@@ -9,7 +9,10 @@ import {
   CharacterEquipmentResponseBody,
   CharacterHitPoints,
   CharacterInitiative,
+  CharacterInventoryWeight,
   CharacterListItem,
+  CharacterMovement,
+  CharacterPassivePerception,
   CharacterSavingThrow,
   CharacterSkillItem,
   CharacterSpellOptionsResponseBody,
@@ -571,6 +574,9 @@ export class CharactersAssert {
       expect(character).toHaveProperty('hitPoints');
       expect(character).toHaveProperty('savingThrows');
       expect(character).toHaveProperty('initiative');
+      expect(character).toHaveProperty('passivePerception');
+      expect(character).toHaveProperty('movement');
+      expect(character).toHaveProperty('inventoryWeight');
       expect(character).toHaveProperty('currency');
       expect(character).toHaveProperty('skillProficiencies');
       expect(character).toHaveProperty('abilityScoreRules');
@@ -610,6 +616,14 @@ export class CharactersAssert {
       expect(
         character.initiative === null || typeof character.initiative === 'object',
       ).toBe(true);
+      expect(
+        character.passivePerception === null ||
+          typeof character.passivePerception === 'object',
+      ).toBe(true);
+      expect(
+        character.movement === null || typeof character.movement === 'object',
+      ).toBe(true);
+      expect(typeof character.inventoryWeight).toBe('object');
       expect(
         character.currency === null || typeof character.currency === 'object',
       ).toBe(true);
@@ -668,6 +682,16 @@ export class CharactersAssert {
       await this.validateInitiativeSchema(character.initiative);
     }
 
+    if (character.passivePerception) {
+      await this.validatePassivePerceptionSchema(character.passivePerception);
+    }
+
+    if (character.movement) {
+      await this.validateMovementSchema(character.movement);
+    }
+
+    await this.validateInventoryWeightSchema(character.inventoryWeight);
+
     if (character.currency) {
       await this.validateCurrencySchema(character.currency);
     }
@@ -678,6 +702,7 @@ export class CharactersAssert {
         if (character.abilityScores === null) {
           expect(character.abilityModifiers).toBeNull();
           expect(character.initiative).toBeNull();
+          expect(character.passivePerception).toBeNull();
 
           return;
         }
@@ -695,6 +720,18 @@ export class CharactersAssert {
       },
     );
 
+    await test.step('Validate passive perception consistency', async () => {
+      if (character.passivePerception === null) {
+        return;
+      }
+
+      expect(character.passivePerception.total).toBe(
+        character.passivePerception.base +
+          character.passivePerception.skillModifier +
+          character.passivePerception.bonus,
+      );
+    });
+
     if (character.abilityScoreRules) {
       await this.validateAbilityScoreRulesSchema(character.abilityScoreRules);
     }
@@ -705,6 +742,19 @@ export class CharactersAssert {
 
     if (character.speciesDetails) {
       await this.validateSpeciesDetailsSchema(character.speciesDetails);
+      await test.step('Validate movement consistency with species', async () => {
+        expect(character.movement).not.toBeNull();
+        expect(character.movement?.baseSpeed).toBe(character.speciesDetails?.speed);
+        expect(character.movement?.sources).toEqual(
+          expect.arrayContaining([
+            {
+              type: 'species',
+              name: character.speciesDetails?.name,
+              value: character.speciesDetails?.speed,
+            },
+          ]),
+        );
+      });
     }
 
     if (character.backgroundDetails) {
@@ -1126,6 +1176,185 @@ export class CharactersAssert {
     if (initiative) {
       await this.validateInitiativeSchema(initiative);
     }
+  }
+
+  async validatePassivePerceptionSchema(
+    passivePerception: CharacterPassivePerception,
+  ) {
+    await test.step('Validate passive perception schema', async () => {
+      expect(passivePerception).toHaveProperty('skill');
+      expect(passivePerception).toHaveProperty('ability');
+      expect(passivePerception).toHaveProperty('base');
+      expect(passivePerception).toHaveProperty('skillModifier');
+      expect(passivePerception).toHaveProperty('bonus');
+      expect(passivePerception).toHaveProperty('total');
+      expect(passivePerception).toHaveProperty('sources');
+
+      expect(passivePerception.skill).toBe('Perception');
+      expect(passivePerception.ability).toBe('WIS');
+      expect(typeof passivePerception.base).toBe('number');
+      expect(typeof passivePerception.skillModifier).toBe('number');
+      expect(typeof passivePerception.bonus).toBe('number');
+      expect(typeof passivePerception.total).toBe('number');
+      expect(Array.isArray(passivePerception.sources)).toBe(true);
+    });
+
+    for (const source of passivePerception.sources) {
+      await test.step('Validate passive perception source schema', async () => {
+        expect(source).toHaveProperty('type');
+        expect(source).toHaveProperty('value');
+
+        expect(['base', 'skillModifier', 'bonus']).toContain(source.type);
+        expect(typeof source.value).toBe('number');
+      });
+    }
+  }
+
+  async validatePassivePerception(
+    passivePerception: CharacterResponseBody['passivePerception'],
+    expectedPassivePerception:
+      | Omit<CharacterPassivePerception, 'sources'>
+      | null,
+  ) {
+    await test.step('Validate passive perception', async () => {
+      if (expectedPassivePerception === null) {
+        expect(passivePerception).toBeNull();
+
+        return;
+      }
+
+      expect(passivePerception).not.toBeNull();
+      expect(passivePerception).toMatchObject(expectedPassivePerception);
+      expect(passivePerception?.total).toBe(
+        expectedPassivePerception.base +
+          expectedPassivePerception.skillModifier +
+          expectedPassivePerception.bonus,
+      );
+      expect(passivePerception?.sources).toEqual(
+        expect.arrayContaining([
+          { type: 'base', value: expectedPassivePerception.base },
+          {
+            type: 'skillModifier',
+            value: expectedPassivePerception.skillModifier,
+          },
+        ]),
+      );
+    });
+
+    if (passivePerception) {
+      await this.validatePassivePerceptionSchema(passivePerception);
+    }
+  }
+
+  async validateMovementSchema(movement: CharacterMovement) {
+    await test.step('Validate movement schema', async () => {
+      expect(movement).toHaveProperty('baseSpeed');
+      expect(movement).toHaveProperty('unit');
+      expect(movement).toHaveProperty('sources');
+
+      expect(typeof movement.baseSpeed).toBe('number');
+      expect(movement.unit).toBe('ft');
+      expect(Array.isArray(movement.sources)).toBe(true);
+    });
+
+    for (const source of movement.sources) {
+      await test.step('Validate movement source schema', async () => {
+        expect(source).toHaveProperty('type');
+        expect(source).toHaveProperty('name');
+        expect(source).toHaveProperty('value');
+
+        expect(source.type).toBe('species');
+        expect(typeof source.name).toBe('string');
+        expect(typeof source.value).toBe('number');
+      });
+    }
+  }
+
+  async validateMovement(
+    movement: CharacterResponseBody['movement'],
+    expectedMovement: Omit<CharacterMovement, 'sources'> | null,
+    expectedSource?: CharacterMovement['sources'][number],
+  ) {
+    await test.step('Validate movement', async () => {
+      if (expectedMovement === null) {
+        expect(movement).toBeNull();
+
+        return;
+      }
+
+      expect(movement).not.toBeNull();
+      expect(movement).toMatchObject(expectedMovement);
+
+      if (expectedSource) {
+        expect(movement?.sources).toEqual(
+          expect.arrayContaining([expectedSource]),
+        );
+      }
+    });
+
+    if (movement) {
+      await this.validateMovementSchema(movement);
+    }
+  }
+
+  async validateInventoryWeightSchema(inventoryWeight: CharacterInventoryWeight) {
+    await test.step('Validate inventory weight schema', async () => {
+      expect(inventoryWeight).toHaveProperty('total');
+      expect(inventoryWeight).toHaveProperty('unit');
+      expect(inventoryWeight).toHaveProperty('sources');
+
+      expect(typeof inventoryWeight.total).toBe('number');
+      expect(inventoryWeight.unit).toBe('lb');
+      expect(Array.isArray(inventoryWeight.sources)).toBe(true);
+    });
+
+    for (const source of inventoryWeight.sources) {
+      await test.step(
+        `Validate inventory weight source schema for ${source.name}`,
+        async () => {
+          expect(source).toHaveProperty('equipmentId');
+          expect(source).toHaveProperty('name');
+          expect(source).toHaveProperty('quantity');
+          expect(source).toHaveProperty('weight');
+          expect(source).toHaveProperty('total');
+
+          expect(typeof source.equipmentId).toBe('number');
+          expect(typeof source.name).toBe('string');
+          expect(typeof source.quantity).toBe('number');
+          expect(typeof source.weight).toBe('number');
+          expect(typeof source.total).toBe('number');
+        },
+      );
+    }
+  }
+
+  async validateInventoryWeight(
+    inventoryWeight: CharacterInventoryWeight,
+    expectedInventoryWeight: {
+      total: number;
+      sources: Omit<
+        CharacterInventoryWeight['sources'][number],
+        'equipmentId'
+      >[];
+    },
+  ) {
+    await test.step('Validate inventory weight', async () => {
+      expect(inventoryWeight.total).toBe(expectedInventoryWeight.total);
+      expect(inventoryWeight.unit).toBe('lb');
+      expect(inventoryWeight.sources).toHaveLength(
+        expectedInventoryWeight.sources.length,
+      );
+
+      for (const expectedSource of expectedInventoryWeight.sources) {
+        expect(inventoryWeight.sources).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining(expectedSource),
+          ]),
+        );
+      }
+    });
+
+    await this.validateInventoryWeightSchema(inventoryWeight);
   }
 
   async validateCurrencySchema(currency: CharacterCurrency) {
