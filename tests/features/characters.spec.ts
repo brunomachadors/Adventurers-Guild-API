@@ -7,6 +7,7 @@ import {
   CharacterCreateRequestBody,
   CharacterCurrency,
   CharacterEquipmentResponseBody,
+  CharacterHitPoints,
   CharacterSkillItem,
   CharacterListItem,
   CharacterResponseBody,
@@ -248,6 +249,51 @@ const aangArmorClass: CharacterArmorClass = {
   ],
 };
 
+const barbarianHitPoints: CharacterHitPoints = {
+  max: 14,
+  current: 14,
+  temporary: 0,
+  hitDie: 12,
+  conModifier: 2,
+  calculation: '12 + 2',
+};
+
+const monkHitPoints: CharacterHitPoints = {
+  max: 10,
+  current: 10,
+  temporary: 0,
+  hitDie: 8,
+  conModifier: 2,
+  calculation: '8 + 2',
+};
+
+const paladinHitPoints: CharacterHitPoints = {
+  max: 25,
+  current: 25,
+  temporary: 0,
+  hitDie: 10,
+  conModifier: 1,
+  calculation: '10 + 1 + (2 * (6 + 1))',
+};
+
+const wizardHitPoints: CharacterHitPoints = {
+  max: 7,
+  current: 7,
+  temporary: 0,
+  hitDie: 6,
+  conModifier: 1,
+  calculation: '6 + 1',
+};
+
+const fighterHitPoints: CharacterHitPoints = {
+  max: 12,
+  current: 12,
+  temporary: 0,
+  hitDie: 10,
+  conModifier: 2,
+  calculation: '10 + 2',
+};
+
 const barbarianSkillProficiencies: SkillName[] = [
   'Athletics',
   'Intimidation',
@@ -396,6 +442,7 @@ test.describe(
         createdCharacter.abilityScoreRules,
         null,
       );
+      await charactersAssert.validateHitPoints(createdCharacter.hitPoints, null);
       await charactersAssert.validateClassDetailsPresence(
         createdCharacter.classDetails ?? null,
         false,
@@ -511,6 +558,7 @@ test.describe(
         updatedCharacter.abilityScores,
         null,
       );
+      await charactersAssert.validateHitPoints(updatedCharacter.hitPoints, null);
       await charactersAssert.validateClassDetailsPresence(
         updatedCharacter.classDetails ?? null,
         true,
@@ -1152,6 +1200,10 @@ test.describe(
         finalCharacter.armorClass,
         barbarianArmorClass,
       );
+      await charactersAssert.validateHitPoints(
+        finalCharacter.hitPoints,
+        barbarianHitPoints,
+      );
       await charactersAssert.validateWeaponAttack(finalCharacter.weaponAttacks, {
         name: 'Greataxe',
         attackType: 'melee',
@@ -1280,6 +1332,7 @@ test.describe(
       await charactersAssert.validateLevel(character.level, 1);
       await charactersAssert.validateMissingFields(character.missingFields, []);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateHitPoints(character.hitPoints, null);
       await charactersAssert.validateCurrency(character.currency, acolyteCurrency);
       await charactersAssert.validateAbilityScoreRules(
         character.abilityScoreRules,
@@ -1399,6 +1452,10 @@ test.describe(
       await charactersAssert.validateArmorClass(
         character.armorClass,
         aangArmorClass,
+      );
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        monkHitPoints,
       );
       await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
         name: 'Quarterstaff',
@@ -1925,6 +1982,10 @@ test.describe(
       await charactersAssert.validateArmorClass(
         character.armorClass,
         paladinArmorClass,
+      );
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        paladinHitPoints,
       );
       await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
         name: 'Longsword',
@@ -2939,6 +3000,10 @@ test.describe(
         finalCharacter.armorClass,
         wizardArmorClass,
       );
+      await charactersAssert.validateHitPoints(
+        finalCharacter.hitPoints,
+        wizardHitPoints,
+      );
       await charactersAssert.validateWeaponAttack(finalCharacter.weaponAttacks, {
         name: 'Quarterstaff',
         attackType: 'melee',
@@ -3562,6 +3627,10 @@ test.describe(
         gimliAbilityScores,
         gimliAbilityBonuses,
       );
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        fighterHitPoints,
+      );
       await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
@@ -3603,6 +3672,10 @@ test.describe(
       const character: CharacterResponseBody = await detailResponse.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        fighterHitPoints,
+      );
 
       await test.step('Validate character has no weapon attacks', async () => {
         expect(character.weaponAttacks).toEqual([]);
@@ -3642,6 +3715,10 @@ test.describe(
         character.abilityScores,
         gimliAbilityScores,
         gimliAbilityBonuses,
+      );
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        fighterHitPoints,
       );
       await charactersAssert.validateStatus(character.status, 'complete');
     },
@@ -3741,6 +3818,10 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        fighterHitPoints,
+      );
       await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
         equipmentId: greataxeEquipmentId,
         name: 'Greataxe',
@@ -3981,6 +4062,10 @@ test.describe(
       const character: CharacterResponseBody = await detailResponse.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        fighterHitPoints,
+      );
       await charactersAssert.validateWeaponAttackAbsent(
         character.weaponAttacks,
         'Greataxe',

@@ -7,6 +7,7 @@ import {
   CharacterResolvedAbilityScores,
   CharacterClassDetails,
   CharacterEquipmentResponseBody,
+  CharacterHitPoints,
   CharacterListItem,
   CharacterSkillItem,
   CharacterSpellOptionsResponseBody,
@@ -565,6 +566,7 @@ export class CharactersAssert {
       expect(character).toHaveProperty('abilityModifiers');
       expect(character).toHaveProperty('armorClass');
       expect(character).toHaveProperty('weaponAttacks');
+      expect(character).toHaveProperty('hitPoints');
       expect(character).toHaveProperty('currency');
       expect(character).toHaveProperty('skillProficiencies');
       expect(character).toHaveProperty('abilityScoreRules');
@@ -597,6 +599,9 @@ export class CharactersAssert {
       ).toBe(true);
       expect(typeof character.armorClass).toBe('object');
       expect(Array.isArray(character.weaponAttacks)).toBe(true);
+      expect(
+        character.hitPoints === null || typeof character.hitPoints === 'object',
+      ).toBe(true);
       expect(
         character.currency === null || typeof character.currency === 'object',
       ).toBe(true);
@@ -644,6 +649,10 @@ export class CharactersAssert {
 
     await this.validateArmorClassSchema(character.armorClass);
     await this.validateWeaponAttacksSchema(character.weaponAttacks);
+
+    if (character.hitPoints) {
+      await this.validateHitPointsSchema(character.hitPoints);
+    }
 
     if (character.currency) {
       await this.validateCurrencySchema(character.currency);
@@ -896,6 +905,45 @@ export class CharactersAssert {
     });
 
     await this.validateArmorClassSchema(armorClass);
+  }
+
+  async validateHitPointsSchema(hitPoints: CharacterHitPoints) {
+    await test.step('Validate hit points schema', async () => {
+      expect(hitPoints).toHaveProperty('max');
+      expect(hitPoints).toHaveProperty('current');
+      expect(hitPoints).toHaveProperty('temporary');
+      expect(hitPoints).toHaveProperty('hitDie');
+      expect(hitPoints).toHaveProperty('conModifier');
+      expect(hitPoints).toHaveProperty('calculation');
+
+      expect(typeof hitPoints.max).toBe('number');
+      expect(typeof hitPoints.current).toBe('number');
+      expect(typeof hitPoints.temporary).toBe('number');
+      expect(typeof hitPoints.hitDie).toBe('number');
+      expect(typeof hitPoints.conModifier).toBe('number');
+      expect(typeof hitPoints.calculation).toBe('string');
+    });
+  }
+
+  async validateHitPoints(
+    hitPoints: CharacterResponseBody['hitPoints'],
+    expectedHitPoints: CharacterHitPoints | null,
+  ) {
+    await test.step('Validate Hit Points', async () => {
+      if (expectedHitPoints === null) {
+        expect(hitPoints).toBeNull();
+
+        return;
+      }
+
+      expect(hitPoints).toEqual(expectedHitPoints);
+      expect(hitPoints?.current).toBe(hitPoints?.max);
+      expect(hitPoints?.temporary).toBe(0);
+    });
+
+    if (hitPoints) {
+      await this.validateHitPointsSchema(hitPoints);
+    }
   }
 
   async validateCurrencySchema(currency: CharacterCurrency) {
