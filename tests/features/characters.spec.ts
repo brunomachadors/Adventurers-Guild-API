@@ -89,6 +89,15 @@ const yenneferAbilityScores: CharacterAbilityScores = {
   CHA: 15,
 };
 
+const casterCoverageAbilityScores: CharacterAbilityScores = {
+  STR: 8,
+  DEX: 14,
+  CON: 13,
+  INT: 12,
+  WIS: 15,
+  CHA: 15,
+};
+
 const barbarianAbilityBonuses: CharacterAbilityScores = {
   STR: 2,
   DEX: 0,
@@ -152,6 +161,15 @@ const yenneferAbilityBonuses: CharacterAbilityScores = {
   CHA: 2,
 };
 
+const casterCoverageAbilityBonuses: CharacterAbilityScores = {
+  STR: 0,
+  DEX: 0,
+  CON: 0,
+  INT: 0,
+  WIS: 1,
+  CHA: 2,
+};
+
 const barbarianAbilityScoresInput: CharacterAbilityScoresInput = {
   base: barbarianAbilityScores,
   bonuses: barbarianAbilityBonuses,
@@ -185,6 +203,11 @@ const gimliAbilityScoresInput: CharacterAbilityScoresInput = {
 const yenneferAbilityScoresInput: CharacterAbilityScoresInput = {
   base: yenneferAbilityScores,
   bonuses: yenneferAbilityBonuses,
+};
+
+const casterCoverageAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: casterCoverageAbilityScores,
+  bonuses: casterCoverageAbilityBonuses,
 };
 
 const patchedCurrency: CharacterCurrency = {
@@ -1292,6 +1315,22 @@ test.describe(
           ],
         },
       );
+      await charactersAssert.validateSpellcastingSummary(
+        finalCharacter.spellcastingSummary,
+        {
+          canCastSpells: false,
+          ability: null,
+          abilityModifier: null,
+          spellSaveDc: null,
+          spellAttackBonus: null,
+          selectedSpellsCount: 0,
+          selectedCantripsCount: 0,
+        },
+      );
+      await test.step('Validate barbarian has no spell slots or selected spells', async () => {
+        expect(finalCharacter.spellSlots).toEqual([]);
+        expect(finalCharacter.selectedSpells).toEqual([]);
+      });
       await charactersAssert.validateSavingThrowOrder(finalCharacter.savingThrows);
       await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
         ability: 'STR',
@@ -3238,6 +3277,35 @@ test.describe(
         { baseSpeed: 30, unit: 'ft' },
         { type: 'species', name: 'Elf', value: 30 },
       );
+      await charactersAssert.validateSpellcastingSummary(
+        finalCharacter.spellcastingSummary,
+        {
+          canCastSpells: true,
+          ability: 'INT',
+          abilityModifier: 3,
+          spellSaveDc: 13,
+          spellAttackBonus: 5,
+          selectedSpellsCount: 0,
+          selectedCantripsCount: selectedSpellIds.length,
+        },
+      );
+      await charactersAssert.validateSpellSlot(finalCharacter.spellSlots, {
+        level: 1,
+        max: 2,
+        used: 0,
+        available: 2,
+      });
+      await test.step('Validate wizard selected spells are enriched', async () => {
+        expect(finalCharacter.selectedSpells).toHaveLength(selectedSpellIds.length);
+        expect(finalCharacter.selectedSpells.map((spell) => spell.id)).toEqual(
+          selectedSpellIds,
+        );
+
+        for (const spell of finalCharacter.selectedSpells) {
+          expect(spell.level).toBe(0);
+          expect(spell.selectionType).toBe('cantrip');
+        }
+      });
       await charactersAssert.validateSavingThrowOrder(finalCharacter.savingThrows);
       await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
         ability: 'INT',
@@ -3354,12 +3422,8 @@ test.describe(
   test.describe.configure({ mode: 'serial' });
 
   let authToken: string;
-  let noScoresCharacterId: number;
-  let withScoresCharacterId: number;
-  let patchScoresCharacterId: number;
-  let noCurrencyCharacterId: number;
-  let withCurrencyCharacterId: number;
-  let patchCurrencyCharacterId: number;
+  let drizztCharacterId: number;
+  let drizztCharacterName: string;
 
   test.beforeAll(async ({ request }) => {
     authToken = await issueDemoToken(request);
@@ -3387,25 +3451,26 @@ test.describe(
   }
 
   test(
-    'Create Drizzt Without Scores',
+    'Create Drizzt Without Scores And Currency',
     { tag: ['@post', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
+      drizztCharacterName = `Drizzt The Ranger ${Date.now()}`;
+
       const response = await charactersClient.createCharacter(
-        buildDrizztRangerPayload(
-          `Drizzt The Ranger Without Scores ${Date.now()}`,
-        ),
+        buildDrizztRangerPayload(drizztCharacterName),
         authToken,
       );
 
       await charactersAssert.created(response);
 
       const character: CharacterResponseBody = await response.json();
-      noScoresCharacterId = character.id;
+      drizztCharacterId = character.id;
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateCurrency(character.currency, null);
@@ -3414,14 +3479,14 @@ test.describe(
   );
 
   test(
-    'Get Drizzt Without Scores',
+    'Get Drizzt Without Scores And Currency',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.getCharacterDetail(
-        noScoresCharacterId,
+        drizztCharacterId,
         authToken,
       );
 
@@ -3430,6 +3495,7 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateCurrency(character.currency, null);
@@ -3438,25 +3504,26 @@ test.describe(
   );
 
   test(
-    'Create Drizzt With Scores',
-    { tag: ['@post', '@data'] },
+    'Patch Scores Drizzt',
+    { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
-      const response = await charactersClient.createCharacter(
-        buildDrizztRangerPayload(`Drizzt The Ranger With Scores ${Date.now()}`, {
+      const response = await charactersClient.updateCharacter(
+        drizztCharacterId,
+        {
           abilityScores: drizztAbilityScoresInput,
-        }),
+        },
         authToken,
       );
 
-      await charactersAssert.created(response);
+      await charactersAssert.success(response);
 
       const character: CharacterResponseBody = await response.json();
-      withScoresCharacterId = character.id;
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(
         character.abilityScores,
@@ -3476,7 +3543,7 @@ test.describe(
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.getCharacterDetail(
-        withScoresCharacterId,
+        drizztCharacterId,
         authToken,
       );
 
@@ -3485,75 +3552,7 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
-      await validateDrizztRangerBuild(character);
-      await charactersAssert.validateAbilityScores(
-        character.abilityScores,
-        drizztAbilityScores,
-        drizztAbilityBonuses,
-      );
-      await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'complete');
-    },
-  );
-
-  test(
-    'Patch Scores Drizzt',
-    { tag: ['@patch', '@data'] },
-    async ({ request }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-
-      const createResponse = await charactersClient.createCharacter(
-        buildDrizztRangerPayload(`Drizzt The Ranger Patch Scores ${Date.now()}`),
-        authToken,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody = await createResponse.json();
-      patchScoresCharacterId = createdCharacter.id;
-
-      const response = await charactersClient.updateCharacter(
-        patchScoresCharacterId,
-        {
-          abilityScores: drizztAbilityScoresInput,
-        },
-        authToken,
-      );
-
-      await charactersAssert.success(response);
-
-      const character: CharacterResponseBody = await response.json();
-
-      await charactersAssert.validateCharacterResponseSchema(character);
-      await validateDrizztRangerBuild(character);
-      await charactersAssert.validateAbilityScores(
-        character.abilityScores,
-        drizztAbilityScores,
-        drizztAbilityBonuses,
-      );
-      await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'complete');
-    },
-  );
-
-  test(
-    'Get Patched Scores Drizzt',
-    { tag: ['@get', '@data'] },
-    async ({ request }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-
-      const response = await charactersClient.getCharacterDetail(
-        patchScoresCharacterId,
-        authToken,
-      );
-
-      await charactersAssert.success(response);
-
-      const character: CharacterResponseBody = await response.json();
-
-      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(
         character.abilityScores,
@@ -3573,7 +3572,7 @@ test.describe(
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.updateCharacter(
-        patchScoresCharacterId,
+        drizztCharacterId,
         {
           abilityScores: null,
         },
@@ -3585,6 +3584,7 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateCurrency(character.currency, null);
@@ -3600,7 +3600,7 @@ test.describe(
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.getCharacterDetail(
-        patchScoresCharacterId,
+        drizztCharacterId,
         authToken,
       );
 
@@ -3609,107 +3609,10 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'complete');
-    },
-  );
-
-  test(
-    'Create Drizzt Without Currency',
-    { tag: ['@post', '@data'] },
-    async ({ request }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-
-      const response = await charactersClient.createCharacter(
-        buildDrizztRangerPayload(
-          `Drizzt The Ranger Without Currency ${Date.now()}`,
-        ),
-        authToken,
-      );
-
-      await charactersAssert.created(response);
-
-      const character: CharacterResponseBody = await response.json();
-      noCurrencyCharacterId = character.id;
-
-      await charactersAssert.validateCharacterResponseSchema(character);
-      await validateDrizztRangerBuild(character);
-      await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'complete');
-    },
-  );
-
-  test(
-    'Get Drizzt Without Currency',
-    { tag: ['@get', '@data'] },
-    async ({ request }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-
-      const response = await charactersClient.getCharacterDetail(
-        noCurrencyCharacterId,
-        authToken,
-      );
-
-      await charactersAssert.success(response);
-
-      const character: CharacterResponseBody = await response.json();
-
-      await charactersAssert.validateCharacterResponseSchema(character);
-      await validateDrizztRangerBuild(character);
-      await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'complete');
-    },
-  );
-
-  test(
-    'Create Drizzt With Currency',
-    { tag: ['@post', '@data'] },
-    async ({ request }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-
-      const response = await charactersClient.createCharacter(
-        buildDrizztRangerPayload(`Drizzt The Ranger With Currency ${Date.now()}`, {
-          currency: soldierCurrency,
-        }),
-        authToken,
-      );
-
-      await charactersAssert.created(response);
-
-      const character: CharacterResponseBody = await response.json();
-      withCurrencyCharacterId = character.id;
-
-      await charactersAssert.validateCharacterResponseSchema(character);
-      await validateDrizztRangerBuild(character);
-      await charactersAssert.validateCurrency(character.currency, soldierCurrency);
-      await charactersAssert.validateStatus(character.status, 'complete');
-    },
-  );
-
-  test(
-    'Get Drizzt With Currency',
-    { tag: ['@get', '@data'] },
-    async ({ request }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-
-      const response = await charactersClient.getCharacterDetail(
-        withCurrencyCharacterId,
-        authToken,
-      );
-
-      await charactersAssert.success(response);
-
-      const character: CharacterResponseBody = await response.json();
-
-      await charactersAssert.validateCharacterResponseSchema(character);
-      await validateDrizztRangerBuild(character);
-      await charactersAssert.validateCurrency(character.currency, soldierCurrency);
       await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
@@ -3721,18 +3624,8 @@ test.describe(
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
-      const createResponse = await charactersClient.createCharacter(
-        buildDrizztRangerPayload(`Drizzt The Ranger Patch Currency ${Date.now()}`),
-        authToken,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody = await createResponse.json();
-      patchCurrencyCharacterId = createdCharacter.id;
-
       const response = await charactersClient.updateCharacter(
-        patchCurrencyCharacterId,
+        drizztCharacterId,
         {
           currency: patchedCurrency,
         },
@@ -3744,6 +3637,7 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, patchedCurrency);
       await charactersAssert.validateStatus(character.status, 'complete');
@@ -3758,7 +3652,7 @@ test.describe(
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.getCharacterDetail(
-        patchCurrencyCharacterId,
+        drizztCharacterId,
         authToken,
       );
 
@@ -3767,6 +3661,7 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, patchedCurrency);
       await charactersAssert.validateStatus(character.status, 'complete');
@@ -3781,7 +3676,7 @@ test.describe(
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.updateCharacter(
-        patchCurrencyCharacterId,
+        drizztCharacterId,
         {
           currency: null,
         },
@@ -3793,6 +3688,7 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'complete');
@@ -3807,7 +3703,7 @@ test.describe(
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.getCharacterDetail(
-        patchCurrencyCharacterId,
+        drizztCharacterId,
         authToken,
       );
 
@@ -3816,6 +3712,7 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, drizztCharacterName);
       await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, null);
       await charactersAssert.validateStatus(character.status, 'complete');
@@ -3969,13 +3866,284 @@ test.describe(
 );
 
 test.describe(
+  'Characters API - Scanlan The Bard Caster Coverage Flow',
+  { tag: ['@characters', '@flow', '@class-coverage', '@bard', '@human'] },
+  () => {
+  let authToken: string;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
+  test(
+    'Create Scanlan The Bard For Caster Coverage',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const characterName = `Scanlan The Bard ${Date.now()}`;
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: characterName,
+          classId: 2,
+          speciesId: 7,
+          backgroundId: 1,
+          level: 1,
+          abilityScores: casterCoverageAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, characterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 2);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 1);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        casterCoverageAbilityScores,
+        casterCoverageAbilityBonuses,
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Human', value: 30 },
+      );
+      await charactersAssert.validateSpellcastingSummary(
+        character.spellcastingSummary,
+        {
+          canCastSpells: true,
+          ability: 'CHA',
+          abilityModifier: 3,
+          spellSaveDc: 13,
+          spellAttackBonus: 5,
+          selectedSpellsCount: 0,
+          selectedCantripsCount: 0,
+        },
+      );
+    },
+  );
+  },
+);
+
+test.describe(
+  'Characters API - Pike The Cleric Caster Coverage Flow',
+  { tag: ['@characters', '@flow', '@class-coverage', '@cleric', '@dragonborn'] },
+  () => {
+  let authToken: string;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
+  test(
+    'Create Pike The Cleric For Caster Coverage',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const characterName = `Pike The Cleric ${Date.now()}`;
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: characterName,
+          classId: 3,
+          speciesId: 1,
+          backgroundId: 1,
+          level: 1,
+          abilityScores: casterCoverageAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, characterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 3);
+      await charactersAssert.validateSpeciesId(character.speciesId, 1);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 1);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        casterCoverageAbilityScores,
+        casterCoverageAbilityBonuses,
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Dragonborn', value: 30 },
+      );
+      await charactersAssert.validateSpellcastingSummary(
+        character.spellcastingSummary,
+        {
+          canCastSpells: true,
+          ability: 'WIS',
+          abilityModifier: 3,
+          spellSaveDc: 13,
+          spellAttackBonus: 5,
+          selectedSpellsCount: 0,
+          selectedCantripsCount: 0,
+        },
+      );
+    },
+  );
+  },
+);
+
+test.describe(
+  'Characters API - Keyleth The Druid Caster Coverage Flow',
+  { tag: ['@characters', '@flow', '@class-coverage', '@druid', '@elf'] },
+  () => {
+  let authToken: string;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
+  test(
+    'Create Keyleth The Druid For Caster Coverage',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const characterName = `Keyleth The Druid ${Date.now()}`;
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: characterName,
+          classId: 4,
+          speciesId: 3,
+          backgroundId: 1,
+          level: 1,
+          abilityScores: casterCoverageAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, characterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 4);
+      await charactersAssert.validateSpeciesId(character.speciesId, 3);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 1);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        casterCoverageAbilityScores,
+        casterCoverageAbilityBonuses,
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Elf', value: 30 },
+      );
+      await charactersAssert.validateSpellcastingSummary(
+        character.spellcastingSummary,
+        {
+          canCastSpells: true,
+          ability: 'WIS',
+          abilityModifier: 3,
+          spellSaveDc: 13,
+          spellAttackBonus: 5,
+          selectedSpellsCount: 0,
+          selectedCantripsCount: 0,
+        },
+      );
+    },
+  );
+  },
+);
+
+test.describe(
+  'Characters API - Elric The Warlock Caster Coverage Flow',
+  { tag: ['@characters', '@flow', '@class-coverage', '@warlock', '@orc'] },
+  () => {
+  let authToken: string;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
+  test(
+    'Create Elric The Warlock For Caster Coverage',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const characterName = `Elric The Warlock ${Date.now()}`;
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: characterName,
+          classId: 11,
+          speciesId: 8,
+          backgroundId: 1,
+          level: 1,
+          abilityScores: casterCoverageAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateName(character.name, characterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 11);
+      await charactersAssert.validateSpeciesId(character.speciesId, 8);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 1);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        casterCoverageAbilityScores,
+        casterCoverageAbilityBonuses,
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Orc', value: 30 },
+      );
+      await charactersAssert.validateSpellcastingSummary(
+        character.spellcastingSummary,
+        {
+          canCastSpells: true,
+          ability: 'CHA',
+          abilityModifier: 3,
+          spellSaveDc: 13,
+          spellAttackBonus: 5,
+          selectedSpellsCount: 0,
+          selectedCantripsCount: 0,
+        },
+      );
+    },
+  );
+  },
+);
+
+test.describe(
   'Characters API - Gimli The Fighter Equipment Flow',
   { tag: ['@characters', '@equipment', '@fighter', '@dwarf'] },
   () => {
   test.describe.configure({ mode: 'serial' });
 
   let authToken: string;
-  let characterWithoutEquipmentId: number;
   let characterWithEquipmentId: number;
   let greataxeEquipmentId: number;
   let shortbowEquipmentId: number;
@@ -3996,115 +4164,6 @@ test.describe(
     expect(shortbow.name).toBe('Shortbow');
     shortbowEquipmentId = shortbow.id;
   });
-
-  test(
-    'Create Gimli Without Equipment',
-    { tag: ['@post', '@data'] },
-    async ({ request }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-
-      const response = await charactersClient.createCharacter(
-        {
-          name: `Gimli The Fighter Without Equipment ${Date.now()}`,
-          classId: 5,
-          speciesId: 2,
-          backgroundId: 16,
-          level: 1,
-          abilityScores: gimliAbilityScoresInput,
-        },
-        authToken,
-      );
-
-      await charactersAssert.created(response);
-
-      const character: CharacterResponseBody = await response.json();
-      characterWithoutEquipmentId = character.id;
-
-      await charactersAssert.validateCharacterResponseSchema(character);
-      await charactersAssert.validateClassId(character.classId, 5);
-      await charactersAssert.validateSpeciesId(character.speciesId, 2);
-      await charactersAssert.validateBackgroundId(character.backgroundId, 16);
-      await charactersAssert.validateAbilityScores(
-        character.abilityScores,
-        gimliAbilityScores,
-        gimliAbilityBonuses,
-      );
-      await charactersAssert.validateHitPoints(
-        character.hitPoints,
-        fighterHitPoints,
-      );
-      await charactersAssert.validateStatus(character.status, 'complete');
-    },
-  );
-
-  test(
-    'Get Empty Equipment',
-    { tag: ['@get', '@data'] },
-    async ({ request }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-
-      const response = await charactersClient.getCharacterEquipment(
-        characterWithoutEquipmentId,
-        authToken,
-      );
-
-      await charactersAssert.success(response);
-
-      const characterEquipment: CharacterEquipmentResponseBody =
-        await response.json();
-
-      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
-      await charactersAssert.validateId(
-        characterEquipment.characterId,
-        characterWithoutEquipmentId,
-      );
-
-      await test.step('Validate character has no equipment', async () => {
-        expect(characterEquipment.equipment).toEqual([]);
-      });
-
-      const detailResponse = await charactersClient.getCharacterDetail(
-        characterWithoutEquipmentId,
-        authToken,
-      );
-
-      await charactersAssert.success(detailResponse);
-
-      const character: CharacterResponseBody = await detailResponse.json();
-
-      await charactersAssert.validateCharacterResponseSchema(character);
-      await charactersAssert.validateHitPoints(
-        character.hitPoints,
-        fighterHitPoints,
-      );
-      await charactersAssert.validatePassivePerception(
-        character.passivePerception,
-        {
-          skill: 'Perception',
-          ability: 'WIS',
-          base: 10,
-          skillModifier: 1,
-          bonus: 0,
-          total: 11,
-        },
-      );
-      await charactersAssert.validateMovement(
-        character.movement,
-        { baseSpeed: 30, unit: 'ft' },
-        { type: 'species', name: 'Dwarf', value: 30 },
-      );
-      await charactersAssert.validateInventoryWeight(character.inventoryWeight, {
-        total: 0,
-        sources: [],
-      });
-
-      await test.step('Validate character has no weapon attacks', async () => {
-        expect(character.weaponAttacks).toEqual([]);
-      });
-    },
-  );
 
   test(
     'Create Gimli The Fighter',
@@ -4144,6 +4203,74 @@ test.describe(
         fighterHitPoints,
       );
       await charactersAssert.validateStatus(character.status, 'complete');
+    },
+  );
+
+  test(
+    'Get Empty Equipment',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterEquipment(
+        characterWithEquipmentId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        characterWithEquipmentId,
+      );
+
+      await test.step('Validate character has no equipment', async () => {
+        expect(characterEquipment.equipment).toEqual([]);
+      });
+
+      const detailResponse = await charactersClient.getCharacterDetail(
+        characterWithEquipmentId,
+        authToken,
+      );
+
+      await charactersAssert.success(detailResponse);
+
+      const character: CharacterResponseBody = await detailResponse.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateHitPoints(
+        character.hitPoints,
+        fighterHitPoints,
+      );
+      await charactersAssert.validatePassivePerception(
+        character.passivePerception,
+        {
+          skill: 'Perception',
+          ability: 'WIS',
+          base: 10,
+          skillModifier: 1,
+          bonus: 0,
+          total: 11,
+        },
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Dwarf', value: 30 },
+      );
+      await charactersAssert.validateInventoryWeight(character.inventoryWeight, {
+        total: 0,
+        sources: [],
+      });
+
+      await test.step('Validate character has no weapon attacks', async () => {
+        expect(character.weaponAttacks).toEqual([]);
+      });
     },
   );
 
@@ -4702,6 +4829,11 @@ test.describe(
   'Characters API - Geralt Of Rivia The Warlock Negative Flow',
   { tag: ['@characters', '@negative', '@warlock', '@dragonborn'] },
   () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let authToken: string;
+  let geraltCharacterId: number;
+
   const buildGeraltWarlockPayload = (
     name: string,
     payload: Partial<Omit<CharacterCreateRequestBody, 'name'>> = {},
@@ -4712,6 +4844,21 @@ test.describe(
     backgroundId: 1,
     level: 1,
     ...payload,
+  });
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+
+    const charactersClient = new CharactersClient(request);
+    const createResponse = await charactersClient.createCharacter(
+      buildGeraltWarlockPayload(`Geralt Of Rivia ${Date.now()}`),
+      authToken,
+    );
+
+    expect(createResponse.status()).toBe(201);
+
+    const character: CharacterResponseBody = await createResponse.json();
+    geraltCharacterId = character.id;
   });
 
   test(
@@ -4864,9 +5011,8 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
-      const response = await charactersClient.getCharacterDetail(999999, token);
+      const response = await charactersClient.getCharacterDetail(999999, authToken);
 
       await charactersAssert.notFound(response);
 
@@ -4882,12 +5028,11 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.updateCharacter(
         999999,
         { classId: 11 },
-        token,
+        authToken,
       );
 
       await charactersAssert.notFound(response);
@@ -4904,9 +5049,8 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
-      const response = await charactersClient.deleteCharacter(999999, token);
+      const response = await charactersClient.deleteCharacter(999999, authToken);
 
       await charactersAssert.notFound(response);
 
@@ -4922,9 +5066,11 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
-      const response = await charactersClient.getCharacterEquipment(999999, token);
+      const response = await charactersClient.getCharacterEquipment(
+        999999,
+        authToken,
+      );
 
       await charactersAssert.notFound(response);
 
@@ -4940,7 +5086,6 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.addCharacterEquipment(
         999999,
@@ -4949,7 +5094,7 @@ test.describe(
           quantity: 1,
           isEquipped: true,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.notFound(response);
@@ -4966,7 +5111,6 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.patchCharacterEquipment(
         999999,
@@ -4974,7 +5118,7 @@ test.describe(
         {
           quantity: 1,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.notFound(response);
@@ -4991,12 +5135,11 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.deleteCharacterEquipment(
         999999,
         1,
-        token,
+        authToken,
       );
 
       await charactersAssert.notFound(response);
@@ -5013,27 +5156,15 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
-
-      const createResponse = await charactersClient.createCharacter(
-        buildGeraltWarlockPayload(
-          `Geralt Of Rivia Invalid Equipment ${Date.now()}`,
-        ),
-        token,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody = await createResponse.json();
 
       const response = await charactersClient.addCharacterEquipment(
-        createdCharacter.id,
+        geraltCharacterId,
         {
           equipmentId: 999999,
           quantity: 1,
           isEquipped: true,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.notFound(response);
@@ -5050,26 +5181,14 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
-
-      const createResponse = await charactersClient.createCharacter(
-        buildGeraltWarlockPayload(
-          `Geralt Of Rivia Missing Equipment Patch ${Date.now()}`,
-        ),
-        token,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody = await createResponse.json();
 
       const response = await charactersClient.patchCharacterEquipment(
-        createdCharacter.id,
+        geraltCharacterId,
         999999,
         {
           quantity: 1,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.notFound(response);
@@ -5089,23 +5208,11 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
-
-      const createResponse = await charactersClient.createCharacter(
-        buildGeraltWarlockPayload(
-          `Geralt Of Rivia Missing Equipment Delete ${Date.now()}`,
-        ),
-        token,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody = await createResponse.json();
 
       const response = await charactersClient.deleteCharacterEquipment(
-        createdCharacter.id,
+        geraltCharacterId,
         999999,
-        token,
+        authToken,
       );
 
       await charactersAssert.notFound(response);
@@ -5125,27 +5232,15 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
-
-      const createResponse = await charactersClient.createCharacter(
-        buildGeraltWarlockPayload(
-          `Geralt Of Rivia Invalid Equipment Payload ${Date.now()}`,
-        ),
-        token,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody = await createResponse.json();
 
       const response = await charactersClient.addCharacterEquipment(
-        createdCharacter.id,
+        geraltCharacterId,
         {
           equipmentId: 1,
           quantity: 0,
           isEquipped: true,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(response);
@@ -5165,15 +5260,14 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.patchCharacterEquipment(
-        1,
+        geraltCharacterId,
         1,
         {
           quantity: 0,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(response);
@@ -5193,13 +5287,12 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.patchCharacterEquipment(
-        1,
+        geraltCharacterId,
         1,
         {},
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(response);
@@ -5219,15 +5312,14 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.patchCharacterEquipment(
-        1,
+        geraltCharacterId,
         1,
         {
           quantity: '3',
         } as unknown as { quantity: number },
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(response);
@@ -5247,7 +5339,6 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.createCharacter(
         {
@@ -5257,7 +5348,7 @@ test.describe(
           backgroundId: 1,
           level: 1,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(response);
@@ -5277,23 +5368,13 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
-
-      const createResponse = await charactersClient.createCharacter(
-        buildGeraltWarlockPayload(`Geralt Of Rivia Invalid Patch ${Date.now()}`),
-        token,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody = await createResponse.json();
 
       const updateResponse = await charactersClient.updateCharacter(
-        createdCharacter.id,
+        geraltCharacterId,
         {
           level: 0,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(updateResponse);
@@ -5313,7 +5394,6 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.createCharacter(
         buildGeraltWarlockPayload(`Geralt Of Rivia Incomplete Scores ${Date.now()}`, {
@@ -5326,7 +5406,7 @@ test.describe(
             },
           } as unknown as CharacterAbilityScoresInput,
         }),
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(response);
@@ -5346,19 +5426,9 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
-
-      const createResponse = await charactersClient.createCharacter(
-        buildGeraltWarlockPayload(`Geralt Of Rivia Invalid Scores ${Date.now()}`),
-        token,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody = await createResponse.json();
 
       const response = await charactersClient.updateCharacter(
-        createdCharacter.id,
+        geraltCharacterId,
         {
           abilityScores: {
             base: {
@@ -5379,7 +5449,7 @@ test.describe(
             },
           } as unknown as CharacterAbilityScoresInput,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(response);
@@ -5399,7 +5469,6 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
 
       const response = await charactersClient.createCharacter(
         buildGeraltWarlockPayload(
@@ -5410,7 +5479,7 @@ test.describe(
           } as unknown as CharacterCurrency,
           },
         ),
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(response);
@@ -5430,19 +5499,9 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      const token = await issueDemoToken(request);
-
-      const createResponse = await charactersClient.createCharacter(
-        buildGeraltWarlockPayload(`Geralt Of Rivia Invalid Currency ${Date.now()}`),
-        token,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody = await createResponse.json();
 
       const response = await charactersClient.updateCharacter(
-        createdCharacter.id,
+        geraltCharacterId,
         {
           currency: {
             cp: 0,
@@ -5452,7 +5511,7 @@ test.describe(
             pp: 0,
           } as unknown as CharacterCurrency,
         },
-        token,
+        authToken,
       );
 
       await charactersAssert.badRequest(response);

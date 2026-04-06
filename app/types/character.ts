@@ -185,6 +185,23 @@ export interface CharacterInventoryWeight {
   sources: CharacterInventoryWeightSource[];
 }
 
+export interface CharacterSpellcastingSummary {
+  canCastSpells: boolean;
+  ability: Attributeshortname | null;
+  abilityModifier: number | null;
+  spellSaveDc: number | null;
+  spellAttackBonus: number | null;
+  selectedSpellsCount: number;
+  selectedCantripsCount: number;
+}
+
+export interface CharacterSpellSlot {
+  level: number;
+  max: number;
+  used: number;
+  available: number;
+}
+
 export interface CharacterAbilityScoreBonusChoice {
   bonus: number;
   count: number;
@@ -264,6 +281,9 @@ export interface CharacterResponseBody {
   passivePerception: CharacterPassivePerception | null;
   movement: CharacterMovement | null;
   inventoryWeight: CharacterInventoryWeight;
+  spellcastingSummary: CharacterSpellcastingSummary;
+  spellSlots: CharacterSpellSlot[];
+  selectedSpells: CharacterSelectedSpellDetail[];
   currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
   abilityScoreRules: CharacterAbilityScoreRules | null;
@@ -297,6 +317,15 @@ export interface CharacterSpellSelectionRule {
 
 export interface CharacterSelectedSpellItem extends CharacterSpellOptionItem {
   selectionType: CharacterSpellSelectionType;
+}
+
+export interface CharacterSelectedSpellDetail extends CharacterSelectedSpellItem {
+  slug: string;
+  school: string;
+  castingTime: string;
+  range: string;
+  components: string[];
+  duration: string;
 }
 
 export interface CharacterSpellSelectionResponseBody {

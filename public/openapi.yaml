@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.16.0
+  version: 1.17.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -1081,6 +1081,16 @@ paths:
                   total: 0
                   unit: lb
                   sources: []
+                spellcastingSummary:
+                  canCastSpells: false
+                  ability: null
+                  abilityModifier: null
+                  spellSaveDc: null
+                  spellAttackBonus: null
+                  selectedSpellsCount: 0
+                  selectedCantripsCount: 0
+                spellSlots: []
+                selectedSpells: []
                 currency: null
                 skillProficiencies: []
                 abilityScoreRules: null
@@ -1132,6 +1142,9 @@ paths:
         - `passivePerception`
         - `movement`
         - `inventoryWeight`
+        - `spellcastingSummary`
+        - `spellSlots`
+        - `selectedSpells`
         - `currency`
         - `skillProficiencies`
         - `abilityScoreRules`
@@ -1154,6 +1167,12 @@ paths:
         `movement` is derived from `speciesDetails.speed` and currently uses `ft` as the unit. It is returned as `null` until species details with a numeric speed are available.
 
         `inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
+
+        `spellcastingSummary` is derived from the character class spellcasting metadata, character level, resolved spellcasting ability modifier, and selected spells. For non-casters, `canCastSpells` is `false`, spellcasting ability values are `null`, and selected spell counts are `0`.
+
+        `spellSlots` is derived from class spellcasting progression and character level. It is returned as an empty array for non-casters or classes without supported slot progression; `used` currently starts at `0`, and `available` is `max - used`.
+
+        `selectedSpells` contains enriched spell details for the character's selected spells, ordered by spell level and spell id. It is returned as an empty array when no spells are selected.
       security:
         - bearerAuth: []
       parameters:
@@ -1340,6 +1359,33 @@ paths:
                       quantity: 1
                       weight: 2
                       total: 2
+                spellcastingSummary:
+                  canCastSpells: true
+                  ability: INT
+                  abilityModifier: 3
+                  spellSaveDc: 13
+                  spellAttackBonus: 5
+                  selectedSpellsCount: 0
+                  selectedCantripsCount: 1
+                spellSlots:
+                  - level: 1
+                    max: 2
+                    used: 0
+                    available: 2
+                selectedSpells:
+                  - id: 1
+                    name: Acid Splash
+                    slug: acid-splash
+                    level: 0
+                    levelLabel: Cantrip
+                    school: Evocation
+                    castingTime: Action
+                    range: 60 feet
+                    components:
+                      - V
+                      - S
+                    duration: Instantaneous
+                    selectionType: cantrip
                 currency:
                   cp: 0
                   sp: 0
@@ -4195,6 +4241,9 @@ components:
         - passivePerception
         - movement
         - inventoryWeight
+        - spellcastingSummary
+        - spellSlots
+        - selectedSpells
         - currency
         - skillProficiencies
         - abilityScoreRules
@@ -4268,6 +4317,16 @@ components:
             - $ref: '#/components/schemas/CharacterMovement'
         inventoryWeight:
           $ref: '#/components/schemas/CharacterInventoryWeight'
+        spellcastingSummary:
+          $ref: '#/components/schemas/CharacterSpellcastingSummary'
+        spellSlots:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSpellSlot'
+        selectedSpells:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSelectedSpellDetail'
         currency:
           nullable: true
           allOf:
@@ -4316,6 +4375,99 @@ components:
         levelLabel:
           type: string
           example: Cantrip
+
+    CharacterSpellcastingSummary:
+      type: object
+      required:
+        - canCastSpells
+        - ability
+        - abilityModifier
+        - spellSaveDc
+        - spellAttackBonus
+        - selectedSpellsCount
+        - selectedCantripsCount
+      properties:
+        canCastSpells:
+          type: boolean
+          example: true
+        ability:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AttributeShortname'
+        abilityModifier:
+          type: integer
+          nullable: true
+          example: 3
+        spellSaveDc:
+          type: integer
+          nullable: true
+          example: 13
+        spellAttackBonus:
+          type: integer
+          nullable: true
+          example: 5
+        selectedSpellsCount:
+          type: integer
+          example: 0
+        selectedCantripsCount:
+          type: integer
+          example: 1
+
+    CharacterSpellSlot:
+      type: object
+      required:
+        - level
+        - max
+        - used
+        - available
+      properties:
+        level:
+          type: integer
+          example: 1
+        max:
+          type: integer
+          example: 2
+        used:
+          type: integer
+          example: 0
+        available:
+          type: integer
+          example: 2
+
+    CharacterSelectedSpellDetail:
+      allOf:
+        - $ref: '#/components/schemas/CharacterSelectedSpellItem'
+        - type: object
+          required:
+            - slug
+            - school
+            - castingTime
+            - range
+            - components
+            - duration
+          properties:
+            slug:
+              type: string
+              example: acid-splash
+            school:
+              type: string
+              example: Evocation
+            castingTime:
+              type: string
+              example: Action
+            range:
+              type: string
+              example: 60 feet
+            components:
+              type: array
+              items:
+                type: string
+              example:
+                - V
+                - S
+            duration:
+              type: string
+              example: Instantaneous
 
     CharacterSkillItem:
       type: object
