@@ -9,6 +9,7 @@ import {
   CharacterEquipmentResponseBody,
   CharacterHitPoints,
   CharacterListItem,
+  CharacterSavingThrow,
   CharacterSkillItem,
   CharacterSpellOptionsResponseBody,
   CharacterSpellSelectionResponseBody,
@@ -567,6 +568,7 @@ export class CharactersAssert {
       expect(character).toHaveProperty('armorClass');
       expect(character).toHaveProperty('weaponAttacks');
       expect(character).toHaveProperty('hitPoints');
+      expect(character).toHaveProperty('savingThrows');
       expect(character).toHaveProperty('currency');
       expect(character).toHaveProperty('skillProficiencies');
       expect(character).toHaveProperty('abilityScoreRules');
@@ -602,6 +604,7 @@ export class CharactersAssert {
       expect(
         character.hitPoints === null || typeof character.hitPoints === 'object',
       ).toBe(true);
+      expect(Array.isArray(character.savingThrows)).toBe(true);
       expect(
         character.currency === null || typeof character.currency === 'object',
       ).toBe(true);
@@ -653,6 +656,8 @@ export class CharactersAssert {
     if (character.hitPoints) {
       await this.validateHitPointsSchema(character.hitPoints);
     }
+
+    await this.validateSavingThrowsSchema(character.savingThrows);
 
     if (character.currency) {
       await this.validateCurrencySchema(character.currency);
@@ -944,6 +949,104 @@ export class CharactersAssert {
     if (hitPoints) {
       await this.validateHitPointsSchema(hitPoints);
     }
+  }
+
+  async validateSavingThrowsSchema(savingThrows: CharacterSavingThrow[]) {
+    await test.step('Validate saving throws schema', async () => {
+      expect(Array.isArray(savingThrows)).toBe(true);
+    });
+
+    for (const savingThrow of savingThrows) {
+      await test.step(
+        `Validate saving throw schema for ${savingThrow.ability}`,
+        async () => {
+          expect(savingThrow).toHaveProperty('ability');
+          expect(savingThrow).toHaveProperty('isProficient');
+          expect(savingThrow).toHaveProperty('abilityModifier');
+          expect(savingThrow).toHaveProperty('proficiencyBonus');
+          expect(savingThrow).toHaveProperty('bonus');
+          expect(savingThrow).toHaveProperty('total');
+          expect(savingThrow).toHaveProperty('sources');
+
+          expect(typeof savingThrow.ability).toBe('string');
+          expect(typeof savingThrow.isProficient).toBe('boolean');
+          expect(typeof savingThrow.abilityModifier).toBe('number');
+          expect(typeof savingThrow.proficiencyBonus).toBe('number');
+          expect(typeof savingThrow.bonus).toBe('number');
+          expect(typeof savingThrow.total).toBe('number');
+          expect(Array.isArray(savingThrow.sources)).toBe(true);
+        },
+      );
+
+      for (const source of savingThrow.sources) {
+        await test.step(
+          `Validate saving throw source schema for ${savingThrow.ability}`,
+          async () => {
+            expect(source).toHaveProperty('type');
+            expect(source).toHaveProperty('value');
+
+            expect(['abilityModifier', 'classProficiency', 'bonus']).toContain(
+              source.type,
+            );
+            expect(typeof source.value).toBe('number');
+          },
+        );
+      }
+    }
+  }
+
+  async validateSavingThrowOrder(savingThrows: CharacterSavingThrow[]) {
+    await test.step('Validate Saving Throw Order', async () => {
+      expect(savingThrows.map((savingThrow) => savingThrow.ability)).toEqual([
+        'STR',
+        'DEX',
+        'CON',
+        'INT',
+        'WIS',
+        'CHA',
+      ]);
+    });
+  }
+
+  async validateSavingThrow(
+    savingThrows: CharacterSavingThrow[],
+    expectedSavingThrow: Omit<CharacterSavingThrow, 'sources'>,
+  ) {
+    await test.step(
+      `Validate saving throw for ${expectedSavingThrow.ability}`,
+      async () => {
+        const savingThrow = savingThrows.find(
+          (item) => item.ability === expectedSavingThrow.ability,
+        );
+
+        expect(savingThrow).toBeDefined();
+        expect(savingThrow).toMatchObject(expectedSavingThrow);
+        expect(savingThrow?.total).toBe(
+          expectedSavingThrow.abilityModifier +
+            expectedSavingThrow.proficiencyBonus +
+            expectedSavingThrow.bonus,
+        );
+        expect(savingThrow?.sources).toEqual(
+          expect.arrayContaining([
+            {
+              type: 'abilityModifier',
+              value: expectedSavingThrow.abilityModifier,
+            },
+          ]),
+        );
+
+        if (expectedSavingThrow.isProficient) {
+          expect(savingThrow?.sources).toEqual(
+            expect.arrayContaining([
+              {
+                type: 'classProficiency',
+                value: expectedSavingThrow.proficiencyBonus,
+              },
+            ]),
+          );
+        }
+      },
+    );
   }
 
   async validateCurrencySchema(currency: CharacterCurrency) {

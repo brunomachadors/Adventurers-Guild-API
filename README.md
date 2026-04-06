@@ -344,6 +344,7 @@ Response fields:
 - `armorClass`
 - `weaponAttacks`
 - `hitPoints`
+- `savingThrows`
 - `currency`
 - `skillProficiencies`
 - `abilityScoreRules`
@@ -386,6 +387,7 @@ Response fields:
 - `armorClass`
 - `weaponAttacks`
 - `hitPoints`
+- `savingThrows`
 - `currency`
 - `abilityScoreRules`
 - `classDetails`
@@ -403,6 +405,8 @@ Returns:
 `weaponAttacks` is derived from currently equipped weapons, class weapon proficiencies, character level, and resolved ability modifiers. If no weapon is equipped, it is returned as an empty array.
 
 `hitPoints` is derived from the character's class hit die, level, and resolved CON modifier. It is returned as `null` until class details and ability modifiers are available; when calculated, `current` starts equal to `max` and `temporary` starts at `0`.
+
+`savingThrows` is derived from class saving throw proficiencies, character level, and resolved ability modifiers. It is returned as an empty array until class details and ability modifiers are available; when calculated, it is ordered as `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.
 
 ### `PATCH /api/characters/{id}`
 
@@ -769,6 +773,68 @@ Character detail:
     "conModifier": 1,
     "calculation": "6 + 1"
   },
+  "savingThrows": [
+    {
+      "ability": "STR",
+      "isProficient": false,
+      "abilityModifier": -1,
+      "proficiencyBonus": 0,
+      "bonus": 0,
+      "total": -1,
+      "sources": [{ "type": "abilityModifier", "value": -1 }]
+    },
+    {
+      "ability": "DEX",
+      "isProficient": false,
+      "abilityModifier": 2,
+      "proficiencyBonus": 0,
+      "bonus": 0,
+      "total": 2,
+      "sources": [{ "type": "abilityModifier", "value": 2 }]
+    },
+    {
+      "ability": "CON",
+      "isProficient": false,
+      "abilityModifier": 1,
+      "proficiencyBonus": 0,
+      "bonus": 0,
+      "total": 1,
+      "sources": [{ "type": "abilityModifier", "value": 1 }]
+    },
+    {
+      "ability": "INT",
+      "isProficient": true,
+      "abilityModifier": 3,
+      "proficiencyBonus": 2,
+      "bonus": 0,
+      "total": 5,
+      "sources": [
+        { "type": "abilityModifier", "value": 3 },
+        { "type": "classProficiency", "value": 2 }
+      ]
+    },
+    {
+      "ability": "WIS",
+      "isProficient": true,
+      "abilityModifier": 1,
+      "proficiencyBonus": 2,
+      "bonus": 0,
+      "total": 3,
+      "sources": [
+        { "type": "abilityModifier", "value": 1 },
+        { "type": "classProficiency", "value": 2 }
+      ]
+    },
+    {
+      "ability": "CHA",
+      "isProficient": false,
+      "abilityModifier": 0,
+      "proficiencyBonus": 0,
+      "bonus": 0,
+      "total": 0,
+      "sources": [{ "type": "abilityModifier", "value": 0 }]
+    }
+  ],
   "currency": {
     "cp": 0,
     "sp": 0,

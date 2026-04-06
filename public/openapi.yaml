@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.14.0
+  version: 1.15.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -16,7 +16,7 @@ info:
     - Classes list and detail
     - Spells list and detail
     - Species list and detail
-    - Character management, deletion, equipment flows, ability score flows, character skill flows, and character spell flows
+    - Character management, deletion, equipment flows, ability score flows, calculated combat stats, character skill flows, and character spell flows
 
 servers:
   - url: http://localhost:3000
@@ -1073,6 +1073,7 @@ paths:
                       value: 10
                 weaponAttacks: []
                 hitPoints: null
+                savingThrows: []
                 currency: null
                 skillProficiencies: []
                 abilityScoreRules: null
@@ -1119,6 +1120,7 @@ paths:
         - `armorClass`
         - `weaponAttacks`
         - `hitPoints`
+        - `savingThrows`
         - `currency`
         - `skillProficiencies`
         - `abilityScoreRules`
@@ -1131,6 +1133,8 @@ paths:
         `weaponAttacks` is derived from currently equipped weapons, class weapon proficiencies, character level, and resolved ability modifiers. If no weapon is equipped, it is returned as an empty array.
 
         `hitPoints` is derived from the character's class hit die, level, and resolved CON modifier. It is returned as `null` until class details and ability modifiers are available; when calculated, `current` starts equal to `max` and `temporary` starts at `0`.
+
+        `savingThrows` is derived from class saving throw proficiencies, character level, and resolved ability modifiers. It is returned as an empty array until class details and ability modifiers are available; when calculated, it is ordered as `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.
       security:
         - bearerAuth: []
       parameters:
@@ -1221,6 +1225,65 @@ paths:
                   hitDie: 6
                   conModifier: 1
                   calculation: 6 + 1
+                savingThrows:
+                  - ability: STR
+                    isProficient: false
+                    abilityModifier: -1
+                    proficiencyBonus: 0
+                    bonus: 0
+                    total: -1
+                    sources:
+                      - type: abilityModifier
+                        value: -1
+                  - ability: DEX
+                    isProficient: false
+                    abilityModifier: 2
+                    proficiencyBonus: 0
+                    bonus: 0
+                    total: 2
+                    sources:
+                      - type: abilityModifier
+                        value: 2
+                  - ability: CON
+                    isProficient: false
+                    abilityModifier: 1
+                    proficiencyBonus: 0
+                    bonus: 0
+                    total: 1
+                    sources:
+                      - type: abilityModifier
+                        value: 1
+                  - ability: INT
+                    isProficient: true
+                    abilityModifier: 3
+                    proficiencyBonus: 2
+                    bonus: 0
+                    total: 5
+                    sources:
+                      - type: abilityModifier
+                        value: 3
+                      - type: classProficiency
+                        value: 2
+                  - ability: WIS
+                    isProficient: true
+                    abilityModifier: 1
+                    proficiencyBonus: 2
+                    bonus: 0
+                    total: 3
+                    sources:
+                      - type: abilityModifier
+                        value: 1
+                      - type: classProficiency
+                        value: 2
+                  - ability: CHA
+                    isProficient: false
+                    abilityModifier: 0
+                    proficiencyBonus: 0
+                    bonus: 0
+                    total: 0
+                    sources:
+                      - type: abilityModifier
+                        value: 0
                 currency:
                   cp: 0
                   sp: 0
@@ -3542,6 +3605,56 @@ components:
           type: string
           example: 6 + 1
 
+    CharacterSavingThrowSource:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - abilityModifier
+            - classProficiency
+            - bonus
+          example: abilityModifier
+        value:
+          type: integer
+          example: 3
+
+    CharacterSavingThrow:
+      type: object
+      required:
+        - ability
+        - isProficient
+        - abilityModifier
+        - proficiencyBonus
+        - bonus
+        - total
+        - sources
+      properties:
+        ability:
+          $ref: '#/components/schemas/AttributeShortname'
+        isProficient:
+          type: boolean
+          example: true
+        abilityModifier:
+          type: integer
+          example: 3
+        proficiencyBonus:
+          type: integer
+          example: 2
+        bonus:
+          type: integer
+          example: 0
+        total:
+          type: integer
+          example: 5
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSavingThrowSource'
+
     CharacterAbilityScoreBonusChoice:
       type: object
       required:
@@ -3834,6 +3947,7 @@ components:
         - armorClass
         - weaponAttacks
         - hitPoints
+        - savingThrows
         - currency
         - skillProficiencies
         - abilityScoreRules
@@ -3889,6 +4003,10 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CharacterHitPoints'
+        savingThrows:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSavingThrow'
         currency:
           nullable: true
           allOf:
