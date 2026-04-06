@@ -1,6 +1,7 @@
 import {
   CharacterAbilityScoreOptionsResponseBody,
   CharacterAbilityModifiers,
+  CharacterArmorClass,
   CharacterAbilityScores,
   CharacterCurrency,
   CharacterResolvedAbilityScores,
@@ -413,6 +414,7 @@ export class CharactersAssert {
       expect(character).toHaveProperty('missingFields');
       expect(character).toHaveProperty('abilityScores');
       expect(character).toHaveProperty('abilityModifiers');
+      expect(character).toHaveProperty('armorClass');
       expect(character).toHaveProperty('currency');
       expect(character).toHaveProperty('skillProficiencies');
       expect(character).toHaveProperty('abilityScoreRules');
@@ -443,6 +445,7 @@ export class CharactersAssert {
         character.abilityModifiers === null ||
           typeof character.abilityModifiers === 'object',
       ).toBe(true);
+      expect(typeof character.armorClass).toBe('object');
       expect(
         character.currency === null || typeof character.currency === 'object',
       ).toBe(true);
@@ -487,6 +490,8 @@ export class CharactersAssert {
     if (character.abilityModifiers) {
       await this.validateAbilityModifiersSchema(character.abilityModifiers);
     }
+
+    await this.validateArmorClassSchema(character.armorClass);
 
     if (character.currency) {
       await this.validateCurrencySchema(character.currency);
@@ -698,6 +703,47 @@ export class CharactersAssert {
       expect(typeof abilityModifiers.WIS).toBe('number');
       expect(typeof abilityModifiers.CHA).toBe('number');
     });
+  }
+
+  async validateArmorClassSchema(armorClass: CharacterArmorClass) {
+    await test.step('Validate armor class schema', async () => {
+      expect(armorClass).toHaveProperty('total');
+      expect(armorClass).toHaveProperty('base');
+      expect(armorClass).toHaveProperty('dexModifierApplied');
+      expect(armorClass).toHaveProperty('classBonus');
+      expect(armorClass).toHaveProperty('shieldBonus');
+      expect(armorClass).toHaveProperty('sources');
+
+      expect(typeof armorClass.total).toBe('number');
+      expect(typeof armorClass.base).toBe('number');
+      expect(typeof armorClass.dexModifierApplied).toBe('number');
+      expect(typeof armorClass.classBonus).toBe('number');
+      expect(typeof armorClass.shieldBonus).toBe('number');
+      expect(Array.isArray(armorClass.sources)).toBe(true);
+    });
+
+    for (const source of armorClass.sources) {
+      await test.step(`Validate armor class source schema for ${source.name}`, async () => {
+        expect(source).toHaveProperty('name');
+        expect(source).toHaveProperty('type');
+        expect(source).toHaveProperty('value');
+
+        expect(typeof source.name).toBe('string');
+        expect(['base', 'armor', 'shield', 'class']).toContain(source.type);
+        expect(typeof source.value).toBe('number');
+      });
+    }
+  }
+
+  async validateArmorClass(
+    armorClass: CharacterArmorClass,
+    expectedArmorClass: CharacterArmorClass,
+  ) {
+    await test.step('Validate Armor Class', async () => {
+      expect(armorClass).toEqual(expectedArmorClass);
+    });
+
+    await this.validateArmorClassSchema(armorClass);
   }
 
   async validateCurrencySchema(currency: CharacterCurrency) {

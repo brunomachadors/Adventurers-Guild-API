@@ -340,6 +340,7 @@ Response fields:
 - `missingFields`
 - `abilityScores`
 - `abilityModifiers`
+- `armorClass`
 - `skillProficiencies`
 - `abilityScoreRules`
 - `classDetails`
@@ -378,6 +379,7 @@ Response fields:
 - `skillProficiencies`
 - `abilityScores`
 - `abilityModifiers`
+- `armorClass`
 - `abilityScoreRules`
 - `classDetails`
 - `speciesDetails`
@@ -388,6 +390,8 @@ Returns:
 - `401` with `{ "error": "Unauthorized" }`
 - `404` with `{ "error": "Character not found" }`
 - `500` with `{ "error": "Failed to fetch character detail" }`
+
+`armorClass` is calculated from the character's resolved DEX modifier and currently equipped armor or shield. If no armor is equipped, the base AC is `10`; Barbarian and Monk unarmored defense can contribute a `class` source when their rules apply.
 
 ### `PATCH /api/characters/{id}`
 
@@ -706,6 +710,20 @@ Character detail:
     "INT": 3,
     "WIS": 1,
     "CHA": 0
+  },
+  "armorClass": {
+    "total": 12,
+    "base": 10,
+    "dexModifierApplied": 2,
+    "classBonus": 0,
+    "shieldBonus": 0,
+    "sources": [
+      {
+        "name": "Base AC",
+        "type": "base",
+        "value": 10
+      }
+    ]
   },
   "abilityScoreRules": {
     "source": "background",
