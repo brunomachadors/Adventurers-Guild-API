@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.12.0
+  version: 1.13.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -1071,6 +1071,8 @@ paths:
                     - name: Base AC
                       type: base
                       value: 10
+                weaponAttacks: []
+                currency: null
                 skillProficiencies: []
                 abilityScoreRules: null
                 classDetails: null
@@ -1114,6 +1116,8 @@ paths:
         - `abilityScores`
         - `abilityModifiers`
         - `armorClass`
+        - `weaponAttacks`
+        - `currency`
         - `skillProficiencies`
         - `abilityScoreRules`
         - `classDetails`
@@ -1121,6 +1125,8 @@ paths:
         - `backgroundDetails`
 
         `armorClass` is calculated from resolved DEX modifier and currently equipped armor or shield. If no armor is equipped, the base AC is `10`; Barbarian and Monk unarmored defense can contribute a `class` source when their rules apply.
+
+        `weaponAttacks` is derived from currently equipped weapons, class weapon proficiencies, character level, and resolved ability modifiers. If no weapon is equipped, it is returned as an empty array.
       security:
         - bearerAuth: []
       parameters:
@@ -1183,6 +1189,33 @@ paths:
                     - name: Base AC
                       type: base
                       value: 10
+                weaponAttacks:
+                  - equipmentId: 42
+                    name: Shortbow
+                    attackType: ranged
+                    ability: DEX
+                    isProficient: true
+                    abilityModifier: 2
+                    proficiencyBonus: 2
+                    attackBonus: 4
+                    damage:
+                      formula: 1d6 + 2
+                      base: 1d6
+                      modifier: 2
+                      damageType: Piercing
+                    properties:
+                      - Ammunition
+                      - Two-Handed
+                    range:
+                      normal: 80
+                      long: 320
+                      unit: ft
+                currency:
+                  cp: 0
+                  sp: 0
+                  ep: 0
+                  gp: 8
+                  pp: 0
                 abilityScoreRules:
                   source: background
                   allowedChoices:
@@ -3371,6 +3404,104 @@ components:
               type: base
               value: 10
 
+    CharacterCurrency:
+      type: object
+      required:
+        - cp
+        - sp
+        - ep
+        - gp
+        - pp
+      properties:
+        cp:
+          type: integer
+          example: 0
+        sp:
+          type: integer
+          example: 0
+        ep:
+          type: integer
+          example: 0
+        gp:
+          type: integer
+          example: 8
+        pp:
+          type: integer
+          example: 0
+
+    CharacterWeaponAttackDamage:
+      type: object
+      required:
+        - formula
+        - base
+        - modifier
+        - damageType
+      properties:
+        formula:
+          type: string
+          example: 1d6 + 2
+        base:
+          type: string
+          example: 1d6
+        modifier:
+          type: integer
+          example: 2
+        damageType:
+          type: string
+          example: Piercing
+
+    CharacterWeaponAttack:
+      type: object
+      required:
+        - equipmentId
+        - name
+        - attackType
+        - ability
+        - isProficient
+        - abilityModifier
+        - proficiencyBonus
+        - attackBonus
+        - damage
+        - properties
+        - range
+      properties:
+        equipmentId:
+          type: integer
+          example: 42
+        name:
+          type: string
+          example: Shortbow
+        attackType:
+          type: string
+          example: ranged
+        ability:
+          $ref: '#/components/schemas/AttributeShortname'
+        isProficient:
+          type: boolean
+          example: true
+        abilityModifier:
+          type: integer
+          example: 2
+        proficiencyBonus:
+          type: integer
+          example: 2
+        attackBonus:
+          type: integer
+          example: 4
+        damage:
+          $ref: '#/components/schemas/CharacterWeaponAttackDamage'
+        properties:
+          type: array
+          items:
+            type: string
+          example:
+            - Ammunition
+            - Two-Handed
+        range:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/EquipmentRange'
+
     CharacterAbilityScoreBonusChoice:
       type: object
       required:
@@ -3493,6 +3624,10 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CharacterAbilityScoresInput'
+        currency:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterCurrency'
         skillProficiencies:
           type: array
           items:
@@ -3531,6 +3666,10 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CharacterAbilityScoresInput'
+        currency:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterCurrency'
         skillProficiencies:
           type: array
           items:
@@ -3653,6 +3792,8 @@ components:
         - abilityScores
         - abilityModifiers
         - armorClass
+        - weaponAttacks
+        - currency
         - skillProficiencies
         - abilityScoreRules
         - classDetails
@@ -3699,6 +3840,14 @@ components:
             - $ref: '#/components/schemas/CharacterAbilityModifiers'
         armorClass:
           $ref: '#/components/schemas/CharacterArmorClass'
+        weaponAttacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterWeaponAttack'
+        currency:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterCurrency'
         skillProficiencies:
           type: array
           items:
