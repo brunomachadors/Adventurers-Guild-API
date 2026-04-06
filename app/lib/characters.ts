@@ -18,6 +18,7 @@ import { BackgroundDetail } from '@/app/types/background';
 import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
 import { SKILL_NAMES, SkillName } from '@/app/types/skill';
 import { getCharacterArmorClass } from './character-armor-class';
+import { getCharacterWeaponAttacks } from './character-weapon-attacks';
 import { getSql } from './db';
 
 function toNumber(value: number | string): number {
@@ -607,6 +608,12 @@ export async function formatCharacterResponse(character: {
     classDetails,
     abilityModifiers,
   );
+  const weaponAttacks = await getCharacterWeaponAttacks(
+    formattedCharacter.id,
+    formattedCharacter.level,
+    classDetails?.slug ?? null,
+    abilityModifiers,
+  );
 
   return {
     ...formattedCharacter,
@@ -615,6 +622,7 @@ export async function formatCharacterResponse(character: {
     abilityScores: formattedCharacter.abilityScores,
     abilityModifiers,
     armorClass,
+    weaponAttacks,
     currency: formattedCharacter.currency,
     skillProficiencies: formattedCharacter.skillProficiencies,
     abilityScoreRules,

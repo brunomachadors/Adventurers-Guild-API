@@ -70,6 +70,15 @@ const drizztAbilityScores: CharacterAbilityScores = {
   CHA: 12,
 };
 
+const gimliAbilityScores: CharacterAbilityScores = {
+  STR: 15,
+  DEX: 13,
+  CON: 14,
+  INT: 8,
+  WIS: 12,
+  CHA: 10,
+};
+
 const barbarianAbilityBonuses: CharacterAbilityScores = {
   STR: 2,
   DEX: 0,
@@ -115,6 +124,15 @@ const drizztAbilityBonuses: CharacterAbilityScores = {
   CHA: 0,
 };
 
+const gimliAbilityBonuses: CharacterAbilityScores = {
+  STR: 2,
+  DEX: 0,
+  CON: 1,
+  INT: 0,
+  WIS: 0,
+  CHA: 0,
+};
+
 const barbarianAbilityScoresInput: CharacterAbilityScoresInput = {
   base: barbarianAbilityScores,
   bonuses: barbarianAbilityBonuses,
@@ -138,6 +156,11 @@ const aangAbilityScoresInput: CharacterAbilityScoresInput = {
 const drizztAbilityScoresInput: CharacterAbilityScoresInput = {
   base: drizztAbilityScores,
   bonuses: drizztAbilityBonuses,
+};
+
+const gimliAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: gimliAbilityScores,
+  bonuses: gimliAbilityBonuses,
 };
 
 const patchedCurrency: CharacterCurrency = {
@@ -1129,6 +1152,23 @@ test.describe(
         finalCharacter.armorClass,
         barbarianArmorClass,
       );
+      await charactersAssert.validateWeaponAttack(finalCharacter.weaponAttacks, {
+        name: 'Greataxe',
+        attackType: 'melee',
+        ability: 'STR',
+        isProficient: true,
+        abilityModifier: 3,
+        proficiencyBonus: 2,
+        attackBonus: 5,
+        damage: {
+          formula: '1d12 + 3',
+          base: '1d12',
+          modifier: 3,
+          damageType: 'Slashing',
+        },
+        properties: ['Heavy', 'Two-Handed'],
+        rangeExists: false,
+      });
       await charactersAssert.validateAbilityScoreRules(
         finalCharacter.abilityScoreRules,
         expectedDetailedBackgrounds.soldier.abilityScores,
@@ -1360,6 +1400,23 @@ test.describe(
         character.armorClass,
         aangArmorClass,
       );
+      await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+        name: 'Quarterstaff',
+        attackType: 'melee',
+        ability: 'STR',
+        isProficient: true,
+        abilityModifier: 0,
+        proficiencyBonus: 2,
+        attackBonus: 2,
+        damage: {
+          formula: '1d6',
+          base: '1d6',
+          modifier: 0,
+          damageType: 'Bludgeoning',
+        },
+        properties: ['Versatile'],
+        rangeExists: false,
+      });
     },
   );
   },
@@ -1868,6 +1925,31 @@ test.describe(
       await charactersAssert.validateArmorClass(
         character.armorClass,
         paladinArmorClass,
+      );
+      await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+        name: 'Longsword',
+        attackType: 'melee',
+        ability: 'STR',
+        isProficient: true,
+        abilityModifier: 3,
+        proficiencyBonus: 2,
+        attackBonus: 5,
+        damage: {
+          formula: '1d8 + 3',
+          base: '1d8',
+          modifier: 3,
+          damageType: 'Slashing',
+        },
+        properties: ['Versatile'],
+        rangeExists: false,
+      });
+      await charactersAssert.validateWeaponAttackAbsent(
+        character.weaponAttacks,
+        'Chain Mail',
+      );
+      await charactersAssert.validateWeaponAttackAbsent(
+        character.weaponAttacks,
+        'Shield',
       );
       await charactersAssert.validateCurrency(character.currency, nobleCurrency);
       await charactersAssert.validateAbilityScoreRules(
@@ -2857,6 +2939,27 @@ test.describe(
         finalCharacter.armorClass,
         wizardArmorClass,
       );
+      await charactersAssert.validateWeaponAttack(finalCharacter.weaponAttacks, {
+        name: 'Quarterstaff',
+        attackType: 'melee',
+        ability: 'STR',
+        isProficient: true,
+        abilityModifier: -1,
+        proficiencyBonus: 2,
+        attackBonus: 1,
+        damage: {
+          formula: '1d6 - 1',
+          base: '1d6',
+          modifier: -1,
+          damageType: 'Bludgeoning',
+        },
+        properties: ['Versatile'],
+        rangeExists: false,
+      });
+      await charactersAssert.validateWeaponAttackAbsent(
+        finalCharacter.weaponAttacks,
+        'Robe',
+      );
       await charactersAssert.validateAbilityScoreRules(
         finalCharacter.abilityScoreRules,
         expectedDetailedBackgrounds.sage.abilityScores,
@@ -3407,16 +3510,23 @@ test.describe(
   let characterWithoutEquipmentId: number;
   let characterWithEquipmentId: number;
   let greataxeEquipmentId: number;
+  let shortbowEquipmentId: number;
 
   test.beforeAll(async ({ request }) => {
     authToken = await issueDemoToken(request);
 
     const equipmentClient = new EquipmentClient(request);
-    const equipmentResponse = await equipmentClient.getEquipmentDetail('greataxe');
-    expect(equipmentResponse.status()).toBe(200);
-    const equipment: EquipmentDetail = await equipmentResponse.json();
-    expect(equipment.name).toBe('Greataxe');
-    greataxeEquipmentId = equipment.id;
+    const greataxeResponse = await equipmentClient.getEquipmentDetail('greataxe');
+    expect(greataxeResponse.status()).toBe(200);
+    const greataxe: EquipmentDetail = await greataxeResponse.json();
+    expect(greataxe.name).toBe('Greataxe');
+    greataxeEquipmentId = greataxe.id;
+
+    const shortbowResponse = await equipmentClient.getEquipmentDetail('shortbow');
+    expect(shortbowResponse.status()).toBe(200);
+    const shortbow: EquipmentDetail = await shortbowResponse.json();
+    expect(shortbow.name).toBe('Shortbow');
+    shortbowEquipmentId = shortbow.id;
   });
 
   test(
@@ -3433,6 +3543,7 @@ test.describe(
           speciesId: 2,
           backgroundId: 16,
           level: 1,
+          abilityScores: gimliAbilityScoresInput,
         },
         authToken,
       );
@@ -3446,6 +3557,11 @@ test.describe(
       await charactersAssert.validateClassId(character.classId, 5);
       await charactersAssert.validateSpeciesId(character.speciesId, 2);
       await charactersAssert.validateBackgroundId(character.backgroundId, 16);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        gimliAbilityScores,
+        gimliAbilityBonuses,
+      );
       await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
@@ -3476,6 +3592,21 @@ test.describe(
       await test.step('Validate character has no equipment', async () => {
         expect(characterEquipment.equipment).toEqual([]);
       });
+
+      const detailResponse = await charactersClient.getCharacterDetail(
+        characterWithoutEquipmentId,
+        authToken,
+      );
+
+      await charactersAssert.success(detailResponse);
+
+      const character: CharacterResponseBody = await detailResponse.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+
+      await test.step('Validate character has no weapon attacks', async () => {
+        expect(character.weaponAttacks).toEqual([]);
+      });
     },
   );
 
@@ -3493,6 +3624,7 @@ test.describe(
           speciesId: 2,
           backgroundId: 16,
           level: 1,
+          abilityScores: gimliAbilityScoresInput,
         },
         authToken,
       );
@@ -3506,6 +3638,11 @@ test.describe(
       await charactersAssert.validateClassId(character.classId, 5);
       await charactersAssert.validateSpeciesId(character.speciesId, 2);
       await charactersAssert.validateBackgroundId(character.backgroundId, 16);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        gimliAbilityScores,
+        gimliAbilityBonuses,
+      );
       await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
@@ -3522,6 +3659,8 @@ test.describe(
         authToken,
         [
           { slug: 'greataxe', quantity: 1, isEquipped: true },
+          { slug: 'shortbow', quantity: 1, isEquipped: true },
+          { slug: 'dagger', quantity: 1, isEquipped: false },
           { slug: 'chain-mail', quantity: 1, isEquipped: true },
           { slug: 'shield', quantity: 1, isEquipped: true },
         ],
@@ -3540,6 +3679,8 @@ test.describe(
       });
       await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
         { name: 'Greataxe', quantity: 1, isEquipped: true },
+        { name: 'Shortbow', quantity: 1, isEquipped: true },
+        { name: 'Dagger', quantity: 1, isEquipped: false },
         { name: 'Chain Mail', quantity: 1, isEquipped: true },
         { name: 'Shield', quantity: 1, isEquipped: true },
       ]);
@@ -3575,9 +3716,79 @@ test.describe(
       });
       await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
         { name: 'Greataxe', quantity: 1, isEquipped: true },
+        { name: 'Shortbow', quantity: 1, isEquipped: true },
+        { name: 'Dagger', quantity: 1, isEquipped: false },
         { name: 'Chain Mail', quantity: 1, isEquipped: true },
         { name: 'Shield', quantity: 1, isEquipped: true },
       ]);
+    },
+  );
+
+  test(
+    'Get Gimli Weapon Attacks',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        characterWithEquipmentId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+        equipmentId: greataxeEquipmentId,
+        name: 'Greataxe',
+        attackType: 'melee',
+        ability: 'STR',
+        isProficient: true,
+        abilityModifier: 3,
+        proficiencyBonus: 2,
+        attackBonus: 5,
+        damage: {
+          formula: '1d12 + 3',
+          base: '1d12',
+          modifier: 3,
+          damageType: 'Slashing',
+        },
+        properties: ['Heavy', 'Two-Handed'],
+        rangeExists: false,
+      });
+      await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+        equipmentId: shortbowEquipmentId,
+        name: 'Shortbow',
+        attackType: 'ranged',
+        ability: 'DEX',
+        isProficient: true,
+        abilityModifier: 1,
+        proficiencyBonus: 2,
+        attackBonus: 3,
+        damage: {
+          formula: '1d6 + 1',
+          base: '1d6',
+          modifier: 1,
+          damageType: 'Piercing',
+        },
+        properties: ['Ammunition', 'Two-Handed'],
+        rangeExists: true,
+      });
+      await charactersAssert.validateWeaponAttackAbsent(
+        character.weaponAttacks,
+        'Dagger',
+      );
+      await charactersAssert.validateWeaponAttackAbsent(
+        character.weaponAttacks,
+        'Chain Mail',
+      );
+      await charactersAssert.validateWeaponAttackAbsent(
+        character.weaponAttacks,
+        'Shield',
+      );
     },
   );
 
@@ -3614,6 +3825,8 @@ test.describe(
         isEquipped: false,
       });
       await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Shortbow', quantity: 1, isEquipped: true },
+        { name: 'Dagger', quantity: 1, isEquipped: false },
         { name: 'Chain Mail', quantity: 1, isEquipped: true },
         { name: 'Shield', quantity: 1, isEquipped: true },
       ]);
@@ -3717,6 +3930,8 @@ test.describe(
         greataxeEquipmentId,
       );
       await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Shortbow', quantity: 1, isEquipped: true },
+        { name: 'Dagger', quantity: 1, isEquipped: false },
         { name: 'Chain Mail', quantity: 1, isEquipped: true },
         { name: 'Shield', quantity: 1, isEquipped: true },
       ]);
@@ -3750,9 +3965,44 @@ test.describe(
         greataxeEquipmentId,
       );
       await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Shortbow', quantity: 1, isEquipped: true },
+        { name: 'Dagger', quantity: 1, isEquipped: false },
         { name: 'Chain Mail', quantity: 1, isEquipped: true },
         { name: 'Shield', quantity: 1, isEquipped: true },
       ]);
+
+      const detailResponse = await charactersClient.getCharacterDetail(
+        characterWithEquipmentId,
+        authToken,
+      );
+
+      await charactersAssert.success(detailResponse);
+
+      const character: CharacterResponseBody = await detailResponse.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateWeaponAttackAbsent(
+        character.weaponAttacks,
+        'Greataxe',
+      );
+      await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+        equipmentId: shortbowEquipmentId,
+        name: 'Shortbow',
+        attackType: 'ranged',
+        ability: 'DEX',
+        isProficient: true,
+        abilityModifier: 1,
+        proficiencyBonus: 2,
+        attackBonus: 3,
+      });
+      await charactersAssert.validateWeaponAttackAbsent(
+        character.weaponAttacks,
+        'Chain Mail',
+      );
+      await charactersAssert.validateWeaponAttackAbsent(
+        character.weaponAttacks,
+        'Shield',
+      );
     },
   );
   },
