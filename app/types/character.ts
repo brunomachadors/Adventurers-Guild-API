@@ -211,3 +211,23 @@ export interface CharacterSkillItem {
   proficiencyBonus: number;
   total: number;
 }
+
+export interface CharacterEquipmentItem {
+  id: number;
+  name: string;
+  category: string;
+  type: string;
+  quantity: number;
+  isEquipped: boolean;
+}
+
+export interface CharacterEquipmentResponseBody {
+  characterId: number;
+  equipment: CharacterEquipmentItem[];
+}
+
+export interface CharacterEquipmentAddRequestBody {
+  equipmentId: number;
+  quantity?: number;
+  isEquipped?: boolean;
+}

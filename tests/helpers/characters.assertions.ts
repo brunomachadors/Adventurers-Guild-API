@@ -5,6 +5,7 @@ import {
   CharacterCurrency,
   CharacterResolvedAbilityScores,
   CharacterClassDetails,
+  CharacterEquipmentResponseBody,
   CharacterListItem,
   CharacterSkillItem,
   CharacterSpellOptionsResponseBody,
@@ -202,6 +203,53 @@ export class CharactersAssert {
         expect(typeof skill.total).toBe('number');
       });
     }
+  }
+
+  async validateCharacterEquipmentSchema(
+    characterEquipment: CharacterEquipmentResponseBody,
+  ) {
+    await test.step('Validate character equipment response schema', async () => {
+      expect(characterEquipment).toHaveProperty('characterId');
+      expect(characterEquipment).toHaveProperty('equipment');
+
+      expect(typeof characterEquipment.characterId).toBe('number');
+      expect(Array.isArray(characterEquipment.equipment)).toBe(true);
+    });
+
+    for (const item of characterEquipment.equipment) {
+      await test.step(`Validate character equipment item schema for ${item.name}`, async () => {
+        expect(item).toHaveProperty('id');
+        expect(item).toHaveProperty('name');
+        expect(item).toHaveProperty('category');
+        expect(item).toHaveProperty('type');
+        expect(item).toHaveProperty('quantity');
+        expect(item).toHaveProperty('isEquipped');
+
+        expect(typeof item.id).toBe('number');
+        expect(typeof item.name).toBe('string');
+        expect(typeof item.category).toBe('string');
+        expect(typeof item.type).toBe('string');
+        expect(typeof item.quantity).toBe('number');
+        expect(typeof item.isEquipped).toBe('boolean');
+      });
+    }
+  }
+
+  async validateCharacterEquipmentItems(
+    characterEquipment: CharacterEquipmentResponseBody,
+    expectedItems: { name: string; quantity: number; isEquipped: boolean }[],
+  ) {
+    await test.step('Validate expected character equipment items', async () => {
+      for (const expectedItem of expectedItems) {
+        const equipmentItem = characterEquipment.equipment.find(
+          (item) => item.name === expectedItem.name,
+        );
+
+        expect(equipmentItem).toBeDefined();
+        expect(equipmentItem?.quantity).toBe(expectedItem.quantity);
+        expect(equipmentItem?.isEquipped).toBe(expectedItem.isEquipped);
+      }
+    });
   }
 
   async validateCharacterSpellSelectionSchema(
