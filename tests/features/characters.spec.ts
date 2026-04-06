@@ -476,6 +476,15 @@ test.describe(
       );
       await charactersAssert.validateHitPoints(createdCharacter.hitPoints, null);
       await charactersAssert.validateInitiative(createdCharacter.initiative, null);
+      await charactersAssert.validatePassivePerception(
+        createdCharacter.passivePerception,
+        null,
+      );
+      await charactersAssert.validateMovement(createdCharacter.movement, null);
+      await charactersAssert.validateInventoryWeight(
+        createdCharacter.inventoryWeight,
+        { total: 0, sources: [] },
+      );
       await test.step('Validate draft character has no saving throws', async () => {
         expect(createdCharacter.savingThrows).toEqual([]);
       });
@@ -596,6 +605,11 @@ test.describe(
       );
       await charactersAssert.validateHitPoints(updatedCharacter.hitPoints, null);
       await charactersAssert.validateInitiative(updatedCharacter.initiative, null);
+      await charactersAssert.validatePassivePerception(
+        updatedCharacter.passivePerception,
+        null,
+      );
+      await charactersAssert.validateMovement(updatedCharacter.movement, null);
       await test.step(
         'Validate character without scores has no saving throws',
         async () => {
@@ -1253,6 +1267,31 @@ test.describe(
         bonus: 0,
         total: 1,
       });
+      await charactersAssert.validatePassivePerception(
+        finalCharacter.passivePerception,
+        {
+          skill: 'Perception',
+          ability: 'WIS',
+          base: 10,
+          skillModifier: 3,
+          bonus: 0,
+          total: 13,
+        },
+      );
+      await charactersAssert.validateMovement(
+        finalCharacter.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Human', value: 30 },
+      );
+      await charactersAssert.validateInventoryWeight(
+        finalCharacter.inventoryWeight,
+        {
+          total: 7,
+          sources: [
+            { name: 'Greataxe', quantity: 1, weight: 7, total: 7 },
+          ],
+        },
+      );
       await charactersAssert.validateSavingThrowOrder(finalCharacter.savingThrows);
       await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
         ability: 'STR',
@@ -1408,6 +1447,15 @@ test.describe(
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateHitPoints(character.hitPoints, null);
       await charactersAssert.validateInitiative(character.initiative, null);
+      await charactersAssert.validatePassivePerception(
+        character.passivePerception,
+        null,
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Human', value: 30 },
+      );
       await test.step(
         'Validate monk without scores has no saving throws',
         async () => {
@@ -1543,6 +1591,28 @@ test.describe(
         abilityModifier: 3,
         bonus: 0,
         total: 3,
+      });
+      await charactersAssert.validatePassivePerception(
+        character.passivePerception,
+        {
+          skill: 'Perception',
+          ability: 'WIS',
+          base: 10,
+          skillModifier: 3,
+          bonus: 0,
+          total: 13,
+        },
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Human', value: 30 },
+      );
+      await charactersAssert.validateInventoryWeight(character.inventoryWeight, {
+        total: 4,
+        sources: [
+          { name: 'Quarterstaff', quantity: 1, weight: 4, total: 4 },
+        ],
       });
       await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
         name: 'Quarterstaff',
@@ -2079,6 +2149,30 @@ test.describe(
         abilityModifier: 0,
         bonus: 0,
         total: 0,
+      });
+      await charactersAssert.validatePassivePerception(
+        character.passivePerception,
+        {
+          skill: 'Perception',
+          ability: 'WIS',
+          base: 10,
+          skillModifier: 1,
+          bonus: 0,
+          total: 11,
+        },
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Human', value: 30 },
+      );
+      await charactersAssert.validateInventoryWeight(character.inventoryWeight, {
+        total: 64,
+        sources: [
+          { name: 'Chain Mail', quantity: 1, weight: 55, total: 55 },
+          { name: 'Longsword', quantity: 1, weight: 3, total: 3 },
+          { name: 'Shield', quantity: 1, weight: 6, total: 6 },
+        ],
       });
       await charactersAssert.validateSavingThrowOrder(character.savingThrows);
       await charactersAssert.validateSavingThrow(character.savingThrows, {
@@ -3128,6 +3222,22 @@ test.describe(
         bonus: 0,
         total: 2,
       });
+      await charactersAssert.validatePassivePerception(
+        finalCharacter.passivePerception,
+        {
+          skill: 'Perception',
+          ability: 'WIS',
+          base: 10,
+          skillModifier: 1,
+          bonus: 0,
+          total: 11,
+        },
+      );
+      await charactersAssert.validateMovement(
+        finalCharacter.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Elf', value: 30 },
+      );
       await charactersAssert.validateSavingThrowOrder(finalCharacter.savingThrows);
       await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
         ability: 'INT',
@@ -3812,6 +3922,22 @@ test.describe(
         bonus: 0,
         total: 2,
       });
+      await charactersAssert.validatePassivePerception(
+        character.passivePerception,
+        {
+          skill: 'Perception',
+          ability: 'WIS',
+          base: 10,
+          skillModifier: 0,
+          bonus: 0,
+          total: 10,
+        },
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Human', value: 30 },
+      );
       await charactersAssert.validateSavingThrowOrder(character.savingThrows);
       await charactersAssert.validateSavingThrow(character.savingThrows, {
         ability: 'CON',
@@ -3953,6 +4079,26 @@ test.describe(
         character.hitPoints,
         fighterHitPoints,
       );
+      await charactersAssert.validatePassivePerception(
+        character.passivePerception,
+        {
+          skill: 'Perception',
+          ability: 'WIS',
+          base: 10,
+          skillModifier: 1,
+          bonus: 0,
+          total: 11,
+        },
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Dwarf', value: 30 },
+      );
+      await charactersAssert.validateInventoryWeight(character.inventoryWeight, {
+        total: 0,
+        sources: [],
+      });
 
       await test.step('Validate character has no weapon attacks', async () => {
         expect(character.weaponAttacks).toEqual([]);
@@ -4104,6 +4250,32 @@ test.describe(
         abilityModifier: 1,
         bonus: 0,
         total: 1,
+      });
+      await charactersAssert.validatePassivePerception(
+        character.passivePerception,
+        {
+          skill: 'Perception',
+          ability: 'WIS',
+          base: 10,
+          skillModifier: 1,
+          bonus: 0,
+          total: 11,
+        },
+      );
+      await charactersAssert.validateMovement(
+        character.movement,
+        { baseSpeed: 30, unit: 'ft' },
+        { type: 'species', name: 'Dwarf', value: 30 },
+      );
+      await charactersAssert.validateInventoryWeight(character.inventoryWeight, {
+        total: 71,
+        sources: [
+          { name: 'Greataxe', quantity: 1, weight: 7, total: 7 },
+          { name: 'Shortbow', quantity: 1, weight: 2, total: 2 },
+          { name: 'Dagger', quantity: 1, weight: 1, total: 1 },
+          { name: 'Chain Mail', quantity: 1, weight: 55, total: 55 },
+          { name: 'Shield', quantity: 1, weight: 6, total: 6 },
+        ],
       });
       await charactersAssert.validateSavingThrowOrder(character.savingThrows);
       await charactersAssert.validateSavingThrow(character.savingThrows, {
@@ -4374,6 +4546,15 @@ test.describe(
         character.hitPoints,
         fighterHitPoints,
       );
+      await charactersAssert.validateInventoryWeight(character.inventoryWeight, {
+        total: 64,
+        sources: [
+          { name: 'Shortbow', quantity: 1, weight: 2, total: 2 },
+          { name: 'Dagger', quantity: 1, weight: 1, total: 1 },
+          { name: 'Chain Mail', quantity: 1, weight: 55, total: 55 },
+          { name: 'Shield', quantity: 1, weight: 6, total: 6 },
+        ],
+      });
       await charactersAssert.validateWeaponAttackAbsent(
         character.weaponAttacks,
         'Greataxe',

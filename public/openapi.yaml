@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.15.0
+  version: 1.16.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -16,7 +16,7 @@ info:
     - Classes list and detail
     - Spells list and detail
     - Species list and detail
-    - Character management, deletion, equipment flows, ability score flows, calculated combat stats, character skill flows, and character spell flows
+    - Character management, deletion, equipment flows, ability score flows, derived stats summary, character skill flows, and character spell flows
 
 servers:
   - url: http://localhost:3000
@@ -42,7 +42,7 @@ tags:
   - name: Species
     description: Species list and species detail endpoints.
   - name: Characters
-    description: Protected character management, deletion, equipment tracking, and derived ability, skill, and spell endpoints.
+    description: Protected character management, deletion, equipment tracking, derived stats summary, and derived ability, skill, and spell endpoints.
 
 x-tagGroups:
   - name: Access
@@ -1074,6 +1074,13 @@ paths:
                 weaponAttacks: []
                 hitPoints: null
                 savingThrows: []
+                initiative: null
+                passivePerception: null
+                movement: null
+                inventoryWeight:
+                  total: 0
+                  unit: lb
+                  sources: []
                 currency: null
                 skillProficiencies: []
                 abilityScoreRules: null
@@ -1121,6 +1128,10 @@ paths:
         - `weaponAttacks`
         - `hitPoints`
         - `savingThrows`
+        - `initiative`
+        - `passivePerception`
+        - `movement`
+        - `inventoryWeight`
         - `currency`
         - `skillProficiencies`
         - `abilityScoreRules`
@@ -1135,6 +1146,14 @@ paths:
         `hitPoints` is derived from the character's class hit die, level, and resolved CON modifier. It is returned as `null` until class details and ability modifiers are available; when calculated, `current` starts equal to `max` and `temporary` starts at `0`.
 
         `savingThrows` is derived from class saving throw proficiencies, character level, and resolved ability modifiers. It is returned as an empty array until class details and ability modifiers are available; when calculated, it is ordered as `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.
+
+        `initiative` is derived from the resolved DEX modifier plus the current static bonus (`0`). It is returned as `null` until ability modifiers are available.
+
+        `passivePerception` is derived from the calculated Perception skill total. Its current formula is `10 + skillModifier + bonus`, with `bonus` currently `0`. It is returned as `null` until ability modifiers are available.
+
+        `movement` is derived from `speciesDetails.speed` and currently uses `ft` as the unit. It is returned as `null` until species details with a numeric speed are available.
+
+        `inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
       security:
         - bearerAuth: []
       parameters:
@@ -1284,6 +1303,43 @@ paths:
                     sources:
                       - type: abilityModifier
                         value: 0
+                initiative:
+                  ability: DEX
+                  abilityModifier: 2
+                  bonus: 0
+                  total: 2
+                  sources:
+                    - type: abilityModifier
+                      ability: DEX
+                      value: 2
+                passivePerception:
+                  skill: Perception
+                  ability: WIS
+                  base: 10
+                  skillModifier: 1
+                  bonus: 0
+                  total: 11
+                  sources:
+                    - type: base
+                      value: 10
+                    - type: skillModifier
+                      value: 1
+                movement:
+                  baseSpeed: 30
+                  unit: ft
+                  sources:
+                    - type: species
+                      name: Human
+                      value: 30
+                inventoryWeight:
+                  total: 2
+                  unit: lb
+                  sources:
+                    - equipmentId: 42
+                      name: Shortbow
+                      quantity: 1
+                      weight: 2
+                      total: 2
                 currency:
                   cp: 0
                   sp: 0
@@ -3655,6 +3711,193 @@ components:
           items:
             $ref: '#/components/schemas/CharacterSavingThrowSource'
 
+    CharacterInitiativeSource:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - abilityModifier
+            - bonus
+          example: abilityModifier
+        ability:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AttributeShortname'
+        value:
+          type: integer
+          example: 2
+
+    CharacterInitiative:
+      type: object
+      required:
+        - ability
+        - abilityModifier
+        - bonus
+        - total
+        - sources
+      properties:
+        ability:
+          type: string
+          enum:
+            - DEX
+          example: DEX
+        abilityModifier:
+          type: integer
+          example: 2
+        bonus:
+          type: integer
+          example: 0
+        total:
+          type: integer
+          example: 2
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterInitiativeSource'
+
+    CharacterPassivePerceptionSource:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - base
+            - skillModifier
+            - bonus
+          example: skillModifier
+        value:
+          type: integer
+          example: 1
+
+    CharacterPassivePerception:
+      type: object
+      required:
+        - skill
+        - ability
+        - base
+        - skillModifier
+        - bonus
+        - total
+        - sources
+      properties:
+        skill:
+          type: string
+          enum:
+            - Perception
+          example: Perception
+        ability:
+          type: string
+          enum:
+            - WIS
+          example: WIS
+        base:
+          type: integer
+          example: 10
+        skillModifier:
+          type: integer
+          example: 1
+        bonus:
+          type: integer
+          example: 0
+        total:
+          type: integer
+          example: 11
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterPassivePerceptionSource'
+
+    CharacterMovementSource:
+      type: object
+      required:
+        - type
+        - name
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - species
+          example: species
+        name:
+          type: string
+          example: Human
+        value:
+          type: integer
+          example: 30
+
+    CharacterMovement:
+      type: object
+      required:
+        - baseSpeed
+        - unit
+        - sources
+      properties:
+        baseSpeed:
+          type: integer
+          example: 30
+        unit:
+          type: string
+          enum:
+            - ft
+          example: ft
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterMovementSource'
+
+    CharacterInventoryWeightSource:
+      type: object
+      required:
+        - equipmentId
+        - name
+        - quantity
+        - weight
+        - total
+      properties:
+        equipmentId:
+          type: integer
+          example: 42
+        name:
+          type: string
+          example: Shortbow
+        quantity:
+          type: integer
+          example: 1
+        weight:
+          type: number
+          example: 2
+        total:
+          type: number
+          example: 2
+
+    CharacterInventoryWeight:
+      type: object
+      required:
+        - total
+        - unit
+        - sources
+      properties:
+        total:
+          type: number
+          example: 2
+        unit:
+          type: string
+          enum:
+            - lb
+          example: lb
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterInventoryWeightSource'
+
     CharacterAbilityScoreBonusChoice:
       type: object
       required:
@@ -3948,6 +4191,10 @@ components:
         - weaponAttacks
         - hitPoints
         - savingThrows
+        - initiative
+        - passivePerception
+        - movement
+        - inventoryWeight
         - currency
         - skillProficiencies
         - abilityScoreRules
@@ -4007,6 +4254,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CharacterSavingThrow'
+        initiative:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterInitiative'
+        passivePerception:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterPassivePerception'
+        movement:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CharacterMovement'
+        inventoryWeight:
+          $ref: '#/components/schemas/CharacterInventoryWeight'
         currency:
           nullable: true
           allOf:

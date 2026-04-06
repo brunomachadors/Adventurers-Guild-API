@@ -144,6 +144,47 @@ export interface CharacterInitiative {
   sources: CharacterInitiativeSource[];
 }
 
+export interface CharacterPassivePerceptionSource {
+  type: 'base' | 'skillModifier' | 'bonus';
+  value: number;
+}
+
+export interface CharacterPassivePerception {
+  skill: 'Perception';
+  ability: 'WIS';
+  base: number;
+  skillModifier: number;
+  bonus: number;
+  total: number;
+  sources: CharacterPassivePerceptionSource[];
+}
+
+export interface CharacterMovementSource {
+  type: 'species';
+  name: string;
+  value: number;
+}
+
+export interface CharacterMovement {
+  baseSpeed: number;
+  unit: 'ft';
+  sources: CharacterMovementSource[];
+}
+
+export interface CharacterInventoryWeightSource {
+  equipmentId: number;
+  name: string;
+  quantity: number;
+  weight: number;
+  total: number;
+}
+
+export interface CharacterInventoryWeight {
+  total: number;
+  unit: 'lb';
+  sources: CharacterInventoryWeightSource[];
+}
+
 export interface CharacterAbilityScoreBonusChoice {
   bonus: number;
   count: number;
@@ -220,6 +261,9 @@ export interface CharacterResponseBody {
   hitPoints: CharacterHitPoints | null;
   savingThrows: CharacterSavingThrow[];
   initiative: CharacterInitiative | null;
+  passivePerception: CharacterPassivePerception | null;
+  movement: CharacterMovement | null;
+  inventoryWeight: CharacterInventoryWeight;
   currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
   abilityScoreRules: CharacterAbilityScoreRules | null;

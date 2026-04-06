@@ -18,6 +18,11 @@ import { BackgroundDetail } from '@/app/types/background';
 import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
 import { SKILL_NAMES, SkillName } from '@/app/types/skill';
 import { getCharacterArmorClass } from './character-armor-class';
+import {
+  getCharacterInventoryWeight,
+  getCharacterMovement,
+  getCharacterPassivePerception,
+} from './character-derived-stats';
 import { getCharacterHitPoints } from './character-hit-points';
 import { getCharacterInitiative } from './character-initiative';
 import { getCharacterSavingThrows } from './character-saving-throws';
@@ -628,6 +633,18 @@ export async function formatCharacterResponse(character: {
     abilityModifiers,
   );
   const initiative = getCharacterInitiative(abilityModifiers);
+  const skills = getCharacterSkillItems(
+    formattedCharacter.level,
+    abilityModifiers,
+    formattedCharacter.skillProficiencies,
+  );
+  const passivePerception = abilityModifiers
+    ? getCharacterPassivePerception(skills)
+    : null;
+  const movement = getCharacterMovement(speciesDetails);
+  const inventoryWeight = await getCharacterInventoryWeight(
+    formattedCharacter.id,
+  );
 
   return {
     ...formattedCharacter,
@@ -640,6 +657,9 @@ export async function formatCharacterResponse(character: {
     hitPoints,
     savingThrows,
     initiative,
+    passivePerception,
+    movement,
+    inventoryWeight,
     currency: formattedCharacter.currency,
     skillProficiencies: formattedCharacter.skillProficiencies,
     abilityScoreRules,
@@ -647,6 +667,51 @@ export async function formatCharacterResponse(character: {
     speciesDetails,
     backgroundDetails,
   };
+}
+
+function getCharacterSkillItems(
+  level: number,
+  abilityModifiers: CharacterAbilityModifiers | null,
+  skillProficiencies: SkillName[],
+) {
+  const proficiencyBonus = getProficiencyBonus(level);
+  const proficientSkills = new Set(skillProficiencies);
+  const skillAbilityMap: Record<SkillName, Attributeshortname> = {
+    Acrobatics: 'DEX',
+    'Animal Handling': 'WIS',
+    Arcana: 'INT',
+    Athletics: 'STR',
+    Deception: 'CHA',
+    History: 'INT',
+    Insight: 'WIS',
+    Intimidation: 'CHA',
+    Investigation: 'INT',
+    Medicine: 'WIS',
+    Nature: 'INT',
+    Perception: 'WIS',
+    Performance: 'CHA',
+    Persuasion: 'CHA',
+    Religion: 'INT',
+    'Sleight of Hand': 'DEX',
+    Stealth: 'DEX',
+    Survival: 'WIS',
+  };
+
+  return SKILL_NAMES.map((name) => {
+    const ability = skillAbilityMap[name];
+    const isProficient = proficientSkills.has(name);
+    const abilityModifier = abilityModifiers?.[ability] ?? 0;
+    const appliedProficiencyBonus = isProficient ? proficiencyBonus : 0;
+
+    return {
+      name,
+      ability,
+      isProficient,
+      abilityModifier,
+      proficiencyBonus: appliedProficiencyBonus,
+      total: abilityModifier + appliedProficiencyBonus,
+    };
+  });
 }
 
 
