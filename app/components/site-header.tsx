@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 const navigationItems = [
   { href: '/', label: 'Overview' },
   { href: '/support', label: 'Support' },
+  { href: '/guides', label: 'Guides' },
   { href: '/docs', label: 'Docs' },
 ] as const;
 
@@ -35,7 +36,10 @@ export function SiteHeader() {
 
         <nav aria-label="Main navigation" className="site-nav">
           {navigationItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              item.href === '/'
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <Link

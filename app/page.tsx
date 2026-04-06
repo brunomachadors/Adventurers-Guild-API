@@ -19,6 +19,9 @@ export default function HomePage() {
           />
           <div className="hero-banner__overlay hero-banner__overlay--feature">
             <div className="hero-actions">
+              <Link className="button button--primary" href="/guides">
+                Read guides
+              </Link>
               <Link className="button button--primary" href="/support">
                 Enter the guild hall
               </Link>
@@ -48,11 +51,15 @@ export default function HomePage() {
             <p className="mini-label">Next route</p>
             <h2>Choose your entrypoint into the realm</h2>
             <p className="hero-copy">
-              Start with the support hub for orientation or move directly to the
-              interactive docs when you want the technical spellbook.
+              Use the support hub for orientation, keep the Guides area ready
+              for the next learning layer, or move directly to the interactive
+              docs when you want the technical spellbook.
             </p>
             <div className="hero-actions">
-              <Link className="button button--primary" href="/support">
+              <Link className="button button--primary" href="/guides">
+                Open guides
+              </Link>
+              <Link className="button button--secondary" href="/support">
                 Open support
               </Link>
               <Link className="button button--secondary" href="/docs">
