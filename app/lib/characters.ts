@@ -17,6 +17,7 @@ import { Attributeshortname } from '@/app/types/attribute';
 import { BackgroundDetail } from '@/app/types/background';
 import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
 import { SKILL_NAMES, SkillName } from '@/app/types/skill';
+import { getCharacterArmorClass } from './character-armor-class';
 import { getSql } from './db';
 
 function toNumber(value: number | string): number {
@@ -601,12 +602,19 @@ export async function formatCharacterResponse(character: {
   const abilityModifiers = getCharacterAbilityModifiers(
     formattedCharacter.abilityScores,
   );
+  const armorClass = await getCharacterArmorClass(
+    formattedCharacter.id,
+    classDetails,
+    abilityModifiers,
+  );
+
   return {
     ...formattedCharacter,
     status: getCharacterStatus(missingFields),
     missingFields,
     abilityScores: formattedCharacter.abilityScores,
     abilityModifiers,
+    armorClass,
     currency: formattedCharacter.currency,
     skillProficiencies: formattedCharacter.skillProficiencies,
     abilityScoreRules,

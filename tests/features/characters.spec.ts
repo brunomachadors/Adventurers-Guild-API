@@ -1,8 +1,10 @@
 import { TokenResponseBody } from '@/app/types/auth';
 import {
   CharacterAbilityScoreOptionsResponseBody,
+  CharacterArmorClass,
   CharacterAbilityScoresInput,
   CharacterAbilityScores,
+  CharacterCreateRequestBody,
   CharacterCurrency,
   CharacterEquipmentResponseBody,
   CharacterSkillItem,
@@ -50,13 +52,22 @@ const paladinAbilityScores: CharacterAbilityScores = {
   CHA: 14,
 };
 
-const patchedDraftAbilityScores: CharacterAbilityScores = {
-  STR: 16,
-  DEX: 12,
+const aangAbilityScores: CharacterAbilityScores = {
+  STR: 10,
+  DEX: 16,
   CON: 14,
-  INT: 10,
-  WIS: 10,
-  CHA: 8,
+  INT: 8,
+  WIS: 15,
+  CHA: 12,
+};
+
+const drizztAbilityScores: CharacterAbilityScores = {
+  STR: 10,
+  DEX: 15,
+  CON: 13,
+  INT: 8,
+  WIS: 14,
+  CHA: 12,
 };
 
 const barbarianAbilityBonuses: CharacterAbilityScores = {
@@ -86,6 +97,24 @@ const paladinAbilityBonuses: CharacterAbilityScores = {
   CHA: 1,
 };
 
+const aangAbilityBonuses: CharacterAbilityScores = {
+  STR: 0,
+  DEX: 0,
+  CON: 0,
+  INT: 1,
+  WIS: 2,
+  CHA: 0,
+};
+
+const drizztAbilityBonuses: CharacterAbilityScores = {
+  STR: 0,
+  DEX: 2,
+  CON: 1,
+  INT: 0,
+  WIS: 0,
+  CHA: 0,
+};
+
 const barbarianAbilityScoresInput: CharacterAbilityScoresInput = {
   base: barbarianAbilityScores,
   bonuses: barbarianAbilityBonuses,
@@ -101,24 +130,14 @@ const paladinAbilityScoresInput: CharacterAbilityScoresInput = {
   bonuses: paladinAbilityBonuses,
 };
 
-const patchedDraftAbilityScoresInput: CharacterAbilityScoresInput = {
-  base: patchedDraftAbilityScores,
-  bonuses: {
-    STR: 0,
-    DEX: 0,
-    CON: 0,
-    INT: 0,
-    WIS: 0,
-    CHA: 0,
-  },
+const aangAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: aangAbilityScores,
+  bonuses: aangAbilityBonuses,
 };
 
-const initialCurrency: CharacterCurrency = {
-  cp: 0,
-  sp: 5,
-  ep: 0,
-  gp: 12,
-  pp: 0,
+const drizztAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: drizztAbilityScores,
+  bonuses: drizztAbilityBonuses,
 };
 
 const patchedCurrency: CharacterCurrency = {
@@ -151,6 +170,59 @@ const nobleCurrency: CharacterCurrency = {
   ep: 0,
   gp: 29,
   pp: 0,
+};
+
+const acolyteCurrency: CharacterCurrency = {
+  cp: 0,
+  sp: 0,
+  ep: 0,
+  gp: 8,
+  pp: 0,
+};
+
+const barbarianArmorClass: CharacterArmorClass = {
+  total: 13,
+  base: 10,
+  dexModifierApplied: 1,
+  classBonus: 2,
+  shieldBonus: 0,
+  sources: [
+    { name: 'Base AC', type: 'base', value: 10 },
+    { name: 'Unarmored Defense', type: 'class', value: 2 },
+  ],
+};
+
+const wizardArmorClass: CharacterArmorClass = {
+  total: 12,
+  base: 10,
+  dexModifierApplied: 2,
+  classBonus: 0,
+  shieldBonus: 0,
+  sources: [{ name: 'Base AC', type: 'base', value: 10 }],
+};
+
+const paladinArmorClass: CharacterArmorClass = {
+  total: 18,
+  base: 16,
+  dexModifierApplied: 0,
+  classBonus: 0,
+  shieldBonus: 2,
+  sources: [
+    { name: 'Chain Mail', type: 'armor', value: 16 },
+    { name: 'Shield', type: 'shield', value: 2 },
+  ],
+};
+
+const aangArmorClass: CharacterArmorClass = {
+  total: 16,
+  base: 10,
+  dexModifierApplied: 3,
+  classBonus: 3,
+  shieldBonus: 0,
+  sources: [
+    { name: 'Base AC', type: 'base', value: 10 },
+    { name: 'Unarmored Defense', type: 'class', value: 3 },
+  ],
 };
 
 const barbarianSkillProficiencies: SkillName[] = [
@@ -225,7 +297,7 @@ async function addCharacterEquipmentBySlug(
 }
 
 test.describe(
-  'Characters API - Barbarian Flow',
+  'Characters API - Conan The Barbarian Full Progression Flow',
   { tag: ['@characters', '@flow', '@barbarian'] },
   () => {
   test.describe.configure({ mode: 'serial' });
@@ -261,7 +333,7 @@ test.describe(
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      createdCharacterName = `Arin ${Date.now()}`;
+      createdCharacterName = `Conan The Barbarian ${Date.now()}`;
 
       const createResponse = await charactersClient.createCharacter(
         {
@@ -484,7 +556,7 @@ test.describe(
   );
 
   test(
-    'Add Species Dwarf',
+    'Add Species Human',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -493,7 +565,7 @@ test.describe(
       const response = await charactersClient.updateCharacter(
         createdCharacterId,
         {
-          speciesId: 2,
+          speciesId: 7,
         },
         authToken,
       );
@@ -504,7 +576,7 @@ test.describe(
 
       await charactersAssert.validateCharacterResponseSchema(character);
       await charactersAssert.validateClassId(character.classId, 1);
-      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
       await charactersAssert.validateBackgroundId(character.backgroundId, null);
       await charactersAssert.validateMissingFields(character.missingFields, [
         'backgroundId',
@@ -516,10 +588,10 @@ test.describe(
       );
 
       if (character.speciesDetails) {
-        await charactersAssert.validateId(character.speciesDetails.id, 2);
+        await charactersAssert.validateId(character.speciesDetails.id, 7);
         await charactersAssert.validateName(
           character.speciesDetails.name,
-          expectedDetailedSpecies.dwarf.name,
+          expectedDetailedSpecies.human.name,
         );
         await charactersAssert.validateSpeciesDetailsSchema(
           character.speciesDetails,
@@ -529,7 +601,7 @@ test.describe(
   );
 
   test(
-    'Get Dwarf Barbarian',
+    'Get Human Barbarian',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -546,7 +618,7 @@ test.describe(
 
       await charactersAssert.validateCharacterResponseSchema(character);
       await charactersAssert.validateClassId(character.classId, 1);
-      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
       await charactersAssert.validateBackgroundId(character.backgroundId, null);
       await charactersAssert.validateMissingFields(character.missingFields, [
         'backgroundId',
@@ -590,7 +662,7 @@ test.describe(
       );
       await charactersAssert.validateStatus(updatedCharacter.status, 'complete');
       await charactersAssert.validateClassId(updatedCharacter.classId, 1);
-      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 2);
+      await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 7);
       await charactersAssert.validateBackgroundId(
         updatedCharacter.backgroundId,
         16,
@@ -615,10 +687,10 @@ test.describe(
       );
 
       if (updatedCharacter.speciesDetails) {
-        await charactersAssert.validateId(updatedCharacter.speciesDetails.id, 2);
+        await charactersAssert.validateId(updatedCharacter.speciesDetails.id, 7);
         await charactersAssert.validateName(
           updatedCharacter.speciesDetails.name,
-          expectedDetailedSpecies.dwarf.name,
+          expectedDetailedSpecies.human.name,
         );
         await charactersAssert.validateSpeciesDetailsSchema(
           updatedCharacter.speciesDetails,
@@ -656,7 +728,7 @@ test.describe(
 
       await charactersAssert.validateCharacterResponseSchema(character);
       await charactersAssert.validateClassId(character.classId, 1);
-      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
       await charactersAssert.validateBackgroundId(character.backgroundId, 16);
       await charactersAssert.validateMissingFields(character.missingFields, []);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
@@ -693,7 +765,7 @@ test.describe(
       await charactersAssert.validateCharacterResponseSchema(character);
       await charactersAssert.validateId(character.id, createdCharacterId);
       await charactersAssert.validateClassId(character.classId, 1);
-      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
       await charactersAssert.validateBackgroundId(character.backgroundId, 16);
       await charactersAssert.validateStatus(character.status, 'complete');
       await charactersAssert.validateCurrency(character.currency, soldierCurrency);
@@ -1044,7 +1116,7 @@ test.describe(
       await charactersAssert.validateName(finalCharacter.name, createdCharacterName);
       await charactersAssert.validateStatus(finalCharacter.status, 'complete');
       await charactersAssert.validateClassId(finalCharacter.classId, 1);
-      await charactersAssert.validateSpeciesId(finalCharacter.speciesId, 2);
+      await charactersAssert.validateSpeciesId(finalCharacter.speciesId, 7);
       await charactersAssert.validateBackgroundId(finalCharacter.backgroundId, 16);
       await charactersAssert.validateLevel(finalCharacter.level, 1);
       await charactersAssert.validateMissingFields(finalCharacter.missingFields, []);
@@ -1052,6 +1124,10 @@ test.describe(
         finalCharacter.abilityScores,
         barbarianAbilityScores,
         barbarianAbilityBonuses,
+      );
+      await charactersAssert.validateArmorClass(
+        finalCharacter.armorClass,
+        barbarianArmorClass,
       );
       await charactersAssert.validateAbilityScoreRules(
         finalCharacter.abilityScoreRules,
@@ -1091,10 +1167,10 @@ test.describe(
       }
 
       if (finalCharacter.speciesDetails) {
-        await charactersAssert.validateId(finalCharacter.speciesDetails.id, 2);
+        await charactersAssert.validateId(finalCharacter.speciesDetails.id, 7);
         await charactersAssert.validateName(
           finalCharacter.speciesDetails.name,
-          expectedDetailedSpecies.dwarf.name,
+          expectedDetailedSpecies.human.name,
         );
         await charactersAssert.validateSpeciesDetailsSchema(
           finalCharacter.speciesDetails,
@@ -1117,7 +1193,180 @@ test.describe(
 );
 
 test.describe(
-  'Characters API - Create Complete Paladin',
+  'Characters API - Aang The Monk Unarmored Defense Flow',
+  { tag: ['@characters', '@flow', '@monk'] },
+  () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let authToken: string;
+  let createdCharacterId: number;
+  const createdCharacterName = `Aang The Monk ${Date.now()}`;
+
+  test.beforeAll(async ({ request }) => {
+    authToken = await issueDemoToken(request);
+  });
+
+  test(
+    'Create Aang The Monk',
+    { tag: ['@post', '@smoke', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.createCharacter(
+        {
+          name: createdCharacterName,
+          classId: 6,
+          speciesId: 7,
+          backgroundId: 1,
+          level: 1,
+          currency: acolyteCurrency,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(response);
+
+      const character: CharacterResponseBody = await response.json();
+      createdCharacterId = character.id;
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateName(character.name, createdCharacterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 6);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 1);
+      await charactersAssert.validateLevel(character.level, 1);
+      await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateAbilityScores(character.abilityScores, null);
+      await charactersAssert.validateCurrency(character.currency, acolyteCurrency);
+      await charactersAssert.validateAbilityScoreRules(
+        character.abilityScoreRules,
+        expectedDetailedBackgrounds.acolyte.abilityScores,
+      );
+      await charactersAssert.validateClassDetailsPresence(
+        character.classDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateSpeciesDetailsPresence(
+        character.speciesDetails ?? null,
+        true,
+      );
+      await charactersAssert.validateBackgroundDetailsPresence(
+        character.backgroundDetails ?? null,
+        true,
+      );
+
+      if (character.classDetails) {
+        await charactersAssert.validateName(character.classDetails.name, 'Monk');
+      }
+
+      if (character.speciesDetails) {
+        await charactersAssert.validateName(
+          character.speciesDetails.name,
+          expectedDetailedSpecies.human.name,
+        );
+      }
+
+      if (character.backgroundDetails) {
+        await charactersAssert.validateName(
+          character.backgroundDetails.name,
+          expectedDetailedBackgrounds.acolyte.name,
+        );
+      }
+    },
+  );
+
+  test(
+    'Select Scores Aang',
+    { tag: ['@put', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.updateCharacterAbilityScores(
+        createdCharacterId,
+        {
+          abilityScores: aangAbilityScoresInput,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const abilityScoreOptions = await response.json();
+
+      await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
+        abilityScoreOptions,
+      );
+      await charactersAssert.validateSelectedAbilityScores(
+        abilityScoreOptions.selectedAbilityScores,
+        aangAbilityScores,
+        aangAbilityBonuses,
+      );
+    },
+  );
+
+  test(
+    'Add Quarterstaff Aang',
+    { tag: ['@post', '@data'] },
+    async ({ request }) => {
+      const characterEquipment = await addCharacterEquipmentBySlug(
+        request,
+        createdCharacterId,
+        authToken,
+        [{ slug: 'quarterstaff', quantity: 1, isEquipped: true }],
+      );
+      const charactersAssert = new CharactersAssert();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Quarterstaff', quantity: 1, isEquipped: true },
+      ]);
+    },
+  );
+
+  test(
+    'Get Complete Aang The Monk',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterDetail(
+        createdCharacterId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const character: CharacterResponseBody = await response.json();
+
+      await charactersAssert.validateCharacterResponseSchema(character);
+      await charactersAssert.validateId(character.id, createdCharacterId);
+      await charactersAssert.validateName(character.name, createdCharacterName);
+      await charactersAssert.validateStatus(character.status, 'complete');
+      await charactersAssert.validateClassId(character.classId, 6);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 1);
+      await charactersAssert.validateAbilityScores(
+        character.abilityScores,
+        aangAbilityScores,
+        aangAbilityBonuses,
+      );
+      await charactersAssert.validateCurrency(character.currency, acolyteCurrency);
+      await charactersAssert.validateArmorClass(
+        character.armorClass,
+        aangArmorClass,
+      );
+    },
+  );
+  },
+);
+
+test.describe(
+  'Characters API - Arthas The Paladin Complete Create Flow',
   { tag: ['@characters', '@flow', '@complete-create'] },
   () => {
   test.describe.configure({ mode: 'serial' });
@@ -1132,12 +1381,12 @@ test.describe(
   });
 
   test(
-    'Create Paladin Human Noble',
+    'Create Arthas The Paladin',
     { tag: ['@post', '@smoke', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      createdCharacterName = `Cedric ${Date.now()}`;
+      createdCharacterName = `Arthas The Paladin ${Date.now()}`;
 
       const response = await charactersClient.createCharacter(
         {
@@ -1221,7 +1470,7 @@ test.describe(
   );
 
   test(
-    'Get Paladin',
+    'Get Arthas The Paladin',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -1587,7 +1836,7 @@ test.describe(
   );
 
   test(
-    'Get Complete Paladin',
+    'Get Complete Arthas The Paladin',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -1615,6 +1864,10 @@ test.describe(
         character.abilityScores,
         paladinAbilityScores,
         paladinAbilityBonuses,
+      );
+      await charactersAssert.validateArmorClass(
+        character.armorClass,
+        paladinArmorClass,
       );
       await charactersAssert.validateCurrency(character.currency, nobleCurrency);
       await charactersAssert.validateAbilityScoreRules(
@@ -1670,7 +1923,7 @@ test.describe(
 );
 
 test.describe(
-  'Characters API - Wizard Flow',
+  'Characters API - Gandalf The Wizard Spell Selection Flow',
   { tag: ['@characters', '@flow', '@wizard'] },
   () => {
   test.describe.configure({ mode: 'serial' });
@@ -1702,12 +1955,12 @@ test.describe(
   );
 
   test(
-    'Create Draft',
+    'Create Gandalf The Wizard',
     { tag: ['@post', '@smoke', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      createdCharacterName = `Merien ${Date.now()}`;
+      createdCharacterName = `Gandalf The Wizard ${Date.now()}`;
 
       const createResponse = await charactersClient.createCharacter(
         {
@@ -1821,7 +2074,7 @@ test.describe(
   );
 
   test(
-    'Add Class Wizard',
+    'Add Class Wizard To Gandalf',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -1890,7 +2143,7 @@ test.describe(
   );
 
   test(
-    'Get Wizard',
+    'Get Gandalf The Wizard',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -2571,7 +2824,7 @@ test.describe(
   );
 
   test(
-    'Get Complete Wizard',
+    'Get Complete Gandalf The Wizard',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -2599,6 +2852,10 @@ test.describe(
         finalCharacter.abilityScores,
         wizardAbilityScores,
         wizardAbilityBonuses,
+      );
+      await charactersAssert.validateArmorClass(
+        finalCharacter.armorClass,
+        wizardArmorClass,
       );
       await charactersAssert.validateAbilityScoreRules(
         finalCharacter.abilityScoreRules,
@@ -2664,8 +2921,8 @@ test.describe(
 );
 
 test.describe(
-  'Characters API - Ability Scores And Currency',
-  { tag: ['@characters', '@ability-scores', '@currency'] },
+  'Characters API - Drizzt The Ranger Ability Scores And Currency Flow',
+  { tag: ['@characters', '@ranger', '@ability-scores', '@currency'] },
   () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -2681,17 +2938,38 @@ test.describe(
     authToken = await issueDemoToken(request);
   });
 
+  const buildDrizztRangerPayload = (
+    name: string,
+    payload: Partial<Omit<CharacterCreateRequestBody, 'name'>> = {},
+  ): CharacterCreateRequestBody => ({
+    name,
+    classId: 8,
+    speciesId: 3,
+    backgroundId: 16,
+    level: 1,
+    ...payload,
+  });
+
+  async function validateDrizztRangerBuild(character: CharacterResponseBody) {
+    await test.step('Validate Drizzt Ranger build', async () => {
+      expect(character.classId).toBe(8);
+      expect(character.speciesId).toBe(3);
+      expect(character.backgroundId).toBe(16);
+      expect(character.missingFields).toEqual([]);
+    });
+  }
+
   test(
-    'Create No Scores',
+    'Create Drizzt Without Scores',
     { tag: ['@post', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.createCharacter(
-        {
-          name: `No Scores ${Date.now()}`,
-        },
+        buildDrizztRangerPayload(
+          `Drizzt The Ranger Without Scores ${Date.now()}`,
+        ),
         authToken,
       );
 
@@ -2701,14 +2979,15 @@ test.describe(
       noScoresCharacterId = character.id;
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Get No Scores',
+    'Get Drizzt Without Scores',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -2724,24 +3003,24 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Create With Scores',
+    'Create Drizzt With Scores',
     { tag: ['@post', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.createCharacter(
-        {
-          name: `With Scores ${Date.now()}`,
-          abilityScores: patchedDraftAbilityScoresInput,
-        },
+        buildDrizztRangerPayload(`Drizzt The Ranger With Scores ${Date.now()}`, {
+          abilityScores: drizztAbilityScoresInput,
+        }),
         authToken,
       );
 
@@ -2751,17 +3030,19 @@ test.describe(
       withScoresCharacterId = character.id;
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(
         character.abilityScores,
-        patchedDraftAbilityScores,
+        drizztAbilityScores,
+        drizztAbilityBonuses,
       );
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Get With Scores',
+    'Get Drizzt With Scores',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -2777,26 +3058,26 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(
         character.abilityScores,
-        patchedDraftAbilityScores,
+        drizztAbilityScores,
+        drizztAbilityBonuses,
       );
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Patch Scores',
+    'Patch Scores Drizzt',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
       const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Patch Scores ${Date.now()}`,
-        },
+        buildDrizztRangerPayload(`Drizzt The Ranger Patch Scores ${Date.now()}`),
         authToken,
       );
 
@@ -2808,7 +3089,7 @@ test.describe(
       const response = await charactersClient.updateCharacter(
         patchScoresCharacterId,
         {
-          abilityScores: patchedDraftAbilityScoresInput,
+          abilityScores: drizztAbilityScoresInput,
         },
         authToken,
       );
@@ -2818,17 +3099,19 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(
         character.abilityScores,
-        patchedDraftAbilityScores,
+        drizztAbilityScores,
+        drizztAbilityBonuses,
       );
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Get Patched Scores',
+    'Get Patched Scores Drizzt',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -2844,17 +3127,19 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(
         character.abilityScores,
-        patchedDraftAbilityScores,
+        drizztAbilityScores,
+        drizztAbilityBonuses,
       );
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Clear Scores',
+    'Clear Scores Drizzt',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -2873,14 +3158,15 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Get Cleared Scores',
+    'Get Cleared Scores Drizzt',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -2896,23 +3182,24 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Create No Currency',
+    'Create Drizzt Without Currency',
     { tag: ['@post', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.createCharacter(
-        {
-          name: `No Currency ${Date.now()}`,
-        },
+        buildDrizztRangerPayload(
+          `Drizzt The Ranger Without Currency ${Date.now()}`,
+        ),
         authToken,
       );
 
@@ -2922,13 +3209,14 @@ test.describe(
       noCurrencyCharacterId = character.id;
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Get No Currency',
+    'Get Drizzt Without Currency',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -2944,23 +3232,23 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Create With Currency',
+    'Create Drizzt With Currency',
     { tag: ['@post', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
       const response = await charactersClient.createCharacter(
-        {
-          name: `With Currency ${Date.now()}`,
-          currency: initialCurrency,
-        },
+        buildDrizztRangerPayload(`Drizzt The Ranger With Currency ${Date.now()}`, {
+          currency: soldierCurrency,
+        }),
         authToken,
       );
 
@@ -2970,13 +3258,14 @@ test.describe(
       withCurrencyCharacterId = character.id;
 
       await charactersAssert.validateCharacterResponseSchema(character);
-      await charactersAssert.validateCurrency(character.currency, initialCurrency);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await validateDrizztRangerBuild(character);
+      await charactersAssert.validateCurrency(character.currency, soldierCurrency);
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Get With Currency',
+    'Get Drizzt With Currency',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -2992,22 +3281,21 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
-      await charactersAssert.validateCurrency(character.currency, initialCurrency);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await validateDrizztRangerBuild(character);
+      await charactersAssert.validateCurrency(character.currency, soldierCurrency);
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Patch Currency',
+    'Patch Currency Drizzt',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
       const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Patch Currency ${Date.now()}`,
-        },
+        buildDrizztRangerPayload(`Drizzt The Ranger Patch Currency ${Date.now()}`),
         authToken,
       );
 
@@ -3029,13 +3317,14 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, patchedCurrency);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Get Patched Currency',
+    'Get Patched Currency Drizzt',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3051,13 +3340,14 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, patchedCurrency);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Clear Currency',
+    'Clear Currency Drizzt',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3076,13 +3366,14 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Get Cleared Currency',
+    'Get Cleared Currency Drizzt',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3098,37 +3389,38 @@ test.describe(
       const character: CharacterResponseBody = await response.json();
 
       await charactersAssert.validateCharacterResponseSchema(character);
+      await validateDrizztRangerBuild(character);
       await charactersAssert.validateCurrency(character.currency, null);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
   },
 );
 
 test.describe(
-  'Characters API - Equipment',
-  { tag: ['@characters', '@equipment'] },
+  'Characters API - Gimli The Fighter Equipment Flow',
+  { tag: ['@characters', '@equipment', '@fighter', '@dwarf'] },
   () => {
   test.describe.configure({ mode: 'serial' });
 
   let authToken: string;
   let characterWithoutEquipmentId: number;
   let characterWithEquipmentId: number;
-  let longswordEquipmentId: number;
+  let greataxeEquipmentId: number;
 
   test.beforeAll(async ({ request }) => {
     authToken = await issueDemoToken(request);
 
     const equipmentClient = new EquipmentClient(request);
-    const equipmentResponse = await equipmentClient.getEquipmentDetail('longsword');
+    const equipmentResponse = await equipmentClient.getEquipmentDetail('greataxe');
     expect(equipmentResponse.status()).toBe(200);
     const equipment: EquipmentDetail = await equipmentResponse.json();
-    expect(equipment.name).toBe('Longsword');
-    longswordEquipmentId = equipment.id;
+    expect(equipment.name).toBe('Greataxe');
+    greataxeEquipmentId = equipment.id;
   });
 
   test(
-    'Create Character Without Equipment',
+    'Create Gimli Without Equipment',
     { tag: ['@post', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3136,7 +3428,11 @@ test.describe(
 
       const response = await charactersClient.createCharacter(
         {
-          name: `No Equipment ${Date.now()}`,
+          name: `Gimli The Fighter Without Equipment ${Date.now()}`,
+          classId: 5,
+          speciesId: 2,
+          backgroundId: 16,
+          level: 1,
         },
         authToken,
       );
@@ -3147,7 +3443,10 @@ test.describe(
       characterWithoutEquipmentId = character.id;
 
       await charactersAssert.validateCharacterResponseSchema(character);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateClassId(character.classId, 5);
+      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 16);
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
@@ -3181,7 +3480,7 @@ test.describe(
   );
 
   test(
-    'Create Character With Equipment',
+    'Create Gimli The Fighter',
     { tag: ['@post', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3189,7 +3488,11 @@ test.describe(
 
       const response = await charactersClient.createCharacter(
         {
-          name: `With Equipment ${Date.now()}`,
+          name: `Gimli The Fighter ${Date.now()}`,
+          classId: 5,
+          speciesId: 2,
+          backgroundId: 16,
+          level: 1,
         },
         authToken,
       );
@@ -3200,31 +3503,29 @@ test.describe(
       characterWithEquipmentId = character.id;
 
       await charactersAssert.validateCharacterResponseSchema(character);
-      await charactersAssert.validateStatus(character.status, 'draft');
+      await charactersAssert.validateClassId(character.classId, 5);
+      await charactersAssert.validateSpeciesId(character.speciesId, 2);
+      await charactersAssert.validateBackgroundId(character.backgroundId, 16);
+      await charactersAssert.validateStatus(character.status, 'complete');
     },
   );
 
   test(
-    'Add Longsword Equipment',
+    'Add Gimli Equipment',
     { tag: ['@post', '@data'] },
     async ({ request }) => {
-      const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
-      const response = await charactersClient.addCharacterEquipment(
+      const characterEquipment = await addCharacterEquipmentBySlug(
+        request,
         characterWithEquipmentId,
-        {
-          equipmentId: longswordEquipmentId,
-          quantity: 1,
-          isEquipped: true,
-        },
         authToken,
+        [
+          { slug: 'greataxe', quantity: 1, isEquipped: true },
+          { slug: 'chain-mail', quantity: 1, isEquipped: true },
+          { slug: 'shield', quantity: 1, isEquipped: true },
+        ],
       );
-
-      await charactersAssert.created(response);
-
-      const characterEquipment: CharacterEquipmentResponseBody =
-        await response.json();
 
       await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
       await charactersAssert.validateId(
@@ -3232,16 +3533,21 @@ test.describe(
         characterWithEquipmentId,
       );
       await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
-        id: longswordEquipmentId,
-        name: 'Longsword',
+        id: greataxeEquipmentId,
+        name: 'Greataxe',
         quantity: 1,
         isEquipped: true,
       });
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Greataxe', quantity: 1, isEquipped: true },
+        { name: 'Chain Mail', quantity: 1, isEquipped: true },
+        { name: 'Shield', quantity: 1, isEquipped: true },
+      ]);
     },
   );
 
   test(
-    'Get Added Equipment',
+    'Get Gimli Equipment',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3263,15 +3569,20 @@ test.describe(
         characterWithEquipmentId,
       );
       await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
-        id: longswordEquipmentId,
+        id: greataxeEquipmentId,
         quantity: 1,
         isEquipped: true,
       });
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Greataxe', quantity: 1, isEquipped: true },
+        { name: 'Chain Mail', quantity: 1, isEquipped: true },
+        { name: 'Shield', quantity: 1, isEquipped: true },
+      ]);
     },
   );
 
   test(
-    'Add Longsword Again',
+    'Add Greataxe Again',
     { tag: ['@post', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3280,7 +3591,7 @@ test.describe(
       const response = await charactersClient.addCharacterEquipment(
         characterWithEquipmentId,
         {
-          equipmentId: longswordEquipmentId,
+          equipmentId: greataxeEquipmentId,
           quantity: 2,
           isEquipped: false,
         },
@@ -3298,15 +3609,19 @@ test.describe(
         characterWithEquipmentId,
       );
       await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
-        id: longswordEquipmentId,
+        id: greataxeEquipmentId,
         quantity: 3,
         isEquipped: false,
       });
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Chain Mail', quantity: 1, isEquipped: true },
+        { name: 'Shield', quantity: 1, isEquipped: true },
+      ]);
     },
   );
 
   test(
-    'Patch Longsword Equipment',
+    'Patch Greataxe Equipment',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3314,7 +3629,7 @@ test.describe(
 
       const response = await charactersClient.patchCharacterEquipment(
         characterWithEquipmentId,
-        longswordEquipmentId,
+        greataxeEquipmentId,
         {
           quantity: 2,
           isEquipped: false,
@@ -3333,7 +3648,7 @@ test.describe(
         characterWithEquipmentId,
       );
       await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
-        id: longswordEquipmentId,
+        id: greataxeEquipmentId,
         quantity: 2,
         isEquipped: false,
       });
@@ -3341,7 +3656,7 @@ test.describe(
   );
 
   test(
-    'Patch Longsword Equipped',
+    'Patch Greataxe Equipped',
     { tag: ['@patch', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3349,7 +3664,7 @@ test.describe(
 
       const response = await charactersClient.patchCharacterEquipment(
         characterWithEquipmentId,
-        longswordEquipmentId,
+        greataxeEquipmentId,
         {
           isEquipped: true,
         },
@@ -3367,7 +3682,7 @@ test.describe(
         characterWithEquipmentId,
       );
       await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
-        id: longswordEquipmentId,
+        id: greataxeEquipmentId,
         quantity: 2,
         isEquipped: true,
       });
@@ -3375,7 +3690,7 @@ test.describe(
   );
 
   test(
-    'Delete Longsword Equipment',
+    'Delete Greataxe Equipment',
     { tag: ['@delete', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3383,7 +3698,7 @@ test.describe(
 
       const response = await charactersClient.deleteCharacterEquipment(
         characterWithEquipmentId,
-        longswordEquipmentId,
+        greataxeEquipmentId,
         authToken,
       );
 
@@ -3399,13 +3714,17 @@ test.describe(
       );
       await charactersAssert.validateCharacterEquipmentItemAbsent(
         characterEquipment,
-        longswordEquipmentId,
+        greataxeEquipmentId,
       );
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Chain Mail', quantity: 1, isEquipped: true },
+        { name: 'Shield', quantity: 1, isEquipped: true },
+      ]);
     },
   );
 
   test(
-    'Get Deleted Equipment',
+    'Get Equipment Without Greataxe',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3428,16 +3747,20 @@ test.describe(
       );
       await charactersAssert.validateCharacterEquipmentItemAbsent(
         characterEquipment,
-        longswordEquipmentId,
+        greataxeEquipmentId,
       );
+      await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+        { name: 'Chain Mail', quantity: 1, isEquipped: true },
+        { name: 'Shield', quantity: 1, isEquipped: true },
+      ]);
     },
   );
   },
 );
 
 test.describe(
-  'Characters API - Delete Flow',
-  { tag: ['@characters', '@flow', '@delete'] },
+  'Characters API - Bilbo The Rogue Delete Flow',
+  { tag: ['@characters', '@flow', '@delete', '@rogue'] },
   () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -3450,18 +3773,18 @@ test.describe(
   });
 
   test(
-    'Create Rogue Orc Criminal',
+    'Create Bilbo The Rogue For Delete',
     { tag: ['@post', '@smoke', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
-      createdCharacterName = `Shade ${Date.now()}`;
+      createdCharacterName = `Bilbo The Rogue ${Date.now()}`;
 
       const response = await charactersClient.createCharacter(
         {
           name: createdCharacterName,
           classId: 9,
-          speciesId: 8,
+          speciesId: 7,
           backgroundId: 5,
           level: 1,
         },
@@ -3478,7 +3801,7 @@ test.describe(
       await charactersAssert.validateName(character.name, createdCharacterName);
       await charactersAssert.validateStatus(character.status, 'complete');
       await charactersAssert.validateClassId(character.classId, 9);
-      await charactersAssert.validateSpeciesId(character.speciesId, 8);
+      await charactersAssert.validateSpeciesId(character.speciesId, 7);
       await charactersAssert.validateBackgroundId(character.backgroundId, 5);
       await charactersAssert.validateLevel(character.level, 1);
       await charactersAssert.validateMissingFields(character.missingFields, []);
@@ -3486,7 +3809,7 @@ test.describe(
   );
 
   test(
-    'Delete Rogue Orc Criminal',
+    'Delete Bilbo The Rogue',
     { tag: ['@delete', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3509,7 +3832,7 @@ test.describe(
   );
 
   test(
-    'Get Deleted Character',
+    'Get Deleted Bilbo Returns Not Found',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3529,7 +3852,7 @@ test.describe(
   );
 
   test(
-    'List Without Deleted Character',
+    'List Excludes Deleted Bilbo',
     { tag: ['@get', '@data'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3552,19 +3875,31 @@ test.describe(
 );
 
 test.describe(
-  'Characters API - Negative',
-  { tag: ['@characters', '@negative'] },
+  'Characters API - Geralt Of Rivia The Warlock Negative Flow',
+  { tag: ['@characters', '@negative', '@warlock', '@dragonborn'] },
   () => {
+  const buildGeraltWarlockPayload = (
+    name: string,
+    payload: Partial<Omit<CharacterCreateRequestBody, 'name'>> = {},
+  ): CharacterCreateRequestBody => ({
+    name,
+    classId: 11,
+    speciesId: 1,
+    backgroundId: 1,
+    level: 1,
+    ...payload,
+  });
+
   test(
-    'Create character without token',
+    'Create Geralt Without Token Is Unauthorized',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
-      const response = await charactersClient.createCharacter({
-        name: 'Unauthorized Character',
-      });
+      const response = await charactersClient.createCharacter(
+        buildGeraltWarlockPayload('Geralt Of Rivia Unauthorized'),
+      );
 
       await charactersAssert.unauthorized(response);
 
@@ -3575,7 +3910,7 @@ test.describe(
   );
 
   test(
-    'Get character without token',
+    'Get Character Without Token Is Unauthorized',
     { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3592,13 +3927,13 @@ test.describe(
   );
 
   test(
-    'Patch character without token',
+    'Patch Character Without Token Is Unauthorized',
     { tag: ['@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
       const charactersAssert = new CharactersAssert();
 
-      const response = await charactersClient.updateCharacter(1, { classId: 1 });
+      const response = await charactersClient.updateCharacter(1, { classId: 11 });
 
       await charactersAssert.unauthorized(response);
 
@@ -3609,7 +3944,7 @@ test.describe(
   );
 
   test(
-    'Delete character without token',
+    'Delete Character Without Token Is Unauthorized',
     { tag: ['@delete', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3626,7 +3961,7 @@ test.describe(
   );
 
   test(
-    'Get character equipment without token',
+    'Get Character Equipment Without Token Is Unauthorized',
     { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3643,7 +3978,7 @@ test.describe(
   );
 
   test(
-    'Add character equipment without token',
+    'Add Character Equipment Without Token Is Unauthorized',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3664,7 +3999,7 @@ test.describe(
   );
 
   test(
-    'Patch character equipment without token',
+    'Patch Character Equipment Without Token Is Unauthorized',
     { tag: ['@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3683,7 +4018,7 @@ test.describe(
   );
 
   test(
-    'Delete character equipment without token',
+    'Delete Character Equipment Without Token Is Unauthorized',
     { tag: ['@delete', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3700,7 +4035,7 @@ test.describe(
   );
 
   test(
-    'Get non-existent character',
+    'Get Non-Existent Character Returns Not Found',
     { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3718,7 +4053,7 @@ test.describe(
   );
 
   test(
-    'Patch non-existent character',
+    'Patch Non-Existent Character Returns Not Found',
     { tag: ['@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3727,7 +4062,7 @@ test.describe(
 
       const response = await charactersClient.updateCharacter(
         999999,
-        { classId: 1 },
+        { classId: 11 },
         token,
       );
 
@@ -3740,7 +4075,7 @@ test.describe(
   );
 
   test(
-    'Delete non-existent character',
+    'Delete Non-Existent Character Returns Not Found',
     { tag: ['@delete', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3758,7 +4093,7 @@ test.describe(
   );
 
   test(
-    'Get non-existent character equipment',
+    'Get Non-Existent Character Equipment Returns Not Found',
     { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3776,7 +4111,7 @@ test.describe(
   );
 
   test(
-    'Add equipment to non-existent character',
+    'Add Equipment To Non-Existent Character Returns Not Found',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3802,7 +4137,7 @@ test.describe(
   );
 
   test(
-    'Patch equipment on non-existent character',
+    'Patch Equipment On Non-Existent Character Returns Not Found',
     { tag: ['@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3827,7 +4162,7 @@ test.describe(
   );
 
   test(
-    'Delete equipment on non-existent character',
+    'Delete Equipment On Non-Existent Character Returns Not Found',
     { tag: ['@delete', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3849,7 +4184,7 @@ test.describe(
   );
 
   test(
-    'Add non-existent equipment to character',
+    'Add Non-Existent Equipment To Geralt Returns Not Found',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3857,9 +4192,9 @@ test.describe(
       const token = await issueDemoToken(request);
 
       const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Invalid Equipment ${Date.now()}`,
-        },
+        buildGeraltWarlockPayload(
+          `Geralt Of Rivia Invalid Equipment ${Date.now()}`,
+        ),
         token,
       );
 
@@ -3886,7 +4221,7 @@ test.describe(
   );
 
   test(
-    'Patch missing character equipment',
+    'Patch Missing Geralt Equipment Returns Not Found',
     { tag: ['@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3894,9 +4229,9 @@ test.describe(
       const token = await issueDemoToken(request);
 
       const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Missing Equipment Patch ${Date.now()}`,
-        },
+        buildGeraltWarlockPayload(
+          `Geralt Of Rivia Missing Equipment Patch ${Date.now()}`,
+        ),
         token,
       );
 
@@ -3925,7 +4260,7 @@ test.describe(
   );
 
   test(
-    'Delete missing character equipment',
+    'Delete Missing Geralt Equipment Returns Not Found',
     { tag: ['@delete', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3933,9 +4268,9 @@ test.describe(
       const token = await issueDemoToken(request);
 
       const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Missing Equipment Delete ${Date.now()}`,
-        },
+        buildGeraltWarlockPayload(
+          `Geralt Of Rivia Missing Equipment Delete ${Date.now()}`,
+        ),
         token,
       );
 
@@ -3961,7 +4296,7 @@ test.describe(
   );
 
   test(
-    'Add character equipment with invalid payload',
+    'Add Geralt Equipment With Invalid Payload',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -3969,9 +4304,9 @@ test.describe(
       const token = await issueDemoToken(request);
 
       const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Invalid Equipment Payload ${Date.now()}`,
-        },
+        buildGeraltWarlockPayload(
+          `Geralt Of Rivia Invalid Equipment Payload ${Date.now()}`,
+        ),
         token,
       );
 
@@ -4001,7 +4336,7 @@ test.describe(
   );
 
   test(
-    'Patch character equipment with invalid quantity',
+    'Patch Character Equipment With Invalid Quantity',
     { tag: ['@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -4029,7 +4364,7 @@ test.describe(
   );
 
   test(
-    'Patch character equipment with empty payload',
+    'Patch Character Equipment With Empty Payload',
     { tag: ['@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -4055,7 +4390,7 @@ test.describe(
   );
 
   test(
-    'Patch character equipment with non-numeric quantity',
+    'Patch Character Equipment With Non-Numeric Quantity',
     { tag: ['@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -4083,7 +4418,7 @@ test.describe(
   );
 
   test(
-    'Create character with invalid payload',
+    'Create Geralt With Invalid Payload',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -4093,6 +4428,10 @@ test.describe(
       const response = await charactersClient.createCharacter(
         {
           name: '',
+          classId: 11,
+          speciesId: 1,
+          backgroundId: 1,
+          level: 1,
         },
         token,
       );
@@ -4109,7 +4448,7 @@ test.describe(
   );
 
   test(
-    'Patch character with invalid payload',
+    'Patch Geralt With Invalid Payload',
     { tag: ['@post', '@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -4117,9 +4456,7 @@ test.describe(
       const token = await issueDemoToken(request);
 
       const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Invalid Patch ${Date.now()}`,
-        },
+        buildGeraltWarlockPayload(`Geralt Of Rivia Invalid Patch ${Date.now()}`),
         token,
       );
 
@@ -4147,7 +4484,7 @@ test.describe(
   );
 
   test(
-    'Create character with incomplete scores',
+    'Create Geralt With Incomplete Scores',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -4155,8 +4492,7 @@ test.describe(
       const token = await issueDemoToken(request);
 
       const response = await charactersClient.createCharacter(
-        {
-          name: `Incomplete Scores ${Date.now()}`,
+        buildGeraltWarlockPayload(`Geralt Of Rivia Incomplete Scores ${Date.now()}`, {
           abilityScores: {
             base: {
               STR: 15,
@@ -4165,7 +4501,7 @@ test.describe(
               STR: 2,
             },
           } as unknown as CharacterAbilityScoresInput,
-        },
+        }),
         token,
       );
 
@@ -4181,7 +4517,7 @@ test.describe(
   );
 
   test(
-    'Patch character with non-numeric score',
+    'Patch Geralt With Non-Numeric Score',
     { tag: ['@post', '@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -4189,9 +4525,7 @@ test.describe(
       const token = await issueDemoToken(request);
 
       const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Invalid Scores ${Date.now()}`,
-        },
+        buildGeraltWarlockPayload(`Geralt Of Rivia Invalid Scores ${Date.now()}`),
         token,
       );
 
@@ -4236,7 +4570,7 @@ test.describe(
   );
 
   test(
-    'Create character with incomplete currency',
+    'Create Geralt With Incomplete Currency',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -4244,12 +4578,14 @@ test.describe(
       const token = await issueDemoToken(request);
 
       const response = await charactersClient.createCharacter(
-        {
-          name: `Incomplete Currency ${Date.now()}`,
+        buildGeraltWarlockPayload(
+          `Geralt Of Rivia Incomplete Currency ${Date.now()}`,
+          {
           currency: {
             gp: 10,
           } as unknown as CharacterCurrency,
-        },
+          },
+        ),
         token,
       );
 
@@ -4265,7 +4601,7 @@ test.describe(
   );
 
   test(
-    'Patch character with non-numeric currency',
+    'Patch Geralt With Non-Numeric Currency',
     { tag: ['@post', '@patch', '@negative', '@error'] },
     async ({ request }) => {
       const charactersClient = new CharactersClient(request);
@@ -4273,9 +4609,7 @@ test.describe(
       const token = await issueDemoToken(request);
 
       const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Invalid Currency ${Date.now()}`,
-        },
+        buildGeraltWarlockPayload(`Geralt Of Rivia Invalid Currency ${Date.now()}`),
         token,
       );
 

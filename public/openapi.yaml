@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.11.0
+  version: 1.12.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -1061,6 +1061,16 @@ paths:
                   - backgroundId
                 abilityScores: null
                 abilityModifiers: null
+                armorClass:
+                  total: 10
+                  base: 10
+                  dexModifierApplied: 0
+                  classBonus: 0
+                  shieldBonus: 0
+                  sources:
+                    - name: Base AC
+                      type: base
+                      value: 10
                 skillProficiencies: []
                 abilityScoreRules: null
                 classDetails: null
@@ -1103,11 +1113,14 @@ paths:
         When related data exists, the detail payload can include nested:
         - `abilityScores`
         - `abilityModifiers`
+        - `armorClass`
         - `skillProficiencies`
         - `abilityScoreRules`
         - `classDetails`
         - `speciesDetails`
         - `backgroundDetails`
+
+        `armorClass` is calculated from resolved DEX modifier and currently equipped armor or shield. If no armor is equipped, the base AC is `10`; Barbarian and Monk unarmored defense can contribute a `class` source when their rules apply.
       security:
         - bearerAuth: []
       parameters:
@@ -1160,6 +1173,16 @@ paths:
                   INT: 3
                   WIS: 1
                   CHA: 0
+                armorClass:
+                  total: 12
+                  base: 10
+                  dexModifierApplied: 2
+                  classBonus: 0
+                  shieldBonus: 0
+                  sources:
+                    - name: Base AC
+                      type: base
+                      value: 10
                 abilityScoreRules:
                   source: background
                   allowedChoices:
@@ -3289,6 +3312,65 @@ components:
           type: integer
           example: 0
 
+    CharacterArmorClassSourceType:
+      type: string
+      enum:
+        - base
+        - armor
+        - shield
+        - class
+      example: base
+
+    CharacterArmorClassSource:
+      type: object
+      required:
+        - name
+        - type
+        - value
+      properties:
+        name:
+          type: string
+          example: Base AC
+        type:
+          $ref: '#/components/schemas/CharacterArmorClassSourceType'
+        value:
+          type: integer
+          example: 10
+
+    CharacterArmorClass:
+      type: object
+      required:
+        - total
+        - base
+        - dexModifierApplied
+        - classBonus
+        - shieldBonus
+        - sources
+      properties:
+        total:
+          type: integer
+          example: 12
+        base:
+          type: integer
+          example: 10
+        dexModifierApplied:
+          type: integer
+          example: 2
+        classBonus:
+          type: integer
+          example: 0
+        shieldBonus:
+          type: integer
+          example: 0
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterArmorClassSource'
+          example:
+            - name: Base AC
+              type: base
+              value: 10
+
     CharacterAbilityScoreBonusChoice:
       type: object
       required:
@@ -3570,6 +3652,7 @@ components:
         - missingFields
         - abilityScores
         - abilityModifiers
+        - armorClass
         - skillProficiencies
         - abilityScoreRules
         - classDetails
@@ -3614,6 +3697,8 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/CharacterAbilityModifiers'
+        armorClass:
+          $ref: '#/components/schemas/CharacterArmorClass'
         skillProficiencies:
           type: array
           items:

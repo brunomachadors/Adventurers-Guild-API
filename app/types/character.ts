@@ -70,6 +70,21 @@ export interface CharacterCurrency {
   pp: number;
 }
 
+export interface CharacterArmorClassSource {
+  name: string;
+  type: 'base' | 'armor' | 'shield' | 'class';
+  value: number;
+}
+
+export interface CharacterArmorClass {
+  total: number;
+  base: number;
+  dexModifierApplied: number;
+  classBonus: number;
+  shieldBonus: number;
+  sources: CharacterArmorClassSource[];
+}
+
 export interface CharacterAbilityScoreBonusChoice {
   bonus: number;
   count: number;
@@ -141,6 +156,7 @@ export interface CharacterResponseBody {
   missingFields: CharacterMissingField[];
   abilityScores: CharacterResolvedAbilityScores | null;
   abilityModifiers: CharacterAbilityModifiers | null;
+  armorClass: CharacterArmorClass;
   currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
   abilityScoreRules: CharacterAbilityScoreRules | null;
