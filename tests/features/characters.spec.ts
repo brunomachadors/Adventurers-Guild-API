@@ -475,6 +475,7 @@ test.describe(
         null,
       );
       await charactersAssert.validateHitPoints(createdCharacter.hitPoints, null);
+      await charactersAssert.validateInitiative(createdCharacter.initiative, null);
       await test.step('Validate draft character has no saving throws', async () => {
         expect(createdCharacter.savingThrows).toEqual([]);
       });
@@ -594,6 +595,7 @@ test.describe(
         null,
       );
       await charactersAssert.validateHitPoints(updatedCharacter.hitPoints, null);
+      await charactersAssert.validateInitiative(updatedCharacter.initiative, null);
       await test.step(
         'Validate character without scores has no saving throws',
         async () => {
@@ -1245,6 +1247,12 @@ test.describe(
         finalCharacter.hitPoints,
         barbarianHitPoints,
       );
+      await charactersAssert.validateInitiative(finalCharacter.initiative, {
+        ability: 'DEX',
+        abilityModifier: 1,
+        bonus: 0,
+        total: 1,
+      });
       await charactersAssert.validateSavingThrowOrder(finalCharacter.savingThrows);
       await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
         ability: 'STR',
@@ -1399,6 +1407,7 @@ test.describe(
       await charactersAssert.validateMissingFields(character.missingFields, []);
       await charactersAssert.validateAbilityScores(character.abilityScores, null);
       await charactersAssert.validateHitPoints(character.hitPoints, null);
+      await charactersAssert.validateInitiative(character.initiative, null);
       await test.step(
         'Validate monk without scores has no saving throws',
         async () => {
@@ -1529,6 +1538,12 @@ test.describe(
         character.hitPoints,
         monkHitPoints,
       );
+      await charactersAssert.validateInitiative(character.initiative, {
+        ability: 'DEX',
+        abilityModifier: 3,
+        bonus: 0,
+        total: 3,
+      });
       await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
         name: 'Quarterstaff',
         attackType: 'melee',
@@ -2059,6 +2074,12 @@ test.describe(
         character.hitPoints,
         paladinHitPoints,
       );
+      await charactersAssert.validateInitiative(character.initiative, {
+        ability: 'DEX',
+        abilityModifier: 0,
+        bonus: 0,
+        total: 0,
+      });
       await charactersAssert.validateSavingThrowOrder(character.savingThrows);
       await charactersAssert.validateSavingThrow(character.savingThrows, {
         ability: 'WIS',
@@ -3101,6 +3122,12 @@ test.describe(
         finalCharacter.hitPoints,
         wizardHitPoints,
       );
+      await charactersAssert.validateInitiative(finalCharacter.initiative, {
+        ability: 'DEX',
+        abilityModifier: 2,
+        bonus: 0,
+        total: 2,
+      });
       await charactersAssert.validateSavingThrowOrder(finalCharacter.savingThrows);
       await charactersAssert.validateSavingThrow(finalCharacter.savingThrows, {
         ability: 'INT',
@@ -3779,6 +3806,12 @@ test.describe(
         character.hitPoints,
         sorcererHitPoints,
       );
+      await charactersAssert.validateInitiative(character.initiative, {
+        ability: 'DEX',
+        abilityModifier: 2,
+        bonus: 0,
+        total: 2,
+      });
       await charactersAssert.validateSavingThrowOrder(character.savingThrows);
       await charactersAssert.validateSavingThrow(character.savingThrows, {
         ability: 'CON',
@@ -4066,6 +4099,12 @@ test.describe(
         character.hitPoints,
         fighterHitPoints,
       );
+      await charactersAssert.validateInitiative(character.initiative, {
+        ability: 'DEX',
+        abilityModifier: 1,
+        bonus: 0,
+        total: 1,
+      });
       await charactersAssert.validateSavingThrowOrder(character.savingThrows);
       await charactersAssert.validateSavingThrow(character.savingThrows, {
         ability: 'STR',

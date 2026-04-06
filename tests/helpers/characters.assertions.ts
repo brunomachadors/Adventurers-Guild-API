@@ -8,6 +8,7 @@ import {
   CharacterClassDetails,
   CharacterEquipmentResponseBody,
   CharacterHitPoints,
+  CharacterInitiative,
   CharacterListItem,
   CharacterSavingThrow,
   CharacterSkillItem,
@@ -569,6 +570,7 @@ export class CharactersAssert {
       expect(character).toHaveProperty('weaponAttacks');
       expect(character).toHaveProperty('hitPoints');
       expect(character).toHaveProperty('savingThrows');
+      expect(character).toHaveProperty('initiative');
       expect(character).toHaveProperty('currency');
       expect(character).toHaveProperty('skillProficiencies');
       expect(character).toHaveProperty('abilityScoreRules');
@@ -605,6 +607,9 @@ export class CharactersAssert {
         character.hitPoints === null || typeof character.hitPoints === 'object',
       ).toBe(true);
       expect(Array.isArray(character.savingThrows)).toBe(true);
+      expect(
+        character.initiative === null || typeof character.initiative === 'object',
+      ).toBe(true);
       expect(
         character.currency === null || typeof character.currency === 'object',
       ).toBe(true);
@@ -659,6 +664,10 @@ export class CharactersAssert {
 
     await this.validateSavingThrowsSchema(character.savingThrows);
 
+    if (character.initiative) {
+      await this.validateInitiativeSchema(character.initiative);
+    }
+
     if (character.currency) {
       await this.validateCurrencySchema(character.currency);
     }
@@ -668,6 +677,7 @@ export class CharactersAssert {
       async () => {
         if (character.abilityScores === null) {
           expect(character.abilityModifiers).toBeNull();
+          expect(character.initiative).toBeNull();
 
           return;
         }
@@ -676,6 +686,12 @@ export class CharactersAssert {
         expect(character.abilityModifiers).toEqual(
           this.createAbilityModifiers(character.abilityScores.final),
         );
+        expect(character.initiative).not.toBeNull();
+        expect(character.initiative?.abilityModifier).toBe(
+          character.abilityModifiers?.DEX,
+        );
+        expect(character.initiative?.bonus).toBe(0);
+        expect(character.initiative?.total).toBe(character.abilityModifiers?.DEX);
       },
     );
 
@@ -1047,6 +1063,69 @@ export class CharactersAssert {
         }
       },
     );
+  }
+
+  async validateInitiativeSchema(initiative: CharacterInitiative) {
+    await test.step('Validate initiative schema', async () => {
+      expect(initiative).toHaveProperty('ability');
+      expect(initiative).toHaveProperty('abilityModifier');
+      expect(initiative).toHaveProperty('bonus');
+      expect(initiative).toHaveProperty('total');
+      expect(initiative).toHaveProperty('sources');
+
+      expect(initiative.ability).toBe('DEX');
+      expect(typeof initiative.abilityModifier).toBe('number');
+      expect(typeof initiative.bonus).toBe('number');
+      expect(typeof initiative.total).toBe('number');
+      expect(Array.isArray(initiative.sources)).toBe(true);
+    });
+
+    for (const source of initiative.sources) {
+      await test.step('Validate initiative source schema', async () => {
+        expect(source).toHaveProperty('type');
+        expect(source).toHaveProperty('value');
+
+        expect(['abilityModifier', 'bonus']).toContain(source.type);
+        expect(typeof source.value).toBe('number');
+
+        if (source.type === 'abilityModifier') {
+          expect(source).toHaveProperty('ability');
+          expect(source.ability).toBe('DEX');
+        }
+      });
+    }
+  }
+
+  async validateInitiative(
+    initiative: CharacterResponseBody['initiative'],
+    expectedInitiative: Omit<CharacterInitiative, 'sources'> | null,
+  ) {
+    await test.step('Validate initiative', async () => {
+      if (expectedInitiative === null) {
+        expect(initiative).toBeNull();
+
+        return;
+      }
+
+      expect(initiative).not.toBeNull();
+      expect(initiative).toMatchObject(expectedInitiative);
+      expect(initiative?.total).toBe(
+        expectedInitiative.abilityModifier + expectedInitiative.bonus,
+      );
+      expect(initiative?.sources).toEqual(
+        expect.arrayContaining([
+          {
+            type: 'abilityModifier',
+            ability: 'DEX',
+            value: expectedInitiative.abilityModifier,
+          },
+        ]),
+      );
+    });
+
+    if (initiative) {
+      await this.validateInitiativeSchema(initiative);
+    }
   }
 
   async validateCurrencySchema(currency: CharacterCurrency) {

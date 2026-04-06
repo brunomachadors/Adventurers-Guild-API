@@ -130,6 +130,20 @@ export interface CharacterSavingThrow {
   sources: CharacterSavingThrowSource[];
 }
 
+export interface CharacterInitiativeSource {
+  type: 'abilityModifier' | 'bonus';
+  ability?: Attributeshortname;
+  value: number;
+}
+
+export interface CharacterInitiative {
+  ability: 'DEX';
+  abilityModifier: number;
+  bonus: number;
+  total: number;
+  sources: CharacterInitiativeSource[];
+}
+
 export interface CharacterAbilityScoreBonusChoice {
   bonus: number;
   count: number;
@@ -205,6 +219,7 @@ export interface CharacterResponseBody {
   weaponAttacks: CharacterWeaponAttack[];
   hitPoints: CharacterHitPoints | null;
   savingThrows: CharacterSavingThrow[];
+  initiative: CharacterInitiative | null;
   currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
   abilityScoreRules: CharacterAbilityScoreRules | null;
