@@ -252,6 +252,37 @@ export class CharactersAssert {
     });
   }
 
+  async validateCharacterEquipmentItem(
+    characterEquipment: CharacterEquipmentResponseBody,
+    expectedItem: { id: number; quantity: number; isEquipped: boolean; name?: string },
+  ) {
+    await test.step('Validate expected character equipment item', async () => {
+      const equipmentItem = characterEquipment.equipment.find(
+        (item) => item.id === expectedItem.id,
+      );
+
+      expect(equipmentItem).toBeDefined();
+
+      if (expectedItem.name !== undefined) {
+        expect(equipmentItem?.name).toBe(expectedItem.name);
+      }
+
+      expect(equipmentItem?.quantity).toBe(expectedItem.quantity);
+      expect(equipmentItem?.isEquipped).toBe(expectedItem.isEquipped);
+    });
+  }
+
+  async validateCharacterEquipmentItemAbsent(
+    characterEquipment: CharacterEquipmentResponseBody,
+    equipmentId: number,
+  ) {
+    await test.step('Validate character equipment item is absent', async () => {
+      expect(
+        characterEquipment.equipment.some((item) => item.id === equipmentId),
+      ).toBe(false);
+    });
+  }
+
   async validateCharacterSpellSelectionSchema(
     spellSelection: CharacterSpellSelectionResponseBody,
   ) {

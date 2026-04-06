@@ -62,6 +62,68 @@ export async function addCharacterEquipment(
   `;
 }
 
+export async function characterEquipmentExists(
+  characterId: number,
+  equipmentId: number,
+): Promise<boolean> {
+  const sql = getSql();
+  const equipmentRows = await sql`
+    SELECT id
+    FROM characterequipment
+    WHERE characterid = ${characterId}
+      AND equipmentid = ${equipmentId}
+    LIMIT 1
+  `;
+
+  return Boolean(equipmentRows && equipmentRows.length > 0);
+}
+
+export async function updateCharacterEquipment(
+  characterId: number,
+  equipmentId: number,
+  updates: {
+    quantity?: number;
+    isEquipped?: boolean;
+  },
+): Promise<void> {
+  const sql = getSql();
+
+  const existingRows = await sql`
+    SELECT quantity, isequipped
+    FROM characterequipment
+    WHERE characterid = ${characterId}
+      AND equipmentid = ${equipmentId}
+    LIMIT 1
+  `;
+
+  const existingItem = existingRows[0];
+  const nextQuantity = updates.quantity ?? toNumber(existingItem.quantity);
+  const nextIsEquipped = updates.isEquipped ?? Boolean(existingItem.isequipped);
+
+  await sql`
+    UPDATE characterequipment
+    SET
+      quantity = ${nextQuantity},
+      isequipped = ${nextIsEquipped},
+      updatedat = NOW()
+    WHERE characterid = ${characterId}
+      AND equipmentid = ${equipmentId}
+  `;
+}
+
+export async function removeCharacterEquipment(
+  characterId: number,
+  equipmentId: number,
+): Promise<void> {
+  const sql = getSql();
+
+  await sql`
+    DELETE FROM characterequipment
+    WHERE characterid = ${characterId}
+      AND equipmentid = ${equipmentId}
+  `;
+}
+
 export async function getCharacterEquipment(
   ownerId: number,
   characterId: number,
