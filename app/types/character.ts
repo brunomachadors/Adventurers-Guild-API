@@ -231,3 +231,8 @@ export interface CharacterEquipmentAddRequestBody {
   quantity?: number;
   isEquipped?: boolean;
 }
+
+export interface CharacterEquipmentUpdateRequestBody {
+  quantity?: number;
+  isEquipped?: boolean;
+}

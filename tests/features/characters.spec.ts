@@ -3231,15 +3231,11 @@ test.describe(
         characterEquipment.characterId,
         characterWithEquipmentId,
       );
-      await test.step('Validate character equipment items are returned', async () => {
-        const longsword = characterEquipment.equipment.find(
-          (item) => item.id === longswordEquipmentId,
-        );
-
-        expect(longsword).toBeDefined();
-        expect(longsword?.name).toBe('Longsword');
-        expect(longsword?.quantity).toBe(1);
-        expect(longsword?.isEquipped).toBe(true);
+      await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
+        id: longswordEquipmentId,
+        name: 'Longsword',
+        quantity: 1,
+        isEquipped: true,
       });
     },
   );
@@ -3266,14 +3262,10 @@ test.describe(
         characterEquipment.characterId,
         characterWithEquipmentId,
       );
-      await test.step('Validate added equipment is returned', async () => {
-        const longsword = characterEquipment.equipment.find(
-          (item) => item.id === longswordEquipmentId,
-        );
-
-        expect(longsword).toBeDefined();
-        expect(longsword?.quantity).toBe(1);
-        expect(longsword?.isEquipped).toBe(true);
+      await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
+        id: longswordEquipmentId,
+        quantity: 1,
+        isEquipped: true,
       });
     },
   );
@@ -3305,15 +3297,139 @@ test.describe(
         characterEquipment.characterId,
         characterWithEquipmentId,
       );
-      await test.step('Validate quantity increments and equipped state updates', async () => {
-        const longsword = characterEquipment.equipment.find(
-          (item) => item.id === longswordEquipmentId,
-        );
-
-        expect(longsword).toBeDefined();
-        expect(longsword?.quantity).toBe(3);
-        expect(longsword?.isEquipped).toBe(false);
+      await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
+        id: longswordEquipmentId,
+        quantity: 3,
+        isEquipped: false,
       });
+    },
+  );
+
+  test(
+    'Patch Longsword Equipment',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.patchCharacterEquipment(
+        characterWithEquipmentId,
+        longswordEquipmentId,
+        {
+          quantity: 2,
+          isEquipped: false,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        characterWithEquipmentId,
+      );
+      await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
+        id: longswordEquipmentId,
+        quantity: 2,
+        isEquipped: false,
+      });
+    },
+  );
+
+  test(
+    'Patch Longsword Equipped',
+    { tag: ['@patch', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.patchCharacterEquipment(
+        characterWithEquipmentId,
+        longswordEquipmentId,
+        {
+          isEquipped: true,
+        },
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        characterWithEquipmentId,
+      );
+      await charactersAssert.validateCharacterEquipmentItem(characterEquipment, {
+        id: longswordEquipmentId,
+        quantity: 2,
+        isEquipped: true,
+      });
+    },
+  );
+
+  test(
+    'Delete Longsword Equipment',
+    { tag: ['@delete', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.deleteCharacterEquipment(
+        characterWithEquipmentId,
+        longswordEquipmentId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        characterWithEquipmentId,
+      );
+      await charactersAssert.validateCharacterEquipmentItemAbsent(
+        characterEquipment,
+        longswordEquipmentId,
+      );
+    },
+  );
+
+  test(
+    'Get Deleted Equipment',
+    { tag: ['@get', '@data'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.getCharacterEquipment(
+        characterWithEquipmentId,
+        authToken,
+      );
+
+      await charactersAssert.success(response);
+
+      const characterEquipment: CharacterEquipmentResponseBody =
+        await response.json();
+
+      await charactersAssert.validateCharacterEquipmentSchema(characterEquipment);
+      await charactersAssert.validateId(
+        characterEquipment.characterId,
+        characterWithEquipmentId,
+      );
+      await charactersAssert.validateCharacterEquipmentItemAbsent(
+        characterEquipment,
+        longswordEquipmentId,
+      );
     },
   );
   },
@@ -3548,6 +3664,42 @@ test.describe(
   );
 
   test(
+    'Patch character equipment without token',
+    { tag: ['@patch', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.patchCharacterEquipment(1, 1, {
+        quantity: 1,
+      });
+
+      await charactersAssert.unauthorized(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Unauthorized');
+    },
+  );
+
+  test(
+    'Delete character equipment without token',
+    { tag: ['@delete', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+
+      const response = await charactersClient.deleteCharacterEquipment(1, 1);
+
+      await charactersAssert.unauthorized(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Unauthorized');
+    },
+  );
+
+  test(
     'Get non-existent character',
     { tag: ['@get', '@negative', '@error'] },
     async ({ request }) => {
@@ -3650,6 +3802,53 @@ test.describe(
   );
 
   test(
+    'Patch equipment on non-existent character',
+    { tag: ['@patch', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.patchCharacterEquipment(
+        999999,
+        1,
+        {
+          quantity: 1,
+        },
+        token,
+      );
+
+      await charactersAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Character not found');
+    },
+  );
+
+  test(
+    'Delete equipment on non-existent character',
+    { tag: ['@delete', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.deleteCharacterEquipment(
+        999999,
+        1,
+        token,
+      );
+
+      await charactersAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(body, 'Character not found');
+    },
+  );
+
+  test(
     'Add non-existent equipment to character',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
@@ -3687,6 +3886,81 @@ test.describe(
   );
 
   test(
+    'Patch missing character equipment',
+    { tag: ['@patch', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const createResponse = await charactersClient.createCharacter(
+        {
+          name: `Missing Equipment Patch ${Date.now()}`,
+        },
+        token,
+      );
+
+      await charactersAssert.created(createResponse);
+
+      const createdCharacter: CharacterResponseBody = await createResponse.json();
+
+      const response = await charactersClient.patchCharacterEquipment(
+        createdCharacter.id,
+        999999,
+        {
+          quantity: 1,
+        },
+        token,
+      );
+
+      await charactersAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Character equipment not found',
+      );
+    },
+  );
+
+  test(
+    'Delete missing character equipment',
+    { tag: ['@delete', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const createResponse = await charactersClient.createCharacter(
+        {
+          name: `Missing Equipment Delete ${Date.now()}`,
+        },
+        token,
+      );
+
+      await charactersAssert.created(createResponse);
+
+      const createdCharacter: CharacterResponseBody = await createResponse.json();
+
+      const response = await charactersClient.deleteCharacterEquipment(
+        createdCharacter.id,
+        999999,
+        token,
+      );
+
+      await charactersAssert.notFound(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Character equipment not found',
+      );
+    },
+  );
+
+  test(
     'Add character equipment with invalid payload',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
@@ -3712,6 +3986,88 @@ test.describe(
           quantity: 0,
           isEquipped: true,
         },
+        token,
+      );
+
+      await charactersAssert.badRequest(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Invalid character equipment request payload',
+      );
+    },
+  );
+
+  test(
+    'Patch character equipment with invalid quantity',
+    { tag: ['@patch', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.patchCharacterEquipment(
+        1,
+        1,
+        {
+          quantity: 0,
+        },
+        token,
+      );
+
+      await charactersAssert.badRequest(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Invalid character equipment request payload',
+      );
+    },
+  );
+
+  test(
+    'Patch character equipment with empty payload',
+    { tag: ['@patch', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.patchCharacterEquipment(
+        1,
+        1,
+        {},
+        token,
+      );
+
+      await charactersAssert.badRequest(response);
+
+      const body: { error: string } = await response.json();
+
+      await charactersAssert.validateErrorResponse(
+        body,
+        'Invalid character equipment request payload',
+      );
+    },
+  );
+
+  test(
+    'Patch character equipment with non-numeric quantity',
+    { tag: ['@patch', '@negative', '@error'] },
+    async ({ request }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const token = await issueDemoToken(request);
+
+      const response = await charactersClient.patchCharacterEquipment(
+        1,
+        1,
+        {
+          quantity: '3',
+        } as unknown as { quantity: number },
         token,
       );
 

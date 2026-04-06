@@ -500,6 +500,42 @@ Returns:
 - `404` with `{ "error": "Equipment not found" }`
 - `500` with `{ "error": "Failed to add character equipment" }`
 
+### `PATCH /api/characters/{id}/equipment/{equipmentId}`
+
+Updates an equipment item already attached to the character and returns the updated character equipment list.
+
+Requires bearer token.
+
+Accepted fields:
+
+- `quantity`
+- `isEquipped`
+
+At least one accepted field must be present. `quantity` must be a positive integer.
+
+Returns:
+
+- `200` with the updated character equipment response
+- `400` with `{ "error": "Invalid character equipment request payload" }`
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `404` with `{ "error": "Character equipment not found" }`
+- `500` with `{ "error": "Failed to update character equipment" }`
+
+### `DELETE /api/characters/{id}/equipment/{equipmentId}`
+
+Removes an equipment item from the character and returns the updated character equipment list.
+
+Requires bearer token.
+
+Returns:
+
+- `200` with the updated character equipment response
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `404` with `{ "error": "Character equipment not found" }`
+- `500` with `{ "error": "Failed to remove character equipment" }`
+
 ### `GET /api/characters/{id}/ability-score-options`
 
 Returns the current ability score selection state for the character.

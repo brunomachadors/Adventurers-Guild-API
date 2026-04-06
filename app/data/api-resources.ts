@@ -108,9 +108,9 @@ export const apiResources: ApiResource[] = [
     name: 'Characters',
     slug: 'characters',
     description:
-      'Protected character management flow with creation, updates, deletion, equipment management, ability score selection, character skill calculation, spell selection, and enriched responses that include class, species, background, derived ability modifier details, and selected skill proficiencies.',
+      'Protected character management flow with creation, updates, deletion, character equipment add/update/removal, ability score selection, skill calculation, spell selection, and enriched responses.',
     summary:
-      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, ability score progression, derived modifier data, calculated skill totals, and character equipment tracking.',
+      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, calculated skill totals, and full character equipment tracking.',
     listFields: [
       'id',
       'name',
@@ -135,12 +135,13 @@ export const apiResources: ApiResource[] = [
       'abilityModifiers',
       'currency',
       'skillProficiencies',
-      'character equipment',
+      'equipment',
     ],
     previewEndpoints: [
-      'POST /api/characters',
       'GET /api/characters/{id}/equipment',
       'POST /api/characters/{id}/equipment',
+      'PATCH /api/characters/{id}/equipment/{equipmentId}',
+      'DELETE /api/characters/{id}/equipment/{equipmentId}',
     ],
     endpoints: [
       'GET /api/characters',
@@ -153,6 +154,8 @@ export const apiResources: ApiResource[] = [
       'GET /api/characters/{id}/skills',
       'GET /api/characters/{id}/equipment',
       'POST /api/characters/{id}/equipment',
+      'PATCH /api/characters/{id}/equipment/{equipmentId}',
+      'DELETE /api/characters/{id}/equipment/{equipmentId}',
       'GET /api/characters/{id}/spell-options',
       'GET /api/characters/{id}/spell-selection',
       'PUT /api/characters/{id}/spells',
@@ -164,5 +167,5 @@ export const projectHighlights = [
   'Visual entrypoint for the API project',
   'Interactive documentation available in /docs',
   'Catalog coverage now includes equipment alongside classes, spells, species, and backgrounds',
-  'Character flows now support equipment tracking, currency, calculated skills, and richer detail payloads',
+  'Character flows now support adding, updating, and removing equipment from a character',
 ];

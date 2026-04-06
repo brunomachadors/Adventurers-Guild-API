@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.10.0
+  version: 1.11.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -1608,6 +1608,150 @@ paths:
               example:
                 error: Failed to add character equipment
 
+  /api/characters/{id}/equipment/{equipmentId}:
+    patch:
+      tags:
+        - Characters
+      operationId: updateCharacterEquipment
+      summary: Update character equipment
+      description: |
+        Updates an equipment item already attached to the character and returns the updated character equipment list.
+
+        At least one of `quantity` or `isEquipped` must be present. `quantity` must be a positive integer.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+        - $ref: '#/components/parameters/CharacterEquipmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterEquipmentUpdateRequestBody'
+            examples:
+              updateQuantity:
+                summary: Update quantity
+                value:
+                  quantity: 2
+              updateEquippedState:
+                summary: Update equipped state
+                value:
+                  isEquipped: true
+              updateBoth:
+                summary: Update quantity and equipped state
+                value:
+                  quantity: 2
+                  isEquipped: false
+      responses:
+        '200':
+          description: Character equipment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterEquipmentResponseBody'
+              example:
+                characterId: 101
+                equipment:
+                  - id: 42
+                    name: Longsword
+                    category: Weapon
+                    type: Weapon
+                    quantity: 2
+                    isEquipped: true
+        '400':
+          description: Invalid character equipment request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid character equipment request payload
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character or character equipment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                characterNotFound:
+                  summary: Character not found
+                  value:
+                    error: Character not found
+                characterEquipmentNotFound:
+                  summary: Character equipment not found
+                  value:
+                    error: Character equipment not found
+        '500':
+          description: Failed to update character equipment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to update character equipment
+    delete:
+      tags:
+        - Characters
+      operationId: removeCharacterEquipment
+      summary: Remove character equipment
+      description: |
+        Removes an equipment item from the character and returns the updated character equipment list.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+        - $ref: '#/components/parameters/CharacterEquipmentId'
+      responses:
+        '200':
+          description: Character equipment removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterEquipmentResponseBody'
+              example:
+                characterId: 101
+                equipment: []
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character or character equipment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                characterNotFound:
+                  summary: Character not found
+                  value:
+                    error: Character not found
+                characterEquipmentNotFound:
+                  summary: Character equipment not found
+                  value:
+                    error: Character equipment not found
+        '500':
+          description: Failed to remove character equipment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to remove character equipment
+
   /api/characters/{id}/ability-score-options:
     get:
       tags:
@@ -2044,6 +2188,15 @@ components:
       in: path
       required: true
       description: Character numeric identifier.
+      schema:
+        type: integer
+        minimum: 1
+
+    CharacterEquipmentId:
+      name: equipmentId
+      in: path
+      required: true
+      description: Equipment numeric identifier attached to the character.
       schema:
         type: integer
         minimum: 1
@@ -3595,6 +3748,19 @@ components:
           type: boolean
           default: false
           example: true
+
+    CharacterEquipmentUpdateRequestBody:
+      type: object
+      description: At least one of `quantity` or `isEquipped` must be present.
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+        isEquipped:
+          type: boolean
+          example: true
+      minProperties: 1
 
     CharacterAbilityScoreOptionsResponseBody:
       type: object

@@ -4,6 +4,7 @@ import {
   CharacterAbilityScoresUpdateRequestBody,
   CharacterCreateRequestBody,
   CharacterEquipmentAddRequestBody,
+  CharacterEquipmentUpdateRequestBody,
   CharacterSpellSelectionUpdateRequestBody,
   CharacterUpdateRequestBody,
 } from '@/app/types/character';
@@ -82,6 +83,28 @@ export class CharactersClient {
   ): Promise<APIResponse> {
     return this.request.post(`/api/characters/${id}/equipment`, {
       data: payload,
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
+  async patchCharacterEquipment(
+    id: number,
+    equipmentId: number,
+    payload: CharacterEquipmentUpdateRequestBody,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.patch(`/api/characters/${id}/equipment/${equipmentId}`, {
+      data: payload,
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
+  async deleteCharacterEquipment(
+    id: number,
+    equipmentId: number,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.delete(`/api/characters/${id}/equipment/${equipmentId}`, {
       headers: this.buildAuthHeaders(token),
     });
   }
