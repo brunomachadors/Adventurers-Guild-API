@@ -85,6 +85,27 @@ export interface CharacterArmorClass {
   sources: CharacterArmorClassSource[];
 }
 
+export interface CharacterWeaponAttackDamage {
+  formula: string;
+  base: string;
+  modifier: number;
+  damageType: string;
+}
+
+export interface CharacterWeaponAttack {
+  equipmentId: number;
+  name: string;
+  attackType: string;
+  ability: Attributeshortname;
+  isProficient: boolean;
+  abilityModifier: number;
+  proficiencyBonus: number;
+  attackBonus: number;
+  damage: CharacterWeaponAttackDamage;
+  properties: string[];
+  range: import('./equipment').EquipmentRange | null;
+}
+
 export interface CharacterAbilityScoreBonusChoice {
   bonus: number;
   count: number;
@@ -157,6 +178,7 @@ export interface CharacterResponseBody {
   abilityScores: CharacterResolvedAbilityScores | null;
   abilityModifiers: CharacterAbilityModifiers | null;
   armorClass: CharacterArmorClass;
+  weaponAttacks: CharacterWeaponAttack[];
   currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
   abilityScoreRules: CharacterAbilityScoreRules | null;

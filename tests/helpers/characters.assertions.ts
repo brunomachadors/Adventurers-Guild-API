@@ -13,6 +13,7 @@ import {
   CharacterSpellSelectionResponseBody,
   CharacterResponseBody,
   CharacterStatus,
+  CharacterWeaponAttack,
 } from '@/app/types/character';
 import { BackgroundDetail } from '@/app/types/background';
 import { SpeciesDetail } from '@/app/types/species';
@@ -284,6 +285,154 @@ export class CharactersAssert {
     });
   }
 
+  async validateWeaponAttacksSchema(weaponAttacks: CharacterWeaponAttack[]) {
+    await test.step('Validate weapon attacks schema', async () => {
+      expect(Array.isArray(weaponAttacks)).toBe(true);
+    });
+
+    for (const weaponAttack of weaponAttacks) {
+      await test.step(
+        `Validate weapon attack schema for ${weaponAttack.name}`,
+        async () => {
+          expect(weaponAttack).toHaveProperty('equipmentId');
+          expect(weaponAttack).toHaveProperty('name');
+          expect(weaponAttack).toHaveProperty('attackType');
+          expect(weaponAttack).toHaveProperty('ability');
+          expect(weaponAttack).toHaveProperty('isProficient');
+          expect(weaponAttack).toHaveProperty('abilityModifier');
+          expect(weaponAttack).toHaveProperty('proficiencyBonus');
+          expect(weaponAttack).toHaveProperty('attackBonus');
+          expect(weaponAttack).toHaveProperty('damage');
+          expect(weaponAttack).toHaveProperty('properties');
+          expect(weaponAttack).toHaveProperty('range');
+
+          expect(typeof weaponAttack.equipmentId).toBe('number');
+          expect(typeof weaponAttack.name).toBe('string');
+          expect(typeof weaponAttack.attackType).toBe('string');
+          expect(typeof weaponAttack.ability).toBe('string');
+          expect(typeof weaponAttack.isProficient).toBe('boolean');
+          expect(typeof weaponAttack.abilityModifier).toBe('number');
+          expect(typeof weaponAttack.proficiencyBonus).toBe('number');
+          expect(typeof weaponAttack.attackBonus).toBe('number');
+          expect(Array.isArray(weaponAttack.properties)).toBe(true);
+          expect(
+            weaponAttack.range === null || typeof weaponAttack.range === 'object',
+          ).toBe(true);
+        },
+      );
+
+      await test.step(
+        `Validate weapon attack damage schema for ${weaponAttack.name}`,
+        async () => {
+          expect(weaponAttack.damage).toHaveProperty('formula');
+          expect(weaponAttack.damage).toHaveProperty('base');
+          expect(weaponAttack.damage).toHaveProperty('modifier');
+          expect(weaponAttack.damage).toHaveProperty('damageType');
+
+          expect(typeof weaponAttack.damage.formula).toBe('string');
+          expect(typeof weaponAttack.damage.base).toBe('string');
+          expect(typeof weaponAttack.damage.modifier).toBe('number');
+          expect(typeof weaponAttack.damage.damageType).toBe('string');
+        },
+      );
+
+      for (const property of weaponAttack.properties) {
+        await test.step(
+          `Validate weapon attack property schema for ${property}`,
+          async () => {
+            expect(typeof property).toBe('string');
+          },
+        );
+      }
+    }
+  }
+
+  async validateWeaponAttack(
+    weaponAttacks: CharacterWeaponAttack[],
+    expectedAttack: {
+      name: string;
+      equipmentId?: number;
+      attackType?: string;
+      ability?: CharacterWeaponAttack['ability'];
+      isProficient?: boolean;
+      abilityModifier?: number;
+      proficiencyBonus?: number;
+      attackBonus?: number;
+      damage?: Partial<CharacterWeaponAttack['damage']>;
+      properties?: string[];
+      rangeExists?: boolean;
+    },
+  ) {
+    await test.step(`Validate weapon attack for ${expectedAttack.name}`, async () => {
+      const weaponAttack = weaponAttacks.find(
+        (attack) => attack.name === expectedAttack.name,
+      );
+
+      expect(weaponAttack).toBeDefined();
+
+      if (expectedAttack.equipmentId !== undefined) {
+        expect(weaponAttack?.equipmentId).toBe(expectedAttack.equipmentId);
+      }
+
+      if (expectedAttack.attackType !== undefined) {
+        expect(weaponAttack?.attackType).toBe(expectedAttack.attackType);
+      }
+
+      if (expectedAttack.ability !== undefined) {
+        expect(weaponAttack?.ability).toBe(expectedAttack.ability);
+      }
+
+      if (expectedAttack.isProficient !== undefined) {
+        expect(weaponAttack?.isProficient).toBe(expectedAttack.isProficient);
+      }
+
+      if (expectedAttack.abilityModifier !== undefined) {
+        expect(weaponAttack?.abilityModifier).toBe(
+          expectedAttack.abilityModifier,
+        );
+      }
+
+      if (expectedAttack.proficiencyBonus !== undefined) {
+        expect(weaponAttack?.proficiencyBonus).toBe(
+          expectedAttack.proficiencyBonus,
+        );
+      }
+
+      if (expectedAttack.attackBonus !== undefined) {
+        expect(weaponAttack?.attackBonus).toBe(expectedAttack.attackBonus);
+      }
+
+      if (expectedAttack.damage) {
+        expect(weaponAttack?.damage).toMatchObject(expectedAttack.damage);
+      }
+
+      if (expectedAttack.properties) {
+        expect(weaponAttack?.properties).toEqual(
+          expect.arrayContaining(expectedAttack.properties),
+        );
+      }
+
+      if (expectedAttack.rangeExists !== undefined) {
+        if (expectedAttack.rangeExists) {
+          expect(weaponAttack?.range).not.toBeNull();
+        } else {
+          expect(weaponAttack?.range).toBeNull();
+        }
+      }
+    });
+  }
+
+  async validateWeaponAttackAbsent(
+    weaponAttacks: CharacterWeaponAttack[],
+    weaponName: string,
+  ) {
+    await test.step(`Validate ${weaponName} is absent from weapon attacks`, async () => {
+      expect(weaponAttacks.some((attack) => attack.name === weaponName)).toBe(
+        false,
+      );
+    });
+  }
+
   async validateCharacterSpellSelectionSchema(
     spellSelection: CharacterSpellSelectionResponseBody,
   ) {
@@ -415,6 +564,7 @@ export class CharactersAssert {
       expect(character).toHaveProperty('abilityScores');
       expect(character).toHaveProperty('abilityModifiers');
       expect(character).toHaveProperty('armorClass');
+      expect(character).toHaveProperty('weaponAttacks');
       expect(character).toHaveProperty('currency');
       expect(character).toHaveProperty('skillProficiencies');
       expect(character).toHaveProperty('abilityScoreRules');
@@ -446,6 +596,7 @@ export class CharactersAssert {
           typeof character.abilityModifiers === 'object',
       ).toBe(true);
       expect(typeof character.armorClass).toBe('object');
+      expect(Array.isArray(character.weaponAttacks)).toBe(true);
       expect(
         character.currency === null || typeof character.currency === 'object',
       ).toBe(true);
@@ -492,6 +643,7 @@ export class CharactersAssert {
     }
 
     await this.validateArmorClassSchema(character.armorClass);
+    await this.validateWeaponAttacksSchema(character.weaponAttacks);
 
     if (character.currency) {
       await this.validateCurrencySchema(character.currency);

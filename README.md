@@ -326,6 +326,7 @@ Request body fields:
 - `backgroundId` optional
 - `level` optional, defaults to `1`
 - `abilityScores` optional
+- `currency` optional
 - `skillProficiencies` optional
 
 Response fields:
@@ -341,6 +342,8 @@ Response fields:
 - `abilityScores`
 - `abilityModifiers`
 - `armorClass`
+- `weaponAttacks`
+- `currency`
 - `skillProficiencies`
 - `abilityScoreRules`
 - `classDetails`
@@ -380,6 +383,8 @@ Response fields:
 - `abilityScores`
 - `abilityModifiers`
 - `armorClass`
+- `weaponAttacks`
+- `currency`
 - `abilityScoreRules`
 - `classDetails`
 - `speciesDetails`
@@ -392,6 +397,8 @@ Returns:
 - `500` with `{ "error": "Failed to fetch character detail" }`
 
 `armorClass` is calculated from the character's resolved DEX modifier and currently equipped armor or shield. If no armor is equipped, the base AC is `10`; Barbarian and Monk unarmored defense can contribute a `class` source when their rules apply.
+
+`weaponAttacks` is derived from currently equipped weapons, class weapon proficiencies, character level, and resolved ability modifiers. If no weapon is equipped, it is returned as an empty array.
 
 ### `PATCH /api/characters/{id}`
 
@@ -407,6 +414,7 @@ Accepted fields:
 - `backgroundId`
 - `level`
 - `abilityScores`
+- `currency`
 - `skillProficiencies`
 
 Returns:
@@ -724,6 +732,37 @@ Character detail:
         "value": 10
       }
     ]
+  },
+  "weaponAttacks": [
+    {
+      "equipmentId": 42,
+      "name": "Shortbow",
+      "attackType": "ranged",
+      "ability": "DEX",
+      "isProficient": true,
+      "abilityModifier": 2,
+      "proficiencyBonus": 2,
+      "attackBonus": 4,
+      "damage": {
+        "formula": "1d6 + 2",
+        "base": "1d6",
+        "modifier": 2,
+        "damageType": "Piercing"
+      },
+      "properties": ["Ammunition", "Two-Handed"],
+      "range": {
+        "normal": 80,
+        "long": 320,
+        "unit": "ft"
+      }
+    }
+  ],
+  "currency": {
+    "cp": 0,
+    "sp": 0,
+    "ep": 0,
+    "gp": 8,
+    "pp": 0
   },
   "abilityScoreRules": {
     "source": "background",
