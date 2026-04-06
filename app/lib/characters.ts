@@ -18,6 +18,7 @@ import { BackgroundDetail } from '@/app/types/background';
 import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
 import { SKILL_NAMES, SkillName } from '@/app/types/skill';
 import { getCharacterArmorClass } from './character-armor-class';
+import { getCharacterHitPoints } from './character-hit-points';
 import { getCharacterWeaponAttacks } from './character-weapon-attacks';
 import { getSql } from './db';
 
@@ -614,6 +615,11 @@ export async function formatCharacterResponse(character: {
     classDetails?.slug ?? null,
     abilityModifiers,
   );
+  const hitPoints = getCharacterHitPoints(
+    classDetails,
+    formattedCharacter.level,
+    abilityModifiers,
+  );
 
   return {
     ...formattedCharacter,
@@ -623,6 +629,7 @@ export async function formatCharacterResponse(character: {
     abilityModifiers,
     armorClass,
     weaponAttacks,
+    hitPoints,
     currency: formattedCharacter.currency,
     skillProficiencies: formattedCharacter.skillProficiencies,
     abilityScoreRules,

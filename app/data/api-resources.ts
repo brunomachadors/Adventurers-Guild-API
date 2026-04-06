@@ -108,9 +108,9 @@ export const apiResources: ApiResource[] = [
     name: 'Characters',
     slug: 'characters',
     description:
-      'Protected character management flow with creation, updates, deletion, character equipment add/update/removal, ability score selection, armor class calculation, weapon attack calculation, skill calculation, spell selection, and enriched responses.',
+      'Protected character management flow with creation, updates, deletion, character equipment add/update/removal, ability score selection, armor class calculation, weapon attack calculation, hit point calculation, skill calculation, spell selection, and enriched responses.',
     summary:
-      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, calculated armor class, derived weapon attacks, calculated skill totals, and full character equipment tracking.',
+      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, calculated armor class, derived weapon attacks, calculated hit points, calculated skill totals, and full character equipment tracking.',
     listFields: [
       'id',
       'name',
@@ -124,6 +124,7 @@ export const apiResources: ApiResource[] = [
       'abilityModifiers',
       'armorClass',
       'weaponAttacks',
+      'hitPoints',
       'currency',
       'skillProficiencies',
       'abilityScoreRules',
@@ -137,6 +138,7 @@ export const apiResources: ApiResource[] = [
       'abilityModifiers',
       'armorClass',
       'weaponAttacks',
+      'hitPoints',
       'currency',
       'skillProficiencies',
       'equipment',
@@ -172,5 +174,5 @@ export const projectHighlights = [
   'Interactive documentation available in /docs',
   'Catalog coverage now includes equipment alongside classes, spells, species, and backgrounds',
   'Character flows now support adding, updating, and removing equipment from a character',
-  'Character detail now includes calculated armor class and weapon attacks from equipped gear',
+  'Character detail now includes calculated armor class, weapon attacks, and hit points',
 ];

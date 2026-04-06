@@ -343,6 +343,7 @@ Response fields:
 - `abilityModifiers`
 - `armorClass`
 - `weaponAttacks`
+- `hitPoints`
 - `currency`
 - `skillProficiencies`
 - `abilityScoreRules`
@@ -384,6 +385,7 @@ Response fields:
 - `abilityModifiers`
 - `armorClass`
 - `weaponAttacks`
+- `hitPoints`
 - `currency`
 - `abilityScoreRules`
 - `classDetails`
@@ -399,6 +401,8 @@ Returns:
 `armorClass` is calculated from the character's resolved DEX modifier and currently equipped armor or shield. If no armor is equipped, the base AC is `10`; Barbarian and Monk unarmored defense can contribute a `class` source when their rules apply.
 
 `weaponAttacks` is derived from currently equipped weapons, class weapon proficiencies, character level, and resolved ability modifiers. If no weapon is equipped, it is returned as an empty array.
+
+`hitPoints` is derived from the character's class hit die, level, and resolved CON modifier. It is returned as `null` until class details and ability modifiers are available; when calculated, `current` starts equal to `max` and `temporary` starts at `0`.
 
 ### `PATCH /api/characters/{id}`
 
@@ -757,6 +761,14 @@ Character detail:
       }
     }
   ],
+  "hitPoints": {
+    "max": 7,
+    "current": 7,
+    "temporary": 0,
+    "hitDie": 6,
+    "conModifier": 1,
+    "calculation": "6 + 1"
+  },
   "currency": {
     "cp": 0,
     "sp": 0,

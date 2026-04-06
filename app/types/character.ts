@@ -106,6 +106,15 @@ export interface CharacterWeaponAttack {
   range: import('./equipment').EquipmentRange | null;
 }
 
+export interface CharacterHitPoints {
+  max: number;
+  current: number;
+  temporary: number;
+  hitDie: number;
+  conModifier: number;
+  calculation: string;
+}
+
 export interface CharacterAbilityScoreBonusChoice {
   bonus: number;
   count: number;
@@ -179,6 +188,7 @@ export interface CharacterResponseBody {
   abilityModifiers: CharacterAbilityModifiers | null;
   armorClass: CharacterArmorClass;
   weaponAttacks: CharacterWeaponAttack[];
+  hitPoints: CharacterHitPoints | null;
   currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
   abilityScoreRules: CharacterAbilityScoreRules | null;
