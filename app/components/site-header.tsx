@@ -24,7 +24,7 @@ export function SiteHeader() {
               className="site-brand__crest-image"
               height={56}
               priority
-              src="/site-icon.png"
+              src="/images/brand/site-icon.png"
               width={56}
             />
           </span>
