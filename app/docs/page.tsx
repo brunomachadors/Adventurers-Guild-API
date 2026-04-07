@@ -19,8 +19,8 @@ export default function DocsPage() {
         </div>
 
         <div className="hero-actions">
-          <Link className="button button--secondary" href="/support">
-            Visit the guild hall
+          <Link className="button button--secondary" href="/guides">
+            Read the guides
           </Link>
           <a className="button button--primary" href="/openapi.yaml">
             Open the raw manuscript

@@ -430,6 +430,10 @@ export function GuidesAccordion({
   const [isSkillsOpen, setIsSkillsOpen] = useState(false);
   const [isClassesOpen, setIsClassesOpen] = useState(false);
   const [isSpeciesOpen, setIsSpeciesOpen] = useState(false);
+  const [selectedAttributeIndex, setSelectedAttributeIndex] = useState(0);
+  const [selectedSkillIndex, setSelectedSkillIndex] = useState(0);
+  const [selectedClassIndex, setSelectedClassIndex] = useState(0);
+  const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState(0);
   const skillDetailExample =
     skills.find((skill) => skill.name === 'Athletics') ?? skills[0];
   const speciesDetailExample =
@@ -455,36 +459,248 @@ export function GuidesAccordion({
     event: MouseEvent<HTMLAnchorElement>,
     skillName: string,
   ) {
-    const skillAnchor = getSkillAnchor(skillName);
+    const skillIndex = skills.findIndex((skill) => skill.name === skillName);
+    const nextSkill = skills[skillIndex];
 
     event.preventDefault();
-    setIsSkillsOpen(true);
 
+    if (!nextSkill) {
+      return;
+    }
+
+    setIsSkillsOpen(true);
+    setSelectedSkillIndex(skillIndex);
+    scrollToGuideCard(getSkillAnchor(nextSkill.name));
+  }
+
+  function updateGuideCardHash(anchor: string) {
+    window.history.replaceState(null, '', `#${anchor}`);
+  }
+
+  function scrollToGuideCard(anchor: string) {
     window.requestAnimationFrame(() => {
-      document.getElementById(skillAnchor)?.scrollIntoView({
+      document.getElementById(anchor)?.scrollIntoView({
         behavior: 'smooth',
-        block: 'center',
+        block: 'start',
       });
-      window.history.replaceState(null, '', `#${skillAnchor}`);
+      updateGuideCardHash(anchor);
     });
+  }
+
+  function scrollToAttributeCard(attributeShortname: string) {
+    updateGuideCardHash(getAttributeAnchor(attributeShortname));
+  }
+
+  function selectAttributeByIndex(attributeIndex: number, shouldScroll = true) {
+    const nextAttribute = attributes[attributeIndex];
+
+    if (!nextAttribute) {
+      return;
+    }
+
+    setSelectedAttributeIndex(attributeIndex);
+
+    if (shouldScroll) {
+      scrollToAttributeCard(nextAttribute.shortname);
+    } else {
+      updateGuideCardHash(getAttributeAnchor(nextAttribute.shortname));
+    }
+  }
+
+  function openAttributeGuideCard(
+    event: MouseEvent<HTMLAnchorElement>,
+    attributeIndex: number,
+  ) {
+    event.preventDefault();
+    selectAttributeByIndex(attributeIndex, false);
   }
 
   function openAttributeCard(
     event: MouseEvent<HTMLAnchorElement>,
     attributeShortname: string,
   ) {
-    const attributeAnchor = getAttributeAnchor(attributeShortname);
+    const attributeIndex = attributes.findIndex(
+      (attribute) => attribute.shortname === attributeShortname,
+    );
+    const nextAttribute = attributes[attributeIndex];
 
     event.preventDefault();
-    setIsAttributesOpen(true);
 
+    if (!nextAttribute) {
+      return;
+    }
+
+    setIsAttributesOpen(true);
+    setSelectedAttributeIndex(attributeIndex);
+    scrollToGuideCard(getAttributeAnchor(nextAttribute.shortname));
+  }
+
+  function openChapterIndex(
+    event: MouseEvent<HTMLAnchorElement>,
+    indexId: string,
+  ) {
+    event.preventDefault();
+    scrollToChapterIndex(indexId);
+  }
+
+  function scrollToChapterIndex(indexId: string) {
     window.requestAnimationFrame(() => {
-      document.getElementById(attributeAnchor)?.scrollIntoView({
+      document.getElementById(indexId)?.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
       });
-      window.history.replaceState(null, '', `#${attributeAnchor}`);
+      updateGuideCardHash(indexId);
     });
+  }
+
+  function scrollToGuideSection(sectionId: string) {
+    window.requestAnimationFrame(() => {
+      document.getElementById(sectionId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+      updateGuideCardHash(sectionId);
+    });
+  }
+
+  function scrollToClassCard(className: string) {
+    window.requestAnimationFrame(() => {
+      const classAnchor = getClassAnchor(className);
+
+      document.getElementById(classAnchor)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      updateGuideCardHash(classAnchor);
+    });
+  }
+
+  function scrollToSkillCard(skillName: string) {
+    updateGuideCardHash(getSkillAnchor(skillName));
+  }
+
+  function scrollToSpeciesCard(speciesName: string) {
+    window.requestAnimationFrame(() => {
+      const speciesAnchor = getSpeciesAnchor(speciesName);
+
+      document.getElementById(speciesAnchor)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      updateGuideCardHash(speciesAnchor);
+    });
+  }
+
+  function selectClassByIndex(classIndex: number, shouldScroll = true) {
+    const nextClass = classes[classIndex];
+
+    if (!nextClass) {
+      return;
+    }
+
+    setSelectedClassIndex(classIndex);
+
+    if (shouldScroll) {
+      scrollToClassCard(nextClass.name);
+    } else {
+      updateGuideCardHash(getClassAnchor(nextClass.name));
+    }
+  }
+
+  function openClassCard(
+    event: MouseEvent<HTMLAnchorElement>,
+    classIndex: number,
+  ) {
+    event.preventDefault();
+    selectClassByIndex(classIndex, false);
+  }
+
+  function selectSkillByIndex(skillIndex: number, shouldScroll = true) {
+    const nextSkill = skills[skillIndex];
+
+    if (!nextSkill) {
+      return;
+    }
+
+    setSelectedSkillIndex(skillIndex);
+
+    if (shouldScroll) {
+      scrollToSkillCard(nextSkill.name);
+    } else {
+      updateGuideCardHash(getSkillAnchor(nextSkill.name));
+    }
+  }
+
+  function openSkillGuideCard(
+    event: MouseEvent<HTMLAnchorElement>,
+    skillIndex: number,
+  ) {
+    event.preventDefault();
+    selectSkillByIndex(skillIndex, false);
+  }
+
+  function selectSpeciesByIndex(speciesIndex: number, shouldScroll = true) {
+    const nextSpecies = species[speciesIndex];
+
+    if (!nextSpecies) {
+      return;
+    }
+
+    setSelectedSpeciesIndex(speciesIndex);
+
+    if (shouldScroll) {
+      scrollToSpeciesCard(nextSpecies.name);
+    } else {
+      updateGuideCardHash(getSpeciesAnchor(nextSpecies.name));
+    }
+  }
+
+  function openSpeciesCard(
+    event: MouseEvent<HTMLAnchorElement>,
+    speciesIndex: number,
+  ) {
+    event.preventDefault();
+    selectSpeciesByIndex(speciesIndex, false);
+  }
+
+  function openAttributesChapter() {
+    setIsAttributesOpen(true);
+    scrollToChapterIndex('attributes-index');
+  }
+
+  function openSkillsChapter() {
+    setIsSkillsOpen(true);
+    scrollToChapterIndex('skills-index');
+  }
+
+  function openClassesChapter() {
+    setIsClassesOpen(true);
+    scrollToChapterIndex('classes-index');
+  }
+
+  function openSpeciesChapter() {
+    setIsSpeciesOpen(true);
+    scrollToChapterIndex('species-index');
+  }
+
+  function closeAttributesChapter() {
+    setIsAttributesOpen(false);
+    scrollToGuideSection('attributes');
+  }
+
+  function closeSkillsChapter() {
+    setIsSkillsOpen(false);
+    scrollToGuideSection('skills');
+  }
+
+  function closeClassesChapter() {
+    setIsClassesOpen(false);
+    scrollToGuideSection('classes');
+  }
+
+  function closeSpeciesChapter() {
+    setIsSpeciesOpen(false);
+    scrollToGuideSection('species');
   }
 
   return (
@@ -522,13 +738,13 @@ export function GuidesAccordion({
                 key={resource.slug}
                 onClick={
                   isAttributes
-                    ? toggleAttributes
+                    ? openAttributesChapter
                     : isSkills
-                      ? toggleSkills
+                      ? openSkillsChapter
                       : isClasses
-                        ? toggleClasses
+                        ? openClassesChapter
                         : isSpecies
-                          ? toggleSpecies
+                          ? openSpeciesChapter
                         : undefined
                 }
                 type="button"
@@ -567,13 +783,25 @@ export function GuidesAccordion({
               natural strengths of a character in the Adventurers Guild API.
             </p>
 
-            <nav className="guide-card-index" aria-label="Attributes index">
+            <nav
+              className="guide-card-index"
+              id="attributes-index"
+              aria-label="Attributes index"
+            >
               <p>Chapter index</p>
               <div>
-                {attributes.map((attribute) => (
+                {attributes.map((attribute, attributeIndex) => (
                   <a
+                    aria-current={
+                      attributeIndex === selectedAttributeIndex
+                        ? 'true'
+                        : undefined
+                    }
                     href={`#${getAttributeAnchor(attribute.shortname)}`}
                     key={attribute.shortname}
+                    onClick={(event) =>
+                      openAttributeGuideCard(event, attributeIndex)
+                    }
                   >
                     {attribute.name}
                   </a>
@@ -582,51 +810,105 @@ export function GuidesAccordion({
             </nav>
 
             <div className="attribute-guide-grid">
-              {attributes.map((attribute) => (
-                <article
-                  className="attribute-guide-card"
-                  id={getAttributeAnchor(attribute.shortname)}
-                  key={attribute.shortname}
-                >
-                  <div className="attribute-guide-card__header">
-                    <h3>{attribute.name}</h3>
-                    <span>{attribute.shortname}</span>
-                  </div>
-                  {attributeIcons[attribute.shortname] ? (
-                    <div className="attribute-guide-card__icon-frame">
-                      <Image
-                        alt={attributeIcons[attribute.shortname].alt}
-                        className="attribute-guide-card__icon"
-                        height={512}
-                        src={attributeIcons[attribute.shortname].src}
-                        width={512}
-                      />
+              {attributes.map((attribute, attributeIndex) => {
+                if (attributeIndex !== selectedAttributeIndex) {
+                  return null;
+                }
+
+                const previousAttribute = attributes[attributeIndex - 1];
+                const nextAttribute = attributes[attributeIndex + 1];
+
+                return (
+                  <article
+                    className="attribute-guide-card"
+                    id={getAttributeAnchor(attribute.shortname)}
+                    key={attribute.shortname}
+                  >
+                    <div className="attribute-guide-card__header">
+                      <h3>{attribute.name}</h3>
+                      <span>{attribute.shortname}</span>
                     </div>
-                  ) : null}
-                  <p>{attribute.description}</p>
-                  <div className="attribute-guide-card__skills">
-                    <p>Related skills</p>
-                    <div className="attribute-skill-list">
-                      {attribute.skills.length > 0 ? (
-                        attribute.skills.map((skill) => (
-                          <a
-                            className="attribute-skill-chip"
-                            href={`#${getSkillAnchor(skill)}`}
-                            key={skill}
-                            onClick={(event) => openSkillCard(event, skill)}
-                          >
-                            {skill}
-                          </a>
-                        ))
+                    {attributeIcons[attribute.shortname] ? (
+                      <div className="attribute-guide-card__icon-frame">
+                        <Image
+                          alt={attributeIcons[attribute.shortname].alt}
+                          className="attribute-guide-card__icon"
+                          height={512}
+                          src={attributeIcons[attribute.shortname].src}
+                          width={512}
+                        />
+                      </div>
+                    ) : null}
+                    <p>{attribute.description}</p>
+                    <div className="attribute-guide-card__skills">
+                      <p>Related skills</p>
+                      <div className="attribute-skill-list">
+                        {attribute.skills.length > 0 ? (
+                          attribute.skills.map((skill) => (
+                            <a
+                              className="attribute-skill-chip"
+                              href={`#${getSkillAnchor(skill)}`}
+                              key={skill}
+                              onClick={(event) => openSkillCard(event, skill)}
+                            >
+                              {skill}
+                            </a>
+                          ))
+                        ) : (
+                          <span className="attribute-skill-chip attribute-skill-chip--empty">
+                            None in the current API catalog
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <nav
+                      aria-label={`${attribute.name} navigation`}
+                      className="guide-card-navigation"
+                    >
+                      {previousAttribute ? (
+                        <button
+                          aria-label={`Previous attribute: ${previousAttribute.name}`}
+                          className="guide-card-navigation__link"
+                          onClick={() =>
+                            selectAttributeByIndex(attributeIndex - 1)
+                          }
+                          type="button"
+                        >
+                          ←
+                        </button>
                       ) : (
-                        <span className="attribute-skill-chip attribute-skill-chip--empty">
-                          None in the current API catalog
-                        </span>
+                        <span className="guide-card-navigation__placeholder" />
                       )}
-                    </div>
-                  </div>
-                </article>
-              ))}
+
+                      <a
+                        className="guide-card-back-link"
+                        href="#attributes-index"
+                        onClick={(event) =>
+                          openChapterIndex(event, 'attributes-index')
+                        }
+                      >
+                        Index
+                      </a>
+
+                      {nextAttribute ? (
+                        <button
+                          aria-label={`Next attribute: ${nextAttribute.name}`}
+                          className="guide-card-navigation__link"
+                          onClick={() =>
+                            selectAttributeByIndex(attributeIndex + 1)
+                          }
+                          type="button"
+                        >
+                          →
+                        </button>
+                      ) : (
+                        <span className="guide-card-navigation__placeholder" />
+                      )}
+                    </nav>
+                  </article>
+                );
+              })}
             </div>
 
             <aside className="guide-how-to-use">
@@ -681,6 +963,14 @@ export function GuidesAccordion({
                 </pre>
               </div>
             </section>
+
+            <button
+              className="guide-accordion__close"
+              onClick={closeAttributesChapter}
+              type="button"
+            >
+              Close Attributes chapter
+            </button>
           </div>
         </div>
       </section>
@@ -711,11 +1001,22 @@ export function GuidesAccordion({
               use, and common classes that often benefit from it.
             </p>
 
-            <nav className="guide-card-index" aria-label="Skills index">
+            <nav
+              className="guide-card-index"
+              id="skills-index"
+              aria-label="Skills index"
+            >
               <p>Chapter index</p>
               <div>
-                {skills.map((skill) => (
-                  <a href={`#${getSkillAnchor(skill.name)}`} key={skill.id}>
+                {skills.map((skill, skillIndex) => (
+                  <a
+                    aria-current={
+                      skillIndex === selectedSkillIndex ? 'true' : undefined
+                    }
+                    href={`#${getSkillAnchor(skill.name)}`}
+                    key={skill.id}
+                    onClick={(event) => openSkillGuideCard(event, skillIndex)}
+                  >
                     {skill.name}
                   </a>
                 ))}
@@ -723,8 +1024,14 @@ export function GuidesAccordion({
             </nav>
 
             <div className="skill-guide-grid">
-              {skills.map((skill) => {
+              {skills.map((skill, skillIndex) => {
+                if (skillIndex !== selectedSkillIndex) {
+                  return null;
+                }
+
                 const skillAnchor = getSkillAnchor(skill.name);
+                const previousSkill = skills[skillIndex - 1];
+                const nextSkill = skills[skillIndex + 1];
 
                 return (
                   <article
@@ -762,6 +1069,47 @@ export function GuidesAccordion({
                         {skill.attribute}
                       </a>
                     </div>
+
+                    <nav
+                      aria-label={`${skill.name} navigation`}
+                      className="guide-card-navigation"
+                    >
+                      {previousSkill ? (
+                        <button
+                          aria-label={`Previous skill: ${previousSkill.name}`}
+                          className="guide-card-navigation__link"
+                          onClick={() => selectSkillByIndex(skillIndex - 1)}
+                          type="button"
+                        >
+                          ←
+                        </button>
+                      ) : (
+                        <span className="guide-card-navigation__placeholder" />
+                      )}
+
+                      <a
+                        className="guide-card-back-link"
+                        href="#skills-index"
+                        onClick={(event) =>
+                          openChapterIndex(event, 'skills-index')
+                        }
+                      >
+                        Index
+                      </a>
+
+                      {nextSkill ? (
+                        <button
+                          aria-label={`Next skill: ${nextSkill.name}`}
+                          className="guide-card-navigation__link"
+                          onClick={() => selectSkillByIndex(skillIndex + 1)}
+                          type="button"
+                        >
+                          →
+                        </button>
+                      ) : (
+                        <span className="guide-card-navigation__placeholder" />
+                      )}
+                    </nav>
                   </article>
                 );
               })}
@@ -872,6 +1220,14 @@ export function GuidesAccordion({
                 </div>
               ) : null}
             </section>
+
+            <button
+              className="guide-accordion__close"
+              onClick={closeSkillsChapter}
+              type="button"
+            >
+              Close Skills chapter
+            </button>
           </div>
         </div>
       </section>
@@ -904,11 +1260,22 @@ export function GuidesAccordion({
               skills, and spellcasting support.
             </p>
 
-            <nav className="guide-card-index" aria-label="Classes index">
+            <nav
+              className="guide-card-index"
+              id="classes-index"
+              aria-label="Classes index"
+            >
               <p>Chapter index</p>
               <div>
-                {classes.map((classItem) => (
-                  <a href={`#${getClassAnchor(classItem.name)}`} key={classItem.id}>
+                {classes.map((classItem, classIndex) => (
+                  <a
+                    aria-current={
+                      classIndex === selectedClassIndex ? 'true' : undefined
+                    }
+                    href={`#${getClassAnchor(classItem.name)}`}
+                    key={classItem.id}
+                    onClick={(event) => openClassCard(event, classIndex)}
+                  >
                     {classItem.name}
                   </a>
                 ))}
@@ -916,9 +1283,15 @@ export function GuidesAccordion({
             </nav>
 
             <div className="class-guide-grid">
-              {classes.map((classItem) => {
+              {classes.map((classItem, classIndex) => {
+                if (classIndex !== selectedClassIndex) {
+                  return null;
+                }
+
                 const classImage = classImages[classItem.name];
                 const hitDie = Number(classItem.hitdie);
+                const previousClass = classes[classIndex - 1];
+                const nextClass = classes[classIndex + 1];
 
                 return (
                   <article
@@ -1080,6 +1453,47 @@ export function GuidesAccordion({
                         </div>
                       </div>
                     ) : null}
+
+                    <nav
+                      aria-label={`${classItem.name} navigation`}
+                      className="guide-card-navigation"
+                    >
+                      {previousClass ? (
+                        <button
+                          aria-label={`Previous class: ${previousClass.name}`}
+                          className="guide-card-navigation__link"
+                          onClick={() => selectClassByIndex(classIndex - 1)}
+                          type="button"
+                        >
+                          ←
+                        </button>
+                      ) : (
+                        <span className="guide-card-navigation__placeholder" />
+                      )}
+
+                      <a
+                        className="guide-card-back-link"
+                        href="#classes-index"
+                        onClick={(event) =>
+                          openChapterIndex(event, 'classes-index')
+                        }
+                      >
+                        Index
+                      </a>
+
+                      {nextClass ? (
+                        <button
+                          aria-label={`Next class: ${nextClass.name}`}
+                          className="guide-card-navigation__link"
+                          onClick={() => selectClassByIndex(classIndex + 1)}
+                          type="button"
+                        >
+                          →
+                        </button>
+                      ) : (
+                        <span className="guide-card-navigation__placeholder" />
+                      )}
+                    </nav>
                   </article>
                 );
               })}
@@ -1105,6 +1519,13 @@ export function GuidesAccordion({
               </div>
             </aside>
 
+            <button
+              className="guide-accordion__close"
+              onClick={closeClassesChapter}
+              type="button"
+            >
+              Close Classes chapter
+            </button>
           </div>
         </div>
       </section>
@@ -1138,13 +1559,23 @@ export function GuidesAccordion({
               species endpoints.
             </p>
 
-            <nav className="guide-card-index" aria-label="Species index">
+            <nav
+              className="guide-card-index"
+              id="species-index"
+              aria-label="Species index"
+            >
               <p>Chapter index</p>
               <div>
-                {species.map((speciesItem) => (
+                {species.map((speciesItem, speciesIndex) => (
                   <a
+                    aria-current={
+                      speciesIndex === selectedSpeciesIndex
+                        ? 'true'
+                        : undefined
+                    }
                     href={`#${getSpeciesAnchor(speciesItem.name)}`}
                     key={speciesItem.id}
+                    onClick={(event) => openSpeciesCard(event, speciesIndex)}
                   >
                     {speciesItem.name}
                   </a>
@@ -1153,8 +1584,14 @@ export function GuidesAccordion({
             </nav>
 
             <div className="species-guide-grid">
-              {species.map((speciesItem) => {
+              {species.map((speciesItem, speciesIndex) => {
+                if (speciesIndex !== selectedSpeciesIndex) {
+                  return null;
+                }
+
                 const speciesImage = speciesImages[speciesItem.name];
+                const previousSpecies = species[speciesIndex - 1];
+                const nextSpecies = species[speciesIndex + 1];
 
                 return (
                   <article
@@ -1261,6 +1698,51 @@ export function GuidesAccordion({
                         </div>
                       </div>
                     ) : null}
+
+                    <nav
+                      aria-label={`${speciesItem.name} navigation`}
+                      className="guide-card-navigation"
+                    >
+                      {previousSpecies ? (
+                        <button
+                          aria-label={`Previous species: ${previousSpecies.name}`}
+                          className="guide-card-navigation__link"
+                          onClick={() =>
+                            selectSpeciesByIndex(speciesIndex - 1)
+                          }
+                          type="button"
+                        >
+                          ←
+                        </button>
+                      ) : (
+                        <span className="guide-card-navigation__placeholder" />
+                      )}
+
+                      <a
+                        className="guide-card-back-link"
+                        href="#species-index"
+                        onClick={(event) =>
+                          openChapterIndex(event, 'species-index')
+                        }
+                      >
+                        Index
+                      </a>
+
+                      {nextSpecies ? (
+                        <button
+                          aria-label={`Next species: ${nextSpecies.name}`}
+                          className="guide-card-navigation__link"
+                          onClick={() =>
+                            selectSpeciesByIndex(speciesIndex + 1)
+                          }
+                          type="button"
+                        >
+                          →
+                        </button>
+                      ) : (
+                        <span className="guide-card-navigation__placeholder" />
+                      )}
+                    </nav>
                   </article>
                 );
               })}
@@ -1375,6 +1857,14 @@ export function GuidesAccordion({
                 </div>
               ) : null}
             </section>
+
+            <button
+              className="guide-accordion__close"
+              onClick={closeSpeciesChapter}
+              type="button"
+            >
+              Close Species chapter
+            </button>
           </div>
         </div>
       </section>

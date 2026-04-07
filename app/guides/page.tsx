@@ -126,7 +126,7 @@ async function getSpecies(): Promise<SpeciesDetail[]> {
       specialtraits,
       subspecies
     FROM species
-    ORDER BY id
+    ORDER BY name
   `;
 
   return speciesRows.map((speciesItem) =>

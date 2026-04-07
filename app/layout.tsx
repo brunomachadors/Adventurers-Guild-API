@@ -20,7 +20,7 @@ const bodyFont = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: 'Adventurers Guild API',
   description:
-    'Fantasy-themed API project with a visual entrypoint, support hub, and interactive documentation.',
+    'Fantasy-themed API project with a visual entrypoint, educational guides, and interactive documentation.',
 };
 
 export default function RootLayout({

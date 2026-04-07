@@ -22,9 +22,6 @@ export default function HomePage() {
               <Link className="button button--primary" href="/guides">
                 Read guides
               </Link>
-              <Link className="button button--primary" href="/support">
-                Enter the guild hall
-              </Link>
               <Link className="button button--secondary" href="/docs">
                 Read the codex
               </Link>
@@ -51,16 +48,13 @@ export default function HomePage() {
             <p className="mini-label">Next route</p>
             <h2>Choose your entrypoint into the realm</h2>
             <p className="hero-copy">
-              Use the support hub for orientation, keep the Guides area ready
-              for the next learning layer, or move directly to the interactive
-              docs when you want the technical spellbook.
+              Start with the Guides area when you want the educational layer,
+              or move directly to the interactive docs when you want the
+              technical spellbook.
             </p>
             <div className="hero-actions">
               <Link className="button button--primary" href="/guides">
                 Open guides
-              </Link>
-              <Link className="button button--secondary" href="/support">
-                Open support
               </Link>
               <Link className="button button--secondary" href="/docs">
                 Open docs
