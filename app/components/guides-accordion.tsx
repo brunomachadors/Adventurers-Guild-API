@@ -5,6 +5,7 @@ import { useState, type MouseEvent } from 'react';
 
 import { apiResources } from '@/app/data/api-resources';
 import type { Attribute } from '@/app/types/attribute';
+import type { ClassDetail } from '@/app/types/class';
 import type { SkillDetail } from '@/app/types/skill';
 import charismaIcon from '@/public/images/attributes/charisma.png';
 import constitutionIcon from '@/public/images/attributes/constitution.png';
@@ -33,6 +34,7 @@ import survivalIcon from '@/public/images/skills/survival.png';
 
 type GuidesAccordionProps = {
   attributes: Attribute[];
+  classes: ClassDetail[];
   skills: SkillDetail[];
 };
 
@@ -156,6 +158,57 @@ const skillIcons = {
   },
 };
 
+const classImages: Record<string, { alt: string; src: string }> = {
+  Barbarian: {
+    alt: 'Barbarian warrior standing in a mountainous fantasy landscape',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775558574/adventurers/classes/Guerreiro_ba%CC%81rbaro_em_paisagem_montanhosa_n1t1mm.png',
+  },
+  Bard: {
+    alt: 'Charming bard performing inside a fantasy tavern',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775560844/adventurers/classes/Bardo_encantador_na_taverna_bn7ua5.png',
+  },
+  Cleric: {
+    alt: 'Cleric praying inside an ancient cathedral',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775561564/adventurers/classes/Cle%CC%81rigo_em_orac%CC%A7a%CC%83o_na_catedral_antiga_yp2wxg.png',
+  },
+  Druid: {
+    alt: 'Half-elf druid standing inside a lush fantasy forest',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775561881/adventurers/classes/Druida_meio-elfo_na_floresta_exuberante_rejo6r.png',
+  },
+  Fighter: {
+    alt: 'Dwarf fighter standing on a fantasy battlefield',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775563032/adventurers/classes/Guerreiro_ana%CC%83o_em_campo_de_batalha_xohlz0.png',
+  },
+  Monk: {
+    alt: 'Monk meditating inside a mountainous temple',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775562372/adventurers/classes/Monge_meditando_no_templo_montanhoso_k73tsn.png',
+  },
+  Paladin: {
+    alt: 'Paladin standing at the entrance of a cathedral',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775562621/adventurers/classes/Paladino_na_entrada_da_catedral_mum3dd.png',
+  },
+  Ranger: {
+    alt: 'Elven ranger archer standing in the shadows of a forest',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775562799/adventurers/classes/Elfa_arqueira_nas_sombras_da_floresta_ka8zqd.png',
+  },
+  Rogue: {
+    alt: 'Halfling rogue counting coins inside a tavern',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775562930/adventurers/classes/Ladra%CC%83o_halfling_na_taverna_contar_moedas_eqaiyz.png',
+  },
+  Sorcerer: {
+    alt: 'Draconic sorcerer casting magic in battle',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775563147/adventurers/classes/Feiticeiro_draco%CC%82nico_em_ac%CC%A7a%CC%83o_ma%CC%81gica_bw775k.png',
+  },
+  Warlock: {
+    alt: 'Tiefling warlock wearing gold and green fantasy attire',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775563473/adventurers/classes/Mulher_tiefling_em_traje_dourado_e_verde_slvzxe.png',
+  },
+  Wizard: {
+    alt: 'Wizard losing control of a spell inside a magical library',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775564051/adventurers/classes/Feitic%CC%A7o_descontrolado_na_biblioteca_ma%CC%81gica_uty1py.png',
+  },
+};
+
 const attributeResponseFields = [
   {
     name: 'id',
@@ -242,9 +295,14 @@ function getAttributeAnchor(attributeShortname: string) {
   return `attribute-${attributeShortname.toLowerCase()}`;
 }
 
-export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
+export function GuidesAccordion({
+  attributes,
+  classes,
+  skills,
+}: GuidesAccordionProps) {
   const [isAttributesOpen, setIsAttributesOpen] = useState(true);
   const [isSkillsOpen, setIsSkillsOpen] = useState(false);
+  const [isClassesOpen, setIsClassesOpen] = useState(false);
   const skillDetailExample =
     skills.find((skill) => skill.name === 'Athletics') ?? skills[0];
 
@@ -254,6 +312,10 @@ export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
 
   function toggleSkills() {
     setIsSkillsOpen((currentValue) => !currentValue);
+  }
+
+  function toggleClasses() {
+    setIsClassesOpen((currentValue) => !currentValue);
   }
 
   function openSkillCard(
@@ -309,9 +371,12 @@ export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
           {guideResources.map((resource) => {
             const isAttributes = resource.slug === 'attributes';
             const isSkills = resource.slug === 'skills';
-            const isEnabled = isAttributes || isSkills;
+            const isClasses = resource.slug === 'classes';
+            const isEnabled = isAttributes || isSkills || isClasses;
             const isOpen =
-              (isAttributes && isAttributesOpen) || (isSkills && isSkillsOpen);
+              (isAttributes && isAttributesOpen) ||
+              (isSkills && isSkillsOpen) ||
+              (isClasses && isClassesOpen);
 
             return (
               <button
@@ -324,7 +389,9 @@ export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
                     ? toggleAttributes
                     : isSkills
                       ? toggleSkills
-                      : undefined
+                      : isClasses
+                        ? toggleClasses
+                        : undefined
                 }
                 type="button"
               >
@@ -590,16 +657,14 @@ export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
                     <code>200 OK</code>
                   </div>
                   <pre>
-                    <code>
-                      {JSON.stringify(
+                    <code>{JSON.stringify(
                         skills.map((skill) => ({
                           id: skill.id,
                           name: skill.name,
                         })),
                         null,
                         2,
-                      )}
-                    </code>
+                      )}</code>
                   </pre>
                 </div>
               </div>
@@ -627,8 +692,7 @@ export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
                       <code>200 OK</code>
                     </div>
                     <pre>
-                      <code>
-                        {JSON.stringify(
+                      <code>{JSON.stringify(
                           {
                             id: skillDetailExample.id,
                             name: skillDetailExample.name,
@@ -639,13 +703,182 @@ export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
                           },
                           null,
                           2,
-                        )}
-                      </code>
+                        )}</code>
                     </pre>
                   </div>
                 </div>
               ) : null}
             </section>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-block guide-accordion" id="classes">
+        <button
+          aria-expanded={isClassesOpen}
+          className="guide-accordion__toggle"
+          onClick={toggleClasses}
+          type="button"
+        >
+          <span>
+            <p className="kicker">Third chapter</p>
+            <h2>Classes</h2>
+            <strong aria-hidden="true">
+              {isClassesOpen ? 'Close' : 'Open'}
+            </strong>
+          </span>
+        </button>
+
+        <div
+          className={`guide-accordion__content${
+            isClassesOpen ? ' guide-accordion__content--open' : ''
+          }`}
+        >
+          <div className="guide-accordion__scroll">
+            <p className="guide-accordion__description">
+              Classes describe a character&apos;s adventuring path: their role,
+              hit die, core attributes, saving throw proficiencies, recommended
+              skills, and spellcasting support.
+            </p>
+
+            <div className="class-guide-grid">
+              {classes.map((classItem) => {
+                const classImage = classImages[classItem.name];
+                const hitDie = Number(classItem.hitdie);
+
+                return (
+                  <article className="class-guide-card" key={classItem.id}>
+                    {classImage ? (
+                      <div className="class-guide-card__media">
+                        <Image
+                          alt={classImage.alt}
+                          fill
+                          sizes="(max-width: 900px) 100vw, 50vw"
+                          src={classImage.src}
+                        />
+                      </div>
+                    ) : null}
+
+                    <div className="class-guide-card__content">
+                      <p className="kicker">{classItem.role}</p>
+                      <h3>{classItem.name}</h3>
+                      <p>{classItem.description}</p>
+
+                      <div className="class-guide-card__meta">
+                        <div className="class-guide-card__stat-block class-guide-card__hit-die">
+                          <p>Hit Die</p>
+                          <span
+                            className={`class-guide-card__die class-guide-card__die--d${hitDie}`}
+                            data-hit-die={hitDie}
+                          >
+                            D{hitDie}
+                          </span>
+                        </div>
+
+                        <div className="class-guide-card__stat-block class-guide-card__primary">
+                          <p>Primary Attribute</p>
+                          <div>
+                            {classItem.primaryattributes.map(
+                              (primaryAttribute) => (
+                                <a
+                                  href={`#${getAttributeAnchor(primaryAttribute)}`}
+                                  key={primaryAttribute}
+                                  onClick={(event) =>
+                                    openAttributeCard(event, primaryAttribute)
+                                  }
+                                >
+                                  {primaryAttribute}
+                                </a>
+                              ),
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="class-guide-card__stat-block class-guide-card__saving-throws">
+                          <p>Saving Throws</p>
+                          <div>
+                            {classItem.savingthrows.map((savingThrow) => (
+                              <a
+                                href={`#${getAttributeAnchor(savingThrow)}`}
+                                key={savingThrow}
+                                onClick={(event) =>
+                                  openAttributeCard(event, savingThrow)
+                                }
+                              >
+                                {savingThrow}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="class-guide-card__details">
+                        <div className="class-guide-card__detail-block">
+                          <p>Recommended skills</p>
+                          {classItem.recommendedskills.length > 0 ? (
+                            <div className="attribute-skill-list">
+                              {classItem.recommendedskills.map((skill) => (
+                                <a
+                                  className="attribute-skill-chip"
+                                  href={`#${getSkillAnchor(skill)}`}
+                                  key={skill}
+                                  onClick={(event) =>
+                                    openSkillCard(event, skill)
+                                  }
+                                >
+                                  {skill}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <span>No recommended skills listed.</span>
+                          )}
+                        </div>
+
+                        <div className="class-guide-card__detail-block">
+                          <p>Subclasses</p>
+                          <span>
+                            {classItem.subclasses.length > 0
+                              ? classItem.subclasses.join(', ')
+                              : 'No subclasses listed yet.'}
+                          </span>
+                        </div>
+
+                        <div className="class-guide-card__detail-block">
+                          <p>Spellcasting</p>
+                          <span>
+                            {classItem.spellcasting
+                              ? `Uses ${classItem.spellcasting.ability}`
+                              : 'No spellcasting progression.'}
+                          </span>
+                        </div>
+
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            <aside className="guide-how-to-use">
+              <h3>How to use</h3>
+              <p>
+                Call <code>GET /api/classes</code> for the compact list, then
+                use <code>GET /api/classes/{'{identifier}'}</code> when you need
+                class details such as hit die, recommended skills, saving
+                throws, subclasses, and spellcasting metadata.
+              </p>
+              <div className="endpoint-stack">
+                <a
+                  className="endpoint-pill"
+                  href="https://adventurers-guild-api.vercel.app/api/classes"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  GET /api/classes
+                </a>
+              </div>
+            </aside>
           </div>
         </div>
       </section>

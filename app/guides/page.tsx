@@ -1,6 +1,7 @@
 import { GuidesAccordion } from '@/app/components/guides-accordion';
 import { getSql } from '@/app/lib/db';
 import type { Attribute } from '@/app/types/attribute';
+import type { ClassDetail } from '@/app/types/class';
 import type { SkillDetail } from '@/app/types/skill';
 
 export const dynamic = 'force-dynamic';
@@ -49,12 +50,43 @@ async function getSkills(): Promise<SkillDetail[]> {
     ) as SkillDetail[];
 }
 
+async function getClasses(): Promise<ClassDetail[]> {
+  const sql = getSql();
+  const classes = await sql`
+    SELECT
+      id,
+      name,
+      slug,
+      description,
+      role,
+      hitdie,
+      primaryattributes,
+      recommendedskills,
+      savingthrows,
+      spellcasting,
+      subclasses,
+      levelprogression
+    FROM classes
+    ORDER BY id
+  `;
+
+  return classes as ClassDetail[];
+}
+
 export default async function GuidesPage() {
-  const [attributes, skills] = await Promise.all([getAttributes(), getSkills()]);
+  const [attributes, skills, classes] = await Promise.all([
+    getAttributes(),
+    getSkills(),
+    getClasses(),
+  ]);
 
   return (
     <main className="page-frame">
-      <GuidesAccordion attributes={attributes} skills={skills} />
+      <GuidesAccordion
+        attributes={attributes}
+        classes={classes}
+        skills={skills}
+      />
     </main>
   );
 }
