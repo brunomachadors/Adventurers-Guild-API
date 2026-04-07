@@ -35,10 +35,13 @@ export default function SupportPage() {
             <h2>Choose your next stop on the map</h2>
             <p>
               Use the overview page for the campaign summary, this support page
-              for orientation, and <code>/docs</code> when you want the full
-              technical spellbook.
+              for orientation, the Guides area for the next learning layer, and
+              <code>/docs</code> when you want the full technical spellbook.
             </p>
             <div className="hero-actions">
+              <Link className="button button--primary" href="/guides">
+                Open guides
+              </Link>
               <Link className="button button--primary" href="/docs">
                 Open the spellbook
               </Link>
