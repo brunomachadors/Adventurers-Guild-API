@@ -7,6 +7,7 @@ import { apiResources } from '@/app/data/api-resources';
 import type { Attribute } from '@/app/types/attribute';
 import type { ClassDetail } from '@/app/types/class';
 import type { SkillDetail } from '@/app/types/skill';
+import type { SpeciesDetail } from '@/app/types/species';
 import charismaIcon from '@/public/images/attributes/charisma.png';
 import constitutionIcon from '@/public/images/attributes/constitution.png';
 import dexterityIcon from '@/public/images/attributes/dexterity.png';
@@ -36,6 +37,7 @@ type GuidesAccordionProps = {
   attributes: Attribute[];
   classes: ClassDetail[];
   skills: SkillDetail[];
+  species: SpeciesDetail[];
 };
 
 const guideResourceOrder = [
@@ -209,6 +211,49 @@ const classImages: Record<string, { alt: string; src: string }> = {
   },
 };
 
+const speciesImages: Record<string, { alt: string; src: string }> = {
+  Aasimar: {
+    alt: 'Aasimar holding a radiant golden sword',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775593718/adventurers/Species/Aasimar_com_espada_dourada_radiante_lve7mo.png',
+  },
+  Dragonborn: {
+    alt: 'Red dragonborn warrior wearing medieval armor',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775591368/adventurers/Species/Guerreiro_draga%CC%83o_vermelho_em_armadura_medieval_i8yflu.png',
+  },
+  Dwarf: {
+    alt: 'Dwarf blacksmith working in the heat of a forge',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775591972/adventurers/Species/Ferreiro_ana%CC%83o_no_calor_da_forja_hcixg4.png',
+  },
+  Elf: {
+    alt: 'Elf adventurer in a fantasy portrait',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775594799/adventurers/Species/ChatGPT_Image_7_de_abr._de_2026_21_46_15_zxqshu.png',
+  },
+  Gnome: {
+    alt: 'Gnome inventor working inside a magical atelier',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775595055/adventurers/Species/Ognomo_inventor_em_seu_atelie%CC%82_ma%CC%81gico_xbsus8.png',
+  },
+  Goliath: {
+    alt: 'Goliath warrior standing in icy mountains',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775595501/adventurers/Species/Guerreiro_Goliath_nas_montanhas_geladas_vzdjty.png',
+  },
+  Halfling: {
+    alt: 'Halfling druid in harmony with nature',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775595739/adventurers/Species/Druid_em_harmonia_com_a_natureza_yjj5yh.png',
+  },
+  Human: {
+    alt: 'Human rogue exploring forest ruins',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775595632/adventurers/Species/Rogue_nas_rui%CC%81nas_da_floresta_bcaa8h.png',
+  },
+  Orc: {
+    alt: 'Half-orc adventurer standing in a forest',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775594915/adventurers/Species/Aventureiro_meio-orc_na_floresta_hczvj5.png',
+  },
+  Tiefling: {
+    alt: 'Tiefling adventurer standing in a medieval alley',
+    src: 'https://res.cloudinary.com/dtglidvcw/image/upload/v1775594752/adventurers/Species/Aventureiro_tiefling_na_viela_medieval_o4rf6j.png',
+  },
+};
+
 const attributeResponseFields = [
   {
     name: 'id',
@@ -283,12 +328,85 @@ const skillDetailResponseFields = [
   },
 ];
 
+const speciesListResponseFields = [
+  {
+    name: 'id',
+    type: 'number',
+    description: 'Unique numeric identifier for the species.',
+  },
+  {
+    name: 'name',
+    type: 'string',
+    description: 'Species name returned in the compact species list.',
+  },
+];
+
+const speciesDetailResponseFields = [
+  {
+    name: 'id',
+    type: 'number',
+    description: 'Unique numeric identifier for the species.',
+  },
+  {
+    name: 'name',
+    type: 'string',
+    description: 'Readable species name, such as Elf or Dragonborn.',
+  },
+  {
+    name: 'slug',
+    type: 'string',
+    description: 'URL-friendly identifier accepted by the detail endpoint.',
+  },
+  {
+    name: 'description',
+    type: 'string',
+    description: 'Short lore and gameplay description for the species.',
+  },
+  {
+    name: 'creatureType',
+    type: 'string',
+    description: 'Creature classification returned by the API.',
+  },
+  {
+    name: 'size',
+    type: 'string',
+    description: 'Default physical size category for the species.',
+  },
+  {
+    name: 'speed',
+    type: 'number',
+    description: 'Base movement speed in feet.',
+  },
+  {
+    name: 'specialTraits',
+    type: 'SpeciesTrait[]',
+    description: 'Traits granted by the base species.',
+  },
+  {
+    name: 'subspecies',
+    type: 'SpeciesSubspecies[]',
+    description: 'Optional lineage variants and their own traits.',
+  },
+];
+
 function getSkillAnchor(skillName: string) {
-  return `skill-${skillName
+  return `skill-${getGuideAnchorSlug(skillName)}`;
+}
+
+function getClassAnchor(className: string) {
+  return `class-${getGuideAnchorSlug(className)}`;
+}
+
+function getSpeciesAnchor(speciesName: string) {
+  return `species-${getGuideAnchorSlug(speciesName)}`;
+}
+
+function getGuideAnchorSlug(value: string) {
+  return value
     .toLowerCase()
     .replaceAll('&', 'and')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')}`;
+    .replace(/(^-|-$)/g, '');
 }
 
 function getAttributeAnchor(attributeShortname: string) {
@@ -306,12 +424,16 @@ export function GuidesAccordion({
   attributes,
   classes,
   skills,
+  species,
 }: GuidesAccordionProps) {
   const [isAttributesOpen, setIsAttributesOpen] = useState(false);
   const [isSkillsOpen, setIsSkillsOpen] = useState(false);
   const [isClassesOpen, setIsClassesOpen] = useState(false);
+  const [isSpeciesOpen, setIsSpeciesOpen] = useState(false);
   const skillDetailExample =
     skills.find((skill) => skill.name === 'Athletics') ?? skills[0];
+  const speciesDetailExample =
+    species.find((speciesItem) => speciesItem.name === 'Elf') ?? species[0];
 
   function toggleAttributes() {
     setIsAttributesOpen((currentValue) => !currentValue);
@@ -323,6 +445,10 @@ export function GuidesAccordion({
 
   function toggleClasses() {
     setIsClassesOpen((currentValue) => !currentValue);
+  }
+
+  function toggleSpecies() {
+    setIsSpeciesOpen((currentValue) => !currentValue);
   }
 
   function openSkillCard(
@@ -379,11 +505,14 @@ export function GuidesAccordion({
             const isAttributes = resource.slug === 'attributes';
             const isSkills = resource.slug === 'skills';
             const isClasses = resource.slug === 'classes';
-            const isEnabled = isAttributes || isSkills || isClasses;
+            const isSpecies = resource.slug === 'species';
+            const isEnabled =
+              isAttributes || isSkills || isClasses || isSpecies;
             const isOpen =
               (isAttributes && isAttributesOpen) ||
               (isSkills && isSkillsOpen) ||
-              (isClasses && isClassesOpen);
+              (isClasses && isClassesOpen) ||
+              (isSpecies && isSpeciesOpen);
 
             return (
               <button
@@ -398,6 +527,8 @@ export function GuidesAccordion({
                       ? toggleSkills
                       : isClasses
                         ? toggleClasses
+                        : isSpecies
+                          ? toggleSpecies
                         : undefined
                 }
                 type="button"
@@ -435,6 +566,20 @@ export function GuidesAccordion({
               Attributes are the six core ability scores used to describe the
               natural strengths of a character in the Adventurers Guild API.
             </p>
+
+            <nav className="guide-card-index" aria-label="Attributes index">
+              <p>Chapter index</p>
+              <div>
+                {attributes.map((attribute) => (
+                  <a
+                    href={`#${getAttributeAnchor(attribute.shortname)}`}
+                    key={attribute.shortname}
+                  >
+                    {attribute.name}
+                  </a>
+                ))}
+              </div>
+            </nav>
 
             <div className="attribute-guide-grid">
               {attributes.map((attribute) => (
@@ -565,6 +710,17 @@ export function GuidesAccordion({
               Each skill has a related attribute, a description, an example of
               use, and common classes that often benefit from it.
             </p>
+
+            <nav className="guide-card-index" aria-label="Skills index">
+              <p>Chapter index</p>
+              <div>
+                {skills.map((skill) => (
+                  <a href={`#${getSkillAnchor(skill.name)}`} key={skill.id}>
+                    {skill.name}
+                  </a>
+                ))}
+              </div>
+            </nav>
 
             <div className="skill-guide-grid">
               {skills.map((skill) => {
@@ -748,13 +904,28 @@ export function GuidesAccordion({
               skills, and spellcasting support.
             </p>
 
+            <nav className="guide-card-index" aria-label="Classes index">
+              <p>Chapter index</p>
+              <div>
+                {classes.map((classItem) => (
+                  <a href={`#${getClassAnchor(classItem.name)}`} key={classItem.id}>
+                    {classItem.name}
+                  </a>
+                ))}
+              </div>
+            </nav>
+
             <div className="class-guide-grid">
               {classes.map((classItem) => {
                 const classImage = classImages[classItem.name];
                 const hitDie = Number(classItem.hitdie);
 
                 return (
-                  <article className="class-guide-card" key={classItem.id}>
+                  <article
+                    className="class-guide-card"
+                    id={getClassAnchor(classItem.name)}
+                    key={classItem.id}
+                  >
                     <div className="class-guide-card__header">
                       <p className="kicker">{classItem.role}</p>
                       <h3>{classItem.name}</h3>
@@ -933,6 +1104,277 @@ export function GuidesAccordion({
                 </a>
               </div>
             </aside>
+
+          </div>
+        </div>
+      </section>
+
+      <section className="section-block guide-accordion" id="species">
+        <button
+          aria-expanded={isSpeciesOpen}
+          className="guide-accordion__toggle"
+          onClick={toggleSpecies}
+          type="button"
+        >
+          <span>
+            <p className="kicker">Fourth chapter</p>
+            <h2>Species</h2>
+            <strong aria-hidden="true">
+              {isSpeciesOpen ? 'Close' : 'Open'}
+            </strong>
+          </span>
+        </button>
+
+        <div
+          className={`guide-accordion__content${
+            isSpeciesOpen ? ' guide-accordion__content--open' : ''
+          }`}
+        >
+          <div className="guide-accordion__scroll">
+            <p className="guide-accordion__description">
+              Species describe a character&apos;s ancestry and physical profile
+              in the Adventurers Guild API. This chapter will grow into a guide
+              for creature type, size, speed, and special traits returned by the
+              species endpoints.
+            </p>
+
+            <nav className="guide-card-index" aria-label="Species index">
+              <p>Chapter index</p>
+              <div>
+                {species.map((speciesItem) => (
+                  <a
+                    href={`#${getSpeciesAnchor(speciesItem.name)}`}
+                    key={speciesItem.id}
+                  >
+                    {speciesItem.name}
+                  </a>
+                ))}
+              </div>
+            </nav>
+
+            <div className="species-guide-grid">
+              {species.map((speciesItem) => {
+                const speciesImage = speciesImages[speciesItem.name];
+
+                return (
+                  <article
+                    className="species-guide-card"
+                    id={getSpeciesAnchor(speciesItem.name)}
+                    key={speciesItem.id}
+                  >
+                    <div
+                      className={`species-guide-card__overview${
+                        speciesImage
+                          ? ''
+                          : ' species-guide-card__overview--text-only'
+                      }`}
+                    >
+                      {speciesImage ? (
+                        <div className="species-guide-card__media">
+                          <Image
+                            alt={speciesImage.alt}
+                            fill
+                            sizes="(max-width: 900px) 100vw, 45vw"
+                            src={speciesImage.src}
+                          />
+                        </div>
+                      ) : null}
+
+                      <div className="species-guide-card__header">
+                        <p className="kicker">{speciesItem.creatureType}</p>
+                        <h3>{speciesItem.name}</h3>
+                        <p>{speciesItem.description}</p>
+                        <div className="species-guide-card__summary">
+                          <div>
+                            <p>Size</p>
+                            <span>{speciesItem.size}</span>
+                          </div>
+                          <div>
+                            <p>Speed</p>
+                            <span>{speciesItem.speed} ft.</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="species-guide-card__traits">
+                      <p>Special traits</p>
+                      {speciesItem.specialTraits.length > 0 ? (
+                        <ul>
+                          {speciesItem.specialTraits.map((trait) => (
+                            <li key={trait.name}>
+                              <strong>{trait.name}</strong>
+                              <span>{trait.description}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span>No special traits listed yet.</span>
+                      )}
+                    </div>
+
+                    {speciesItem.subspecies.length > 0 ? (
+                      <div className="species-subspecies">
+                        <div className="species-subspecies__heading">
+                          <p>Subspecies</p>
+                          <span>
+                            Variants returned by the species detail endpoint.
+                          </span>
+                        </div>
+
+                        <div className="species-subspecies__table-wrap">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Special traits</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {speciesItem.subspecies.map((subspecies) => (
+                                <tr key={subspecies.slug}>
+                                  <td data-label="Name">{subspecies.name}</td>
+                                  <td data-label="Description">
+                                    {subspecies.description}
+                                  </td>
+                                  <td data-label="Special traits">
+                                    {subspecies.specialTraits.length > 0 ? (
+                                      <div className="species-subspecies__trait-list">
+                                        {subspecies.specialTraits.map(
+                                          (trait) => (
+                                            <div key={trait.name}>
+                                              <strong>{trait.name}</strong>
+                                              <span>{trait.description}</span>
+                                            </div>
+                                          ),
+                                        )}
+                                      </div>
+                                    ) : (
+                                      'No special traits listed.'
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+
+            <aside className="guide-how-to-use">
+              <h3>How to use</h3>
+              <p>
+                Call <code>GET /api/species</code> for the compact species
+                list, then use{' '}
+                <code>GET /api/species/{'{identifier}'}</code> to read a
+                species&apos; creature type, size, movement speed, and special
+                traits.
+              </p>
+              <div className="endpoint-stack">
+                <a
+                  className="endpoint-pill"
+                  href="https://adventurers-guild-api.vercel.app/api/species"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  GET /api/species
+                </a>
+              </div>
+            </aside>
+
+            <section className="guide-expected-return">
+              <div className="section-heading">
+                <h3>Expected return</h3>
+                <h4>Response shape</h4>
+                <p>
+                  The list endpoint returns a compact species index with only
+                  identifiers and names. Use the detail endpoint when you need
+                  creature type, size, speed, traits, and subspecies.
+                </p>
+              </div>
+
+              <div className="response-variant">
+                <div className="response-variant__heading">
+                  <h4>List response</h4>
+                  <code>GET /api/species</code>
+                </div>
+
+                <div className="response-field-list response-field-list--compact">
+                  {speciesListResponseFields.map((field) => (
+                    <article className="response-field-card" key={field.name}>
+                      <span>{field.name}</span>
+                      <p>{field.description}</p>
+                      <strong>{field.type}</strong>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="response-example">
+                  <div className="response-example__header">
+                    <span>Example JSON</span>
+                    <code>200 OK</code>
+                  </div>
+                  <pre>
+                    <code>{JSON.stringify(
+                        species.map((speciesItem) => ({
+                          id: speciesItem.id,
+                          name: speciesItem.name,
+                        })),
+                        null,
+                        2,
+                      )}</code>
+                  </pre>
+                </div>
+              </div>
+
+              {speciesDetailExample ? (
+                <div className="response-variant">
+                  <div className="response-variant__heading">
+                    <h4>Detail response: {speciesDetailExample.name}</h4>
+                    <code>GET /api/species/{speciesDetailExample.slug}</code>
+                  </div>
+
+                  <div className="response-field-list">
+                    {speciesDetailResponseFields.map((field) => (
+                      <article className="response-field-card" key={field.name}>
+                        <span>{field.name}</span>
+                        <p>{field.description}</p>
+                        <strong>{field.type}</strong>
+                      </article>
+                    ))}
+                  </div>
+
+                  <div className="response-example">
+                    <div className="response-example__header">
+                      <span>Example JSON</span>
+                      <code>200 OK</code>
+                    </div>
+                    <pre>
+                      <code>{JSON.stringify(
+                          {
+                            id: speciesDetailExample.id,
+                            name: speciesDetailExample.name,
+                            slug: speciesDetailExample.slug,
+                            description: speciesDetailExample.description,
+                            creatureType: speciesDetailExample.creatureType,
+                            size: speciesDetailExample.size,
+                            speed: speciesDetailExample.speed,
+                            specialTraits: speciesDetailExample.specialTraits,
+                            subspecies: speciesDetailExample.subspecies,
+                          },
+                          null,
+                          2,
+                        )}</code>
+                    </pre>
+                  </div>
+                </div>
+              ) : null}
+            </section>
           </div>
         </div>
       </section>

@@ -8,6 +8,13 @@ export interface SpeciesTrait {
   description: string;
 }
 
+export interface SpeciesSubspecies {
+  name: string;
+  slug: string;
+  description: string;
+  specialTraits: SpeciesTrait[];
+}
+
 export interface SpeciesDetail {
   id: number;
   name: string;
@@ -17,4 +24,5 @@ export interface SpeciesDetail {
   size: string;
   speed: number;
   specialTraits: SpeciesTrait[];
+  subspecies: SpeciesSubspecies[];
 }

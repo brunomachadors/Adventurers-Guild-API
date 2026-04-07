@@ -842,6 +842,7 @@ export class CharactersAssert {
         expect(speciesDetails).toHaveProperty('size');
         expect(speciesDetails).toHaveProperty('speed');
         expect(speciesDetails).toHaveProperty('specialTraits');
+        expect(speciesDetails).toHaveProperty('subspecies');
 
         expect(typeof speciesDetails.id).toBe('number');
         expect(typeof speciesDetails.name).toBe('string');
@@ -851,6 +852,7 @@ export class CharactersAssert {
         expect(typeof speciesDetails.size).toBe('string');
         expect(typeof speciesDetails.speed).toBe('number');
         expect(Array.isArray(speciesDetails.specialTraits)).toBe(true);
+        expect(Array.isArray(speciesDetails.subspecies)).toBe(true);
       },
     );
 
@@ -862,6 +864,22 @@ export class CharactersAssert {
           expect(trait).toHaveProperty('description');
           expect(typeof trait.name).toBe('string');
           expect(typeof trait.description).toBe('string');
+        },
+      );
+    }
+
+    for (const subspecies of speciesDetails.subspecies) {
+      await test.step(
+        `Validate subspecies schema for ${subspecies.name}`,
+        async () => {
+          expect(subspecies).toHaveProperty('name');
+          expect(subspecies).toHaveProperty('slug');
+          expect(subspecies).toHaveProperty('description');
+          expect(subspecies).toHaveProperty('specialTraits');
+          expect(typeof subspecies.name).toBe('string');
+          expect(typeof subspecies.slug).toBe('string');
+          expect(typeof subspecies.description).toBe('string');
+          expect(Array.isArray(subspecies.specialTraits)).toBe(true);
         },
       );
     }

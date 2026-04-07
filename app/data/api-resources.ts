@@ -92,6 +92,7 @@ export const apiResources: ApiResource[] = [
       'size',
       'speed',
       'specialTraits',
+      'subspecies',
     ],
     endpoints: ['GET /api/species', 'GET /api/species/{identifier}'],
   },

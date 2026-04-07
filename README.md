@@ -288,6 +288,7 @@ Response fields:
 - `size`
 - `speed`
 - `specialTraits`
+- `subspecies`
 
 Returns:
 
@@ -1279,6 +1280,19 @@ Species detail:
     {
       "name": "Draconic Ancestry",
       "description": "You have a dragon ancestor, which grants you a Breath Weapon and damage resistance tied to that ancestry."
+    }
+  ],
+  "subspecies": [
+    {
+      "name": "Black Dragon Ancestry",
+      "slug": "black-dragon-ancestry",
+      "description": "A dragonborn ancestry tied to black dragons and acid damage.",
+      "specialTraits": [
+        {
+          "name": "Damage Type",
+          "description": "Your Draconic Ancestry damage type is Acid."
+        }
+      ]
     }
   ]
 }

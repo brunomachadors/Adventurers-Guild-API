@@ -1,5 +1,5 @@
 import { getSql } from '@/app/lib/db';
-import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
+import { formatSpeciesDetail } from '@/app/lib/species';
 import { NextResponse } from 'next/server';
 
 interface RouteContext {
@@ -8,41 +8,8 @@ interface RouteContext {
   }>;
 }
 
-function toNumber(value: number | string): number {
-  return typeof value === 'number' ? value : Number(value);
-}
-
 function normalizeSpeciesValue(value: string): string {
   return value.trim().toLowerCase();
-}
-
-function isSpeciesTrait(value: unknown): value is SpeciesTrait {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'name' in value &&
-    'description' in value &&
-    typeof value.name === 'string' &&
-    typeof value.description === 'string'
-  );
-}
-
-function parseSpecialTraits(value: unknown): SpeciesTrait[] {
-  if (Array.isArray(value)) {
-    return value.filter(isSpeciesTrait);
-  }
-
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-
-      return Array.isArray(parsed) ? parsed.filter(isSpeciesTrait) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  return [];
 }
 
 export async function GET(_: Request, { params }: RouteContext) {
@@ -63,7 +30,8 @@ export async function GET(_: Request, { params }: RouteContext) {
           creaturetype,
           size,
           speed,
-          specialtraits
+          specialtraits,
+          subspecies
         FROM species
         WHERE id = ${parsedId}
       `;
@@ -79,7 +47,8 @@ export async function GET(_: Request, { params }: RouteContext) {
           creaturetype,
           size,
           speed,
-          specialtraits
+          specialtraits,
+          subspecies
         FROM species
         WHERE LOWER(name) = ${normalizedIdentifier}
           OR LOWER(slug) = ${normalizedIdentifier}
@@ -92,16 +61,7 @@ export async function GET(_: Request, { params }: RouteContext) {
 
     const speciesItem = speciesRows[0];
 
-    const formattedSpecies: SpeciesDetail = {
-      id: toNumber(speciesItem.id),
-      name: speciesItem.name,
-      slug: speciesItem.slug,
-      description: speciesItem.description,
-      creatureType: speciesItem.creaturetype,
-      size: speciesItem.size,
-      speed: toNumber(speciesItem.speed),
-      specialTraits: parseSpecialTraits(speciesItem.specialtraits),
-    };
+    const formattedSpecies = formatSpeciesDetail(speciesItem);
 
     return NextResponse.json(formattedSpecies, { status: 200 });
   } catch (error) {

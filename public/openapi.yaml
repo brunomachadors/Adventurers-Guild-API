@@ -916,6 +916,13 @@ paths:
                     specialTraits:
                       - name: Draconic Ancestry
                         description: You have a dragon ancestor, which grants you a Breath Weapon and damage resistance tied to that ancestry.
+                    subspecies:
+                      - name: Black Dragon Ancestry
+                        slug: black-dragon-ancestry
+                        description: A dragonborn ancestry tied to black dragons and acid damage.
+                        specialTraits:
+                          - name: Damage Type
+                            description: Your Draconic Ancestry damage type is Acid.
                 elf:
                   summary: Elf detail
                   value:
@@ -929,6 +936,13 @@ paths:
                     specialTraits:
                       - name: Darkvision
                         description: You have Darkvision with a range of 60 feet.
+                    subspecies:
+                      - name: High Elf
+                        slug: high-elf
+                        description: A magical elven lineage with an arcane cantrip and additional arcane magic.
+                        specialTraits:
+                          - name: Level 1
+                            description: You know the Prestidigitation cantrip.
         '404':
           description: Species not found
           content:
@@ -1457,6 +1471,7 @@ paths:
                   specialTraits:
                     - name: Darkvision
                       description: You have Darkvision with a range of 60 feet.
+                  subspecies: []
                 backgroundDetails:
                   id: 13
                   name: Sage
@@ -3365,6 +3380,28 @@ components:
           type: string
           example: You have Darkvision with a range of 60 feet.
 
+    SpeciesSubspecies:
+      type: object
+      required:
+        - name
+        - slug
+        - description
+        - specialTraits
+      properties:
+        name:
+          type: string
+          example: High Elf
+        slug:
+          type: string
+          example: high-elf
+        description:
+          type: string
+          example: A magical elven lineage with an arcane cantrip.
+        specialTraits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeciesTrait'
+
     SpeciesDetail:
       type: object
       required:
@@ -3376,6 +3413,7 @@ components:
         - size
         - speed
         - specialTraits
+        - subspecies
       properties:
         id:
           type: integer
@@ -3402,6 +3440,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SpeciesTrait'
+        subspecies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeciesSubspecies'
 
     CharacterStatus:
       type: string

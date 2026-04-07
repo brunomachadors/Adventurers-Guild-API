@@ -1,8 +1,10 @@
 import { GuidesAccordion } from '@/app/components/guides-accordion';
 import { getSql } from '@/app/lib/db';
+import { formatSpeciesDetail } from '@/app/lib/species';
 import type { Attribute } from '@/app/types/attribute';
 import type { ClassDetail } from '@/app/types/class';
 import type { SkillDetail } from '@/app/types/skill';
+import type { SpeciesDetail } from '@/app/types/species';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,11 +112,34 @@ async function getClasses(): Promise<ClassDetail[]> {
   })) as ClassDetail[];
 }
 
+async function getSpecies(): Promise<SpeciesDetail[]> {
+  const sql = getSql();
+  const speciesRows = await sql`
+    SELECT
+      id,
+      name,
+      slug,
+      description,
+      creaturetype,
+      size,
+      speed,
+      specialtraits,
+      subspecies
+    FROM species
+    ORDER BY id
+  `;
+
+  return speciesRows.map((speciesItem) =>
+    formatSpeciesDetail(speciesItem),
+  ) as SpeciesDetail[];
+}
+
 export default async function GuidesPage() {
-  const [attributes, skills, classes] = await Promise.all([
+  const [attributes, skills, classes, species] = await Promise.all([
     getAttributes(),
     getSkills(),
     getClasses(),
+    getSpecies(),
   ]);
 
   return (
@@ -123,6 +148,7 @@ export default async function GuidesPage() {
         attributes={attributes}
         classes={classes}
         skills={skills}
+        species={species}
       />
     </main>
   );
