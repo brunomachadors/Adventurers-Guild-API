@@ -2,7 +2,10 @@ import { test } from '@playwright/test';
 
 import { ClassDetail } from '@/app/types/class';
 import { ClassesClient } from '../clients/classes.client';
-import { expectedDetailedClasses } from '../data/classes.expected';
+import {
+  expectedClassSubclasses,
+  expectedDetailedClasses,
+} from '../data/classes.expected';
 import { ClassAssert } from '../helpers/classes.assertions';
 
 test.describe('Classes API - Detail', { tag: ['@classes', '@detail'] }, () => {
@@ -54,6 +57,31 @@ test.describe('Classes API - Detail', { tag: ['@classes', '@detail'] }, () => {
         const body: ClassDetail = await response.json();
 
         await classAssert.validateClassDetail(body, expectedClass);
+      },
+    );
+  }
+
+  for (const expectedClass of expectedClassSubclasses) {
+    test(
+      `Validate Class Subclasses - ${expectedClass.name}`,
+      { tag: ['@get', '@data', '@subclasses'] },
+      async ({ request }) => {
+        const classesClient = new ClassesClient(request);
+        const classAssert = new ClassAssert();
+
+        const response = await classesClient.getClassDetail(expectedClass.id);
+
+        await classAssert.success(response);
+
+        const body: ClassDetail = await response.json();
+
+        await classAssert.validateDetailSchema(body);
+        await classAssert.validateId(body.id, expectedClass.id);
+        await classAssert.validateName(body.name, expectedClass.name);
+        await classAssert.validateSubclasses(
+          body.subclasses,
+          expectedClass.subclasses,
+        );
       },
     );
   }

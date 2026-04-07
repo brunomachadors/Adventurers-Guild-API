@@ -50,6 +50,34 @@ async function getSkills(): Promise<SkillDetail[]> {
     ) as SkillDetail[];
 }
 
+function getStringProperty(
+  record: Record<string, unknown>,
+  propertyNames: string[],
+) {
+  const propertyValue = propertyNames
+    .map((propertyName) => record[propertyName])
+    .find((value) => typeof value === 'string');
+
+  return typeof propertyValue === 'string' ? propertyValue : null;
+}
+
+function normalizeSubclassName(subclass: unknown) {
+  if (typeof subclass === 'string') {
+    return subclass;
+  }
+
+  if (!subclass || typeof subclass !== 'object') {
+    return null;
+  }
+
+  return getStringProperty(subclass as Record<string, unknown>, [
+    'name',
+    'subclassName',
+    'subclass',
+    'title',
+  ]);
+}
+
 async function getClasses(): Promise<ClassDetail[]> {
   const sql = getSql();
   const classes = await sql`
@@ -70,7 +98,16 @@ async function getClasses(): Promise<ClassDetail[]> {
     ORDER BY id
   `;
 
-  return classes as ClassDetail[];
+  return classes.map((classItem) => ({
+    ...classItem,
+    subclasses: Array.isArray(classItem.subclasses)
+      ? classItem.subclasses
+          .map((subclass) => normalizeSubclassName(subclass))
+          .filter((subclassName): subclassName is string =>
+            Boolean(subclassName),
+          )
+      : [],
+  })) as ClassDetail[];
 }
 
 export default async function GuidesPage() {

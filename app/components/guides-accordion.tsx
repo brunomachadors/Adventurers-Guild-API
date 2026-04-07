@@ -295,12 +295,19 @@ function getAttributeAnchor(attributeShortname: string) {
   return `attribute-${attributeShortname.toLowerCase()}`;
 }
 
+function splitDescriptionSentences(description: string) {
+  return description
+    .split(/(?<=\.)\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
 export function GuidesAccordion({
   attributes,
   classes,
   skills,
 }: GuidesAccordionProps) {
-  const [isAttributesOpen, setIsAttributesOpen] = useState(true);
+  const [isAttributesOpen, setIsAttributesOpen] = useState(false);
   const [isSkillsOpen, setIsSkillsOpen] = useState(false);
   const [isClassesOpen, setIsClassesOpen] = useState(false);
   const skillDetailExample =
@@ -748,113 +755,160 @@ export function GuidesAccordion({
 
                 return (
                   <article className="class-guide-card" key={classItem.id}>
-                    {classImage ? (
-                      <div className="class-guide-card__media">
-                        <Image
-                          alt={classImage.alt}
-                          fill
-                          sizes="(max-width: 900px) 100vw, 50vw"
-                          src={classImage.src}
-                        />
-                      </div>
-                    ) : null}
-
-                    <div className="class-guide-card__content">
+                    <div className="class-guide-card__header">
                       <p className="kicker">{classItem.role}</p>
                       <h3>{classItem.name}</h3>
                       <p>{classItem.description}</p>
+                    </div>
 
-                      <div className="class-guide-card__meta">
-                        <div className="class-guide-card__stat-block class-guide-card__hit-die">
-                          <p>Hit Die</p>
-                          <span
-                            className={`class-guide-card__die class-guide-card__die--d${hitDie}`}
-                            data-hit-die={hitDie}
-                          >
-                            D{hitDie}
-                          </span>
+                    <div className="class-guide-card__overview">
+                      {classImage ? (
+                        <div className="class-guide-card__media">
+                          <Image
+                            alt={classImage.alt}
+                            fill
+                            sizes="(max-width: 900px) 100vw, 50vw"
+                            src={classImage.src}
+                          />
                         </div>
+                      ) : null}
 
-                        <div className="class-guide-card__stat-block class-guide-card__primary">
-                          <p>Primary Attribute</p>
-                          <div>
-                            {classItem.primaryattributes.map(
-                              (primaryAttribute) => (
+                      <div className="class-guide-card__content">
+                        <div className="class-guide-card__meta">
+                          <div className="class-guide-card__stat-block class-guide-card__hit-die">
+                            <p>Hit Die</p>
+                            <span
+                              className={`class-guide-card__die class-guide-card__die--d${hitDie}`}
+                              data-hit-die={hitDie}
+                            >
+                              D{hitDie}
+                            </span>
+                          </div>
+
+                          <div className="class-guide-card__stat-block class-guide-card__primary">
+                            <p>Primary Attribute</p>
+                            <div>
+                              {classItem.primaryattributes.map(
+                                (primaryAttribute) => (
+                                  <a
+                                    href={`#${getAttributeAnchor(primaryAttribute)}`}
+                                    key={primaryAttribute}
+                                    onClick={(event) =>
+                                      openAttributeCard(event, primaryAttribute)
+                                    }
+                                  >
+                                    {primaryAttribute}
+                                  </a>
+                                ),
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="class-guide-card__stat-block class-guide-card__saving-throws">
+                            <p>Saving Throws</p>
+                            <div>
+                              {classItem.savingthrows.map((savingThrow) => (
                                 <a
-                                  href={`#${getAttributeAnchor(primaryAttribute)}`}
-                                  key={primaryAttribute}
+                                  href={`#${getAttributeAnchor(savingThrow)}`}
+                                  key={savingThrow}
                                   onClick={(event) =>
-                                    openAttributeCard(event, primaryAttribute)
+                                    openAttributeCard(event, savingThrow)
                                   }
                                 >
-                                  {primaryAttribute}
-                                </a>
-                              ),
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="class-guide-card__stat-block class-guide-card__saving-throws">
-                          <p>Saving Throws</p>
-                          <div>
-                            {classItem.savingthrows.map((savingThrow) => (
-                              <a
-                                href={`#${getAttributeAnchor(savingThrow)}`}
-                                key={savingThrow}
-                                onClick={(event) =>
-                                  openAttributeCard(event, savingThrow)
-                                }
-                              >
-                                {savingThrow}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="class-guide-card__details">
-                        <div className="class-guide-card__detail-block">
-                          <p>Recommended skills</p>
-                          {classItem.recommendedskills.length > 0 ? (
-                            <div className="attribute-skill-list">
-                              {classItem.recommendedskills.map((skill) => (
-                                <a
-                                  className="attribute-skill-chip"
-                                  href={`#${getSkillAnchor(skill)}`}
-                                  key={skill}
-                                  onClick={(event) =>
-                                    openSkillCard(event, skill)
-                                  }
-                                >
-                                  {skill}
+                                  {savingThrow}
                                 </a>
                               ))}
                             </div>
-                          ) : (
-                            <span>No recommended skills listed.</span>
-                          )}
+                          </div>
                         </div>
 
-                        <div className="class-guide-card__detail-block">
-                          <p>Subclasses</p>
-                          <span>
-                            {classItem.subclasses.length > 0
-                              ? classItem.subclasses.join(', ')
-                              : 'No subclasses listed yet.'}
-                          </span>
-                        </div>
+                        <div className="class-guide-card__details">
+                          <div className="class-guide-card__detail-block">
+                            <p>Recommended skills</p>
+                            {classItem.recommendedskills.length > 0 ? (
+                              <div className="attribute-skill-list">
+                                {classItem.recommendedskills.map((skill) => (
+                                  <a
+                                    className="attribute-skill-chip"
+                                    href={`#${getSkillAnchor(skill)}`}
+                                    key={skill}
+                                    onClick={(event) =>
+                                      openSkillCard(event, skill)
+                                    }
+                                  >
+                                    {skill}
+                                  </a>
+                                ))}
+                              </div>
+                            ) : (
+                              <span>No recommended skills listed.</span>
+                            )}
+                          </div>
 
-                        <div className="class-guide-card__detail-block">
-                          <p>Spellcasting</p>
-                          <span>
-                            {classItem.spellcasting
-                              ? `Uses ${classItem.spellcasting.ability}`
-                              : 'No spellcasting progression.'}
-                          </span>
-                        </div>
+                          <div className="class-guide-card__detail-block">
+                            <p>Subclasses</p>
+                            <span>
+                              {classItem.subclasses.length > 0
+                                ? classItem.subclasses.join(', ')
+                                : 'No subclasses listed yet.'}
+                            </span>
+                          </div>
 
+                          {classItem.spellcasting ? (
+                            <div className="class-guide-card__detail-block">
+                              <p>Spellcasting</p>
+                              <span>
+                                Uses {classItem.spellcasting.ability}
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
+
+                    {classItem.levelprogression.length > 0 ? (
+                      <div className="class-progression">
+                        <div className="class-progression__heading">
+                          <p>Class progression</p>
+                          <span>
+                            Features returned by the class detail endpoint.
+                          </span>
+                        </div>
+
+                        <div className="class-progression__table-wrap">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Level</th>
+                                <th>Feature</th>
+                                <th>Description</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {classItem.levelprogression.flatMap((levelItem) =>
+                                levelItem.features.map((feature) => (
+                                  <tr
+                                    key={`${classItem.id}-${levelItem.level}-${feature.name}`}
+                                  >
+                                    <td data-label="Level">{levelItem.level}</td>
+                                    <td data-label="Feature">{feature.name}</td>
+                                    <td data-label="Description">
+                                      <div className="class-progression__description">
+                                        {splitDescriptionSentences(
+                                          feature.description,
+                                        ).map((sentence) => (
+                                          <p key={sentence}>{sentence}</p>
+                                        ))}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )),
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : null}
                   </article>
                 );
               })}

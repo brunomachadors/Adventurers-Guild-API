@@ -15,6 +15,102 @@ export const expectedClassesList: ClassListItem[] = [
   { id: 12, name: 'Wizard' },
 ];
 
+export const expectedClassSubclasses: Pick<
+  ClassDetail,
+  'id' | 'name' | 'subclasses'
+>[] = [
+  {
+    id: 1,
+    name: 'Barbarian',
+    subclasses: ['Berserker', 'Wild Heart', 'World Tree', 'Zealot'],
+  },
+  {
+    id: 2,
+    name: 'Bard',
+    subclasses: [
+      'College of Dance',
+      'College of Glamour',
+      'College of Lore',
+      'College of Valor',
+    ],
+  },
+  {
+    id: 3,
+    name: 'Cleric',
+    subclasses: ['Life Domain', 'Light Domain', 'Trickery Domain', 'War Domain'],
+  },
+  {
+    id: 4,
+    name: 'Druid',
+    subclasses: [
+      'Circle of the Land',
+      'Circle of the Moon',
+      'Circle of the Sea',
+      'Circle of the Stars',
+    ],
+  },
+  {
+    id: 5,
+    name: 'Fighter',
+    subclasses: ['Battle Master', 'Champion', 'Eldritch Knight', 'Psi Warrior'],
+  },
+  {
+    id: 6,
+    name: 'Monk',
+    subclasses: [
+      'Warrior of Mercy',
+      'Warrior of Shadow',
+      'Warrior of the Elements',
+      'Warrior of the Open Hand',
+    ],
+  },
+  {
+    id: 7,
+    name: 'Paladin',
+    subclasses: [
+      'Oath of Devotion',
+      'Oath of Glory',
+      'Oath of the Ancients',
+      'Oath of Vengeance',
+    ],
+  },
+  {
+    id: 8,
+    name: 'Ranger',
+    subclasses: ['Beast Master', 'Fey Wanderer', 'Gloom Stalker', 'Hunter'],
+  },
+  {
+    id: 9,
+    name: 'Rogue',
+    subclasses: ['Arcane Trickster', 'Assassin', 'Soulknife', 'Thief'],
+  },
+  {
+    id: 10,
+    name: 'Sorcerer',
+    subclasses: [
+      'Aberrant Sorcery',
+      'Clockwork Sorcery',
+      'Draconic Sorcery',
+      'Wild Magic Sorcery',
+    ],
+  },
+  {
+    id: 11,
+    name: 'Warlock',
+    subclasses: [
+      'Archfey Patron',
+      'Celestial Patron',
+      'Fiend Patron',
+      'Great Old One Patron',
+    ],
+  },
+  {
+    id: 12,
+    name: 'Wizard',
+    subclasses: ['Abjurer', 'Diviner', 'Evoker', 'Illusionist'],
+  },
+];
+
 export type ExpectedClassDetail = Pick<
   ClassDetail,
   | 'id'
@@ -42,7 +138,7 @@ export const expectedDetailedClasses: Record<string, ExpectedClassDetail> = {
     recommendedskills: ['Athletics', 'Survival', 'Intimidation'],
     savingthrows: ['STR', 'CON'],
     spellcasting: null,
-    subclasses: ['Berserker', 'Wild Heart', 'World Tree'],
+    subclasses: ['Berserker', 'Wild Heart', 'World Tree', 'Zealot'],
     hitdie: 12,
     role: 'melee',
     description:
@@ -62,7 +158,7 @@ export const expectedDetailedClasses: Record<string, ExpectedClassDetail> = {
     ],
     savingthrows: ['STR', 'CON'],
     spellcasting: null,
-    subclasses: ['Champion'],
+    subclasses: ['Battle Master', 'Champion', 'Eldritch Knight', 'Psi Warrior'],
     hitdie: 10,
     role: 'melee',
     description:
@@ -101,7 +197,7 @@ export const expectedDetailedClasses: Record<string, ExpectedClassDetail> = {
         spellsAddedPerLevel: 2,
       },
     },
-    subclasses: ['Evoker'],
+    subclasses: ['Abjurer', 'Diviner', 'Evoker', 'Illusionist'],
     hitdie: 6,
     role: 'caster',
     description:
