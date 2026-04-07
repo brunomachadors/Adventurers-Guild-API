@@ -1020,7 +1020,7 @@ li {
   text-transform: uppercase;
 }
 
-.skill-guide-card__attribute span {
+.skill-guide-card__attribute a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1028,6 +1028,7 @@ li {
   min-height: 34px;
   padding: 7px 12px;
   border-radius: 999px;
+  border: 1px solid rgba(61, 25, 15, 0.34);
   background:
     radial-gradient(circle at top, rgba(255, 229, 190, 0.2), transparent 42%),
     linear-gradient(180deg, rgba(90, 42, 26, 0.96), rgba(61, 25, 15, 0.96));
@@ -1035,6 +1036,23 @@ li {
   font-family: var(--font-heading), sans-serif;
   font-weight: 800;
   letter-spacing: 0.08em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 238, 211, 0.14),
+    0 3px 0 rgba(61, 25, 15, 0.24);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.skill-guide-card__attribute a:hover,
+.skill-guide-card__attribute a:focus-visible {
+  border-color: rgba(255, 218, 164, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 238, 211, 0.16),
+    0 3px 0 rgba(61, 25, 15, 0.24),
+    0 8px 14px rgba(61, 25, 15, 0.18);
+  transform: translateY(-2px);
 }
 
 .guide-how-to-use {

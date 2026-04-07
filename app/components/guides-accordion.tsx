@@ -18,6 +18,18 @@ import arcanaIcon from '@/public/images/skills/arcana.png';
 import athleticsIcon from '@/public/images/skills/athletics.png';
 import deceptionIcon from '@/public/images/skills/deception.png';
 import historyIcon from '@/public/images/skills/history.png';
+import insightIcon from '@/public/images/skills/insight.png';
+import intimidationIcon from '@/public/images/skills/intimidation.png';
+import investigationIcon from '@/public/images/skills/investigation.png';
+import medicineIcon from '@/public/images/skills/medicine.png';
+import natureIcon from '@/public/images/skills/nature.png';
+import perceptionIcon from '@/public/images/skills/perception.png';
+import performanceIcon from '@/public/images/skills/performance.png';
+import persuasionIcon from '@/public/images/skills/persuasion.png';
+import religionIcon from '@/public/images/skills/religion.png';
+import sleightOfHandIcon from '@/public/images/skills/sleight-of-hand.png';
+import stealthIcon from '@/public/images/skills/stealth.png';
+import survivalIcon from '@/public/images/skills/survival.png';
 
 type GuidesAccordionProps = {
   attributes: Attribute[];
@@ -93,6 +105,54 @@ const skillIcons = {
   History: {
     alt: 'History skill icon',
     src: historyIcon,
+  },
+  Insight: {
+    alt: 'Insight skill icon',
+    src: insightIcon,
+  },
+  Intimidation: {
+    alt: 'Intimidation skill icon',
+    src: intimidationIcon,
+  },
+  Investigation: {
+    alt: 'Investigation skill icon',
+    src: investigationIcon,
+  },
+  Medicine: {
+    alt: 'Medicine skill icon',
+    src: medicineIcon,
+  },
+  Nature: {
+    alt: 'Nature skill icon',
+    src: natureIcon,
+  },
+  Perception: {
+    alt: 'Perception skill icon',
+    src: perceptionIcon,
+  },
+  Performance: {
+    alt: 'Performance skill icon',
+    src: performanceIcon,
+  },
+  Persuasion: {
+    alt: 'Persuasion skill icon',
+    src: persuasionIcon,
+  },
+  Religion: {
+    alt: 'Religion skill icon',
+    src: religionIcon,
+  },
+  'Sleight of Hand': {
+    alt: 'Sleight of Hand skill icon',
+    src: sleightOfHandIcon,
+  },
+  Stealth: {
+    alt: 'Stealth skill icon',
+    src: stealthIcon,
+  },
+  Survival: {
+    alt: 'Survival skill icon',
+    src: survivalIcon,
   },
 };
 
@@ -178,6 +238,10 @@ function getSkillAnchor(skillName: string) {
     .replace(/(^-|-$)/g, '')}`;
 }
 
+function getAttributeAnchor(attributeShortname: string) {
+  return `attribute-${attributeShortname.toLowerCase()}`;
+}
+
 export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
   const [isAttributesOpen, setIsAttributesOpen] = useState(true);
   const [isSkillsOpen, setIsSkillsOpen] = useState(false);
@@ -207,6 +271,24 @@ export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
         block: 'center',
       });
       window.history.replaceState(null, '', `#${skillAnchor}`);
+    });
+  }
+
+  function openAttributeCard(
+    event: MouseEvent<HTMLAnchorElement>,
+    attributeShortname: string,
+  ) {
+    const attributeAnchor = getAttributeAnchor(attributeShortname);
+
+    event.preventDefault();
+    setIsAttributesOpen(true);
+
+    window.requestAnimationFrame(() => {
+      document.getElementById(attributeAnchor)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+      window.history.replaceState(null, '', `#${attributeAnchor}`);
     });
   }
 
@@ -284,6 +366,7 @@ export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
               {attributes.map((attribute) => (
                 <article
                   className="attribute-guide-card"
+                  id={getAttributeAnchor(attribute.shortname)}
                   key={attribute.shortname}
                 >
                   <div className="attribute-guide-card__header">
@@ -440,7 +523,14 @@ export function GuidesAccordion({ attributes, skills }: GuidesAccordionProps) {
                     </div>
                     <div className="skill-guide-card__attribute">
                       <p>Related attribute</p>
-                      <span>{skill.attribute}</span>
+                      <a
+                        href={`#${getAttributeAnchor(skill.attribute)}`}
+                        onClick={(event) =>
+                          openAttributeCard(event, skill.attribute)
+                        }
+                      >
+                        {skill.attribute}
+                      </a>
                     </div>
                   </article>
                 );
