@@ -2,6 +2,7 @@ import { GuidesAccordion } from '@/app/components/guides-accordion';
 import { getSql } from '@/app/lib/db';
 import { formatSpeciesDetail } from '@/app/lib/species';
 import type { Attribute } from '@/app/types/attribute';
+import type { BackgroundDetail } from '@/app/types/background';
 import type { ClassDetail } from '@/app/types/class';
 import type { SkillDetail } from '@/app/types/skill';
 import type { SpeciesDetail } from '@/app/types/species';
@@ -134,18 +135,50 @@ async function getSpecies(): Promise<SpeciesDetail[]> {
   ) as SpeciesDetail[];
 }
 
+async function getBackgrounds(): Promise<BackgroundDetail[]> {
+  const sql = getSql();
+  const backgroundRows = await sql`
+    SELECT
+      id,
+      name,
+      slug,
+      description,
+      abilityscores,
+      feat,
+      skillproficiencies,
+      toolproficiency,
+      equipmentoptions
+    FROM backgrounds
+    ORDER BY name
+  `;
+
+  return backgroundRows.map((background) => ({
+    id: background.id,
+    name: background.name,
+    slug: background.slug,
+    description: background.description,
+    abilityScores: background.abilityscores,
+    feat: background.feat,
+    skillProficiencies: background.skillproficiencies,
+    toolProficiency: background.toolproficiency,
+    equipmentOptions: background.equipmentoptions,
+  })) as BackgroundDetail[];
+}
+
 export default async function GuidesPage() {
-  const [attributes, skills, classes, species] = await Promise.all([
+  const [attributes, skills, classes, species, backgrounds] = await Promise.all([
     getAttributes(),
     getSkills(),
     getClasses(),
     getSpecies(),
+    getBackgrounds(),
   ]);
 
   return (
     <main className="page-frame">
       <GuidesAccordion
         attributes={attributes}
+        backgrounds={backgrounds}
         classes={classes}
         skills={skills}
         species={species}

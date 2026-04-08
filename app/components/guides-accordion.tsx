@@ -3,8 +3,17 @@
 import Image from 'next/image';
 import { useState, type MouseEvent } from 'react';
 
+import { BackgroundsGuideChapter } from '@/app/components/guides/backgrounds-guide-chapter';
+import {
+  getAttributeAnchor,
+  getBackgroundAnchor,
+  getClassAnchor,
+  getSkillAnchor,
+  getSpeciesAnchor,
+} from '@/app/components/guides/background-guide-utils';
 import { apiResources } from '@/app/data/api-resources';
 import type { Attribute } from '@/app/types/attribute';
+import type { BackgroundDetail } from '@/app/types/background';
 import type { ClassDetail } from '@/app/types/class';
 import type { SkillDetail } from '@/app/types/skill';
 import type { SpeciesDetail } from '@/app/types/species';
@@ -35,6 +44,7 @@ import survivalIcon from '@/public/images/skills/survival.png';
 
 type GuidesAccordionProps = {
   attributes: Attribute[];
+  backgrounds: BackgroundDetail[];
   classes: ClassDetail[];
   skills: SkillDetail[];
   species: SpeciesDetail[];
@@ -389,30 +399,6 @@ const speciesDetailResponseFields = [
   },
 ];
 
-function getSkillAnchor(skillName: string) {
-  return `skill-${getGuideAnchorSlug(skillName)}`;
-}
-
-function getClassAnchor(className: string) {
-  return `class-${getGuideAnchorSlug(className)}`;
-}
-
-function getSpeciesAnchor(speciesName: string) {
-  return `species-${getGuideAnchorSlug(speciesName)}`;
-}
-
-function getGuideAnchorSlug(value: string) {
-  return value
-    .toLowerCase()
-    .replaceAll('&', 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
-function getAttributeAnchor(attributeShortname: string) {
-  return `attribute-${attributeShortname.toLowerCase()}`;
-}
-
 function splitDescriptionSentences(description: string) {
   return description
     .split(/(?<=\.)\s+/)
@@ -422,6 +408,7 @@ function splitDescriptionSentences(description: string) {
 
 export function GuidesAccordion({
   attributes,
+  backgrounds,
   classes,
   skills,
   species,
@@ -430,10 +417,12 @@ export function GuidesAccordion({
   const [isSkillsOpen, setIsSkillsOpen] = useState(false);
   const [isClassesOpen, setIsClassesOpen] = useState(false);
   const [isSpeciesOpen, setIsSpeciesOpen] = useState(false);
+  const [isBackgroundsOpen, setIsBackgroundsOpen] = useState(false);
   const [selectedAttributeIndex, setSelectedAttributeIndex] = useState(0);
   const [selectedSkillIndex, setSelectedSkillIndex] = useState(0);
   const [selectedClassIndex, setSelectedClassIndex] = useState(0);
   const [selectedSpeciesIndex, setSelectedSpeciesIndex] = useState(0);
+  const [selectedBackgroundIndex, setSelectedBackgroundIndex] = useState(0);
   const skillDetailExample =
     skills.find((skill) => skill.name === 'Athletics') ?? skills[0];
   const speciesDetailExample =
@@ -455,22 +444,16 @@ export function GuidesAccordion({
     setIsSpeciesOpen((currentValue) => !currentValue);
   }
 
+  function toggleBackgrounds() {
+    setIsBackgroundsOpen((currentValue) => !currentValue);
+  }
+
   function openSkillCard(
     event: MouseEvent<HTMLAnchorElement>,
     skillName: string,
   ) {
-    const skillIndex = skills.findIndex((skill) => skill.name === skillName);
-    const nextSkill = skills[skillIndex];
-
     event.preventDefault();
-
-    if (!nextSkill) {
-      return;
-    }
-
-    setIsSkillsOpen(true);
-    setSelectedSkillIndex(skillIndex);
-    scrollToGuideCard(getSkillAnchor(nextSkill.name));
+    openSkillByName(skillName);
   }
 
   function updateGuideCardHash(anchor: string) {
@@ -519,12 +502,15 @@ export function GuidesAccordion({
     event: MouseEvent<HTMLAnchorElement>,
     attributeShortname: string,
   ) {
+    event.preventDefault();
+    openAttributeByShortname(attributeShortname);
+  }
+
+  function openAttributeByShortname(attributeShortname: string) {
     const attributeIndex = attributes.findIndex(
       (attribute) => attribute.shortname === attributeShortname,
     );
     const nextAttribute = attributes[attributeIndex];
-
-    event.preventDefault();
 
     if (!nextAttribute) {
       return;
@@ -533,6 +519,19 @@ export function GuidesAccordion({
     setIsAttributesOpen(true);
     setSelectedAttributeIndex(attributeIndex);
     scrollToGuideCard(getAttributeAnchor(nextAttribute.shortname));
+  }
+
+  function openSkillByName(skillName: string) {
+    const skillIndex = skills.findIndex((skill) => skill.name === skillName);
+    const nextSkill = skills[skillIndex];
+
+    if (!nextSkill) {
+      return;
+    }
+
+    setIsSkillsOpen(true);
+    setSelectedSkillIndex(skillIndex);
+    scrollToGuideCard(getSkillAnchor(nextSkill.name));
   }
 
   function openChapterIndex(
@@ -588,6 +587,18 @@ export function GuidesAccordion({
         block: 'start',
       });
       updateGuideCardHash(speciesAnchor);
+    });
+  }
+
+  function scrollToBackgroundCard(backgroundName: string) {
+    window.requestAnimationFrame(() => {
+      const backgroundAnchor = getBackgroundAnchor(backgroundName);
+
+      document.getElementById(backgroundAnchor)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      updateGuideCardHash(backgroundAnchor);
     });
   }
 
@@ -663,6 +674,25 @@ export function GuidesAccordion({
     selectSpeciesByIndex(speciesIndex, false);
   }
 
+  function selectBackgroundByIndex(
+    backgroundIndex: number,
+    shouldScroll = true,
+  ) {
+    const nextBackground = backgrounds[backgroundIndex];
+
+    if (!nextBackground) {
+      return;
+    }
+
+    setSelectedBackgroundIndex(backgroundIndex);
+
+    if (shouldScroll) {
+      scrollToBackgroundCard(nextBackground.name);
+    } else {
+      updateGuideCardHash(getBackgroundAnchor(nextBackground.name));
+    }
+  }
+
   function openAttributesChapter() {
     setIsAttributesOpen(true);
     scrollToChapterIndex('attributes-index');
@@ -681,6 +711,11 @@ export function GuidesAccordion({
   function openSpeciesChapter() {
     setIsSpeciesOpen(true);
     scrollToChapterIndex('species-index');
+  }
+
+  function openBackgroundsChapter() {
+    setIsBackgroundsOpen(true);
+    scrollToChapterIndex('backgrounds-index');
   }
 
   function closeAttributesChapter() {
@@ -703,6 +738,11 @@ export function GuidesAccordion({
     scrollToGuideSection('species');
   }
 
+  function closeBackgroundsChapter() {
+    setIsBackgroundsOpen(false);
+    scrollToGuideSection('backgrounds');
+  }
+
   return (
     <>
       <section className="section-block guide-grimoire-cover">
@@ -722,13 +762,19 @@ export function GuidesAccordion({
             const isSkills = resource.slug === 'skills';
             const isClasses = resource.slug === 'classes';
             const isSpecies = resource.slug === 'species';
+            const isBackgrounds = resource.slug === 'backgrounds';
             const isEnabled =
-              isAttributes || isSkills || isClasses || isSpecies;
+              isAttributes ||
+              isSkills ||
+              isClasses ||
+              isSpecies ||
+              isBackgrounds;
             const isOpen =
               (isAttributes && isAttributesOpen) ||
               (isSkills && isSkillsOpen) ||
               (isClasses && isClassesOpen) ||
-              (isSpecies && isSpeciesOpen);
+              (isSpecies && isSpeciesOpen) ||
+              (isBackgrounds && isBackgroundsOpen);
 
             return (
               <button
@@ -745,7 +791,9 @@ export function GuidesAccordion({
                         ? openClassesChapter
                         : isSpecies
                           ? openSpeciesChapter
-                        : undefined
+                          : isBackgrounds
+                            ? openBackgroundsChapter
+                          : undefined
                 }
                 type="button"
               >
@@ -1914,6 +1962,19 @@ export function GuidesAccordion({
           </div>
         </div>
       </section>
+
+      <BackgroundsGuideChapter
+        attributes={attributes}
+        backgrounds={backgrounds}
+        isOpen={isBackgroundsOpen}
+        onClose={closeBackgroundsChapter}
+        onOpenAttribute={openAttributeByShortname}
+        onOpenChapterIndex={scrollToChapterIndex}
+        onOpenSkill={openSkillByName}
+        onSelectBackground={selectBackgroundByIndex}
+        onToggle={toggleBackgrounds}
+        selectedBackgroundIndex={selectedBackgroundIndex}
+      />
     </>
   );
 }
