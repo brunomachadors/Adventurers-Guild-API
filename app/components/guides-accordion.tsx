@@ -756,26 +756,37 @@ export function GuidesAccordion({
         </nav>
       </section>
 
-      <section className="section-block guide-accordion" id="attributes">
-        <button
-          aria-expanded={isAttributesOpen}
-          className="guide-accordion__toggle"
-          onClick={toggleAttributes}
-          type="button"
-        >
-          <span>
-            <p className="kicker">First chapter</p>
-            <h2>Attributes</h2>
-            <strong aria-hidden="true">
-              {isAttributesOpen ? 'Close' : 'Open'}
-            </strong>
-          </span>
-        </button>
+      <section
+        aria-labelledby="attributes-heading"
+        className="section-block guide-accordion"
+        id="attributes"
+      >
+        <h2 className="guide-accordion__heading" id="attributes-heading">
+          <button
+            aria-controls="attributes-panel"
+            aria-expanded={isAttributesOpen}
+            className="guide-accordion__toggle"
+            onClick={toggleAttributes}
+            type="button"
+          >
+            <span>
+              <span className="kicker">First chapter</span>
+              <span className="guide-accordion__title">Attributes</span>
+              <strong aria-hidden="true">
+                {isAttributesOpen ? 'Close' : 'Open'}
+              </strong>
+            </span>
+          </button>
+        </h2>
 
         <div
+          aria-hidden={!isAttributesOpen}
           className={`guide-accordion__content${
             isAttributesOpen ? ' guide-accordion__content--open' : ''
           }`}
+          id="attributes-panel"
+          inert={!isAttributesOpen}
+          role="region"
         >
           <div className="guide-accordion__scroll">
             <p className="guide-accordion__description">
@@ -975,24 +986,37 @@ export function GuidesAccordion({
         </div>
       </section>
 
-      <section className="section-block guide-accordion" id="skills">
-        <button
-          aria-expanded={isSkillsOpen}
-          className="guide-accordion__toggle"
-          onClick={toggleSkills}
-          type="button"
-        >
-          <span>
-            <p className="kicker">Second chapter</p>
-            <h2>Skills</h2>
-            <strong aria-hidden="true">{isSkillsOpen ? 'Close' : 'Open'}</strong>
-          </span>
-        </button>
+      <section
+        aria-labelledby="skills-heading"
+        className="section-block guide-accordion"
+        id="skills"
+      >
+        <h2 className="guide-accordion__heading" id="skills-heading">
+          <button
+            aria-controls="skills-panel"
+            aria-expanded={isSkillsOpen}
+            className="guide-accordion__toggle"
+            onClick={toggleSkills}
+            type="button"
+          >
+            <span>
+              <span className="kicker">Second chapter</span>
+              <span className="guide-accordion__title">Skills</span>
+              <strong aria-hidden="true">
+                {isSkillsOpen ? 'Close' : 'Open'}
+              </strong>
+            </span>
+          </button>
+        </h2>
 
         <div
+          aria-hidden={!isSkillsOpen}
           className={`guide-accordion__content${
             isSkillsOpen ? ' guide-accordion__content--open' : ''
           }`}
+          id="skills-panel"
+          inert={!isSkillsOpen}
+          role="region"
         >
           <div className="guide-accordion__scroll">
             <p className="guide-accordion__description">
@@ -1232,26 +1256,37 @@ export function GuidesAccordion({
         </div>
       </section>
 
-      <section className="section-block guide-accordion" id="classes">
-        <button
-          aria-expanded={isClassesOpen}
-          className="guide-accordion__toggle"
-          onClick={toggleClasses}
-          type="button"
-        >
-          <span>
-            <p className="kicker">Third chapter</p>
-            <h2>Classes</h2>
-            <strong aria-hidden="true">
-              {isClassesOpen ? 'Close' : 'Open'}
-            </strong>
-          </span>
-        </button>
+      <section
+        aria-labelledby="classes-heading"
+        className="section-block guide-accordion"
+        id="classes"
+      >
+        <h2 className="guide-accordion__heading" id="classes-heading">
+          <button
+            aria-controls="classes-panel"
+            aria-expanded={isClassesOpen}
+            className="guide-accordion__toggle"
+            onClick={toggleClasses}
+            type="button"
+          >
+            <span>
+              <span className="kicker">Third chapter</span>
+              <span className="guide-accordion__title">Classes</span>
+              <strong aria-hidden="true">
+                {isClassesOpen ? 'Close' : 'Open'}
+              </strong>
+            </span>
+          </button>
+        </h2>
 
         <div
+          aria-hidden={!isClassesOpen}
           className={`guide-accordion__content${
             isClassesOpen ? ' guide-accordion__content--open' : ''
           }`}
+          id="classes-panel"
+          inert={!isClassesOpen}
+          role="region"
         >
           <div className="guide-accordion__scroll">
             <p className="guide-accordion__description">
@@ -1530,26 +1565,37 @@ export function GuidesAccordion({
         </div>
       </section>
 
-      <section className="section-block guide-accordion" id="species">
-        <button
-          aria-expanded={isSpeciesOpen}
-          className="guide-accordion__toggle"
-          onClick={toggleSpecies}
-          type="button"
-        >
-          <span>
-            <p className="kicker">Fourth chapter</p>
-            <h2>Species</h2>
-            <strong aria-hidden="true">
-              {isSpeciesOpen ? 'Close' : 'Open'}
-            </strong>
-          </span>
-        </button>
+      <section
+        aria-labelledby="species-heading"
+        className="section-block guide-accordion"
+        id="species"
+      >
+        <h2 className="guide-accordion__heading" id="species-heading">
+          <button
+            aria-controls="species-panel"
+            aria-expanded={isSpeciesOpen}
+            className="guide-accordion__toggle"
+            onClick={toggleSpecies}
+            type="button"
+          >
+            <span>
+              <span className="kicker">Fourth chapter</span>
+              <span className="guide-accordion__title">Species</span>
+              <strong aria-hidden="true">
+                {isSpeciesOpen ? 'Close' : 'Open'}
+              </strong>
+            </span>
+          </button>
+        </h2>
 
         <div
+          aria-hidden={!isSpeciesOpen}
           className={`guide-accordion__content${
             isSpeciesOpen ? ' guide-accordion__content--open' : ''
           }`}
+          id="species-panel"
+          inert={!isSpeciesOpen}
+          role="region"
         >
           <div className="guide-accordion__scroll">
             <p className="guide-accordion__description">
