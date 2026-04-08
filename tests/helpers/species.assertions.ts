@@ -1,4 +1,9 @@
-import { SpeciesDetail, SpeciesListItem, SpeciesTrait } from '@/app/types/species';
+import {
+  SpeciesDetail,
+  SpeciesListItem,
+  SpeciesSubspecies,
+  SpeciesTrait,
+} from '@/app/types/species';
 import { expect, test } from '@playwright/test';
 
 export class SpeciesAssert {
@@ -44,6 +49,7 @@ export class SpeciesAssert {
       expect(species).toHaveProperty('size');
       expect(species).toHaveProperty('speed');
       expect(species).toHaveProperty('specialTraits');
+      expect(species).toHaveProperty('subspecies');
 
       expect(typeof species.id).toBe('number');
       expect(typeof species.name).toBe('string');
@@ -53,6 +59,7 @@ export class SpeciesAssert {
       expect(typeof species.size).toBe('string');
       expect(typeof species.speed).toBe('number');
       expect(Array.isArray(species.specialTraits)).toBe(true);
+      expect(Array.isArray(species.subspecies)).toBe(true);
     });
 
     for (const trait of species.specialTraits) {
@@ -62,6 +69,34 @@ export class SpeciesAssert {
         expect(typeof trait.name).toBe('string');
         expect(typeof trait.description).toBe('string');
       });
+    }
+
+    for (const subspecies of species.subspecies) {
+      await test.step(
+        `Validate subspecies schema for ${subspecies.name}`,
+        async () => {
+          expect(subspecies).toHaveProperty('name');
+          expect(subspecies).toHaveProperty('slug');
+          expect(subspecies).toHaveProperty('description');
+          expect(subspecies).toHaveProperty('specialTraits');
+          expect(typeof subspecies.name).toBe('string');
+          expect(typeof subspecies.slug).toBe('string');
+          expect(typeof subspecies.description).toBe('string');
+          expect(Array.isArray(subspecies.specialTraits)).toBe(true);
+        },
+      );
+
+      for (const trait of subspecies.specialTraits) {
+        await test.step(
+          `Validate subspecies trait schema for ${subspecies.name}: ${trait.name}`,
+          async () => {
+            expect(trait).toHaveProperty('name');
+            expect(trait).toHaveProperty('description');
+            expect(typeof trait.name).toBe('string');
+            expect(typeof trait.description).toBe('string');
+          },
+        );
+      }
     }
   }
 
@@ -132,6 +167,15 @@ export class SpeciesAssert {
     });
   }
 
+  async validateSubspecies(
+    subspecies: SpeciesSubspecies[],
+    expectedSubspecies: SpeciesSubspecies[],
+  ) {
+    await test.step('Validate Subspecies', async () => {
+      expect(subspecies).toEqual(expectedSubspecies);
+    });
+  }
+
   async validateErrorMessage(error: string, expectedError: string) {
     await test.step('Validate Error Message', async () => {
       expect(error).toBe(expectedError);
@@ -169,6 +213,10 @@ export class SpeciesAssert {
     await this.validateSpecialTraits(
       actualSpecies.specialTraits,
       expectedSpecies.specialTraits,
+    );
+    await this.validateSubspecies(
+      actualSpecies.subspecies,
+      expectedSpecies.subspecies,
     );
   }
 

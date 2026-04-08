@@ -1,73 +1,73 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { apiResources, projectHighlights } from '@/app/data/api-resources';
+import { apiResources } from '@/app/data/api-resources';
 import logoImage from '@/public/images/brand/logo.png';
 
 export default function HomePage() {
   return (
     <main className="page-frame">
       <section className="hero-panel">
+        <div className="section-heading overview-heading">
+          <p className="kicker">Campaign overview</p>
+          <h1>Adventurers Guild API overview</h1>
+          <p>
+            Choose the learning path that fits your party before opening the
+            wider API realm.
+          </p>
+        </div>
+
         <div className="hero-banner hero-banner--feature">
           <Image
-            alt="Adventurers Guild fantasy banner"
+            alt="Adventurers Guild API campaign banner"
             className="hero-banner__image"
             height={540}
             priority
             src={logoImage}
             width={1280}
           />
-          <div className="hero-banner__overlay hero-banner__overlay--feature">
-            <div className="hero-actions">
-              <Link className="button button--primary" href="/guides">
-                Read guides
-              </Link>
-              <Link className="button button--primary" href="/support">
-                Enter the guild hall
-              </Link>
-              <Link className="button button--secondary" href="/docs">
-                Read the codex
-              </Link>
-            </div>
-          </div>
         </div>
 
-        <div className="hero-panel__grid">
-          <article className="hero-panel__aside hero-panel__aside--sheet">
-            <p className="mini-label">Party notes</p>
-            <div className="sheet-emblem" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </div>
-            <ul className="feature-list">
-              {projectHighlights.map((highlight) => (
-                <li key={highlight}>{highlight}</li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="hero-panel__aside hero-panel__aside--sheet">
-            <p className="mini-label">Next route</p>
-            <h2>Choose your entrypoint into the realm</h2>
+        <section
+          aria-labelledby="overview-guides-title"
+          className="overview-path overview-path--guides"
+        >
+          <div>
+            <p className="mini-label">For young adventurers</p>
+            <h2 id="overview-guides-title">
+              Start with the illustrated guides
+            </h2>
             <p className="hero-copy">
-              Use the support hub for orientation, keep the Guides area ready
-              for the next learning layer, or move directly to the interactive
-              docs when you want the technical spellbook.
+              Everything is drawn, organized, and explained for young
+              adventurers who want to understand the Adventurers Guild API
+              before reading the raw contract. Begin with readable chapters for
+              Attributes, Skills, Classes, and Species.
             </p>
-            <div className="hero-actions">
-              <Link className="button button--primary" href="/guides">
-                Open guides
-              </Link>
-              <Link className="button button--secondary" href="/support">
-                Open support
-              </Link>
-              <Link className="button button--secondary" href="/docs">
-                Open docs
-              </Link>
-            </div>
-          </article>
-        </div>
+          </div>
+          <Link className="button button--primary" href="/guides">
+            Start with guides
+          </Link>
+        </section>
+
+        <section
+          aria-labelledby="overview-docs-title"
+          className="overview-path overview-path--docs"
+        >
+          <div>
+            <p className="mini-label">For experienced adventurers</p>
+            <h2 id="overview-docs-title">
+              Consult the pure API documentation
+            </h2>
+            <p>
+              If you already know the realm and need exact request shapes,
+              response schemas, endpoints, and contract details, open the
+              technical codex and read the OpenAPI reference directly.
+            </p>
+          </div>
+          <Link className="button button--secondary" href="/docs">
+            Open API docs
+          </Link>
+        </section>
       </section>
 
       <section className="section-block">

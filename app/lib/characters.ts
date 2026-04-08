@@ -15,7 +15,7 @@ import {
 } from '@/app/types/character';
 import { Attributeshortname } from '@/app/types/attribute';
 import { BackgroundDetail } from '@/app/types/background';
-import { SpeciesDetail, SpeciesTrait } from '@/app/types/species';
+import { SpeciesDetail } from '@/app/types/species';
 import { SKILL_NAMES, SkillName } from '@/app/types/skill';
 import { getCharacterArmorClass } from './character-armor-class';
 import {
@@ -33,6 +33,7 @@ import {
 } from './character-spellcasting';
 import { getCharacterWeaponAttacks } from './character-weapon-attacks';
 import { getSql } from './db';
+import { formatSpeciesDetail } from './species';
 
 function toNumber(value: number | string): number {
   return typeof value === 'number' ? value : Number(value);
@@ -157,35 +158,6 @@ export async function getCharacterClassDetails(
           })),
       })),
   };
-}
-
-function isSpeciesTrait(value: unknown): value is SpeciesTrait {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'name' in value &&
-    'description' in value &&
-    typeof value.name === 'string' &&
-    typeof value.description === 'string'
-  );
-}
-
-function parseSpecialTraits(value: unknown): SpeciesTrait[] {
-  if (Array.isArray(value)) {
-    return value.filter(isSpeciesTrait);
-  }
-
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-
-      return Array.isArray(parsed) ? parsed.filter(isSpeciesTrait) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  return [];
 }
 
 const ABILITY_SCORE_KEYS: Attributeshortname[] = [
@@ -465,7 +437,8 @@ export async function getCharacterSpeciesDetails(
       creaturetype,
       size,
       speed,
-      specialtraits
+      specialtraits,
+      subspecies
     FROM species
     WHERE id = ${speciesId}
     LIMIT 1
@@ -477,16 +450,7 @@ export async function getCharacterSpeciesDetails(
 
   const speciesItem = speciesRows[0];
 
-  return {
-    id: toNumber(speciesItem.id),
-    name: speciesItem.name,
-    slug: speciesItem.slug,
-    description: speciesItem.description,
-    creatureType: speciesItem.creaturetype,
-    size: speciesItem.size,
-    speed: toNumber(speciesItem.speed),
-    specialTraits: parseSpecialTraits(speciesItem.specialtraits),
-  };
+  return formatSpeciesDetail(speciesItem);
 }
 
 export async function getCharacterBackgroundDetails(

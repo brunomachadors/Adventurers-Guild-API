@@ -92,6 +92,7 @@ export const apiResources: ApiResource[] = [
       'size',
       'speed',
       'specialTraits',
+      'subspecies',
     ],
     endpoints: ['GET /api/species', 'GET /api/species/{identifier}'],
   },
@@ -183,12 +184,4 @@ export const apiResources: ApiResource[] = [
       'PUT /api/characters/{id}/spells',
     ],
   },
-];
-
-export const projectHighlights = [
-  'Visual entrypoint for the API project',
-  'Interactive documentation available in /docs',
-  'Catalog coverage now includes equipment alongside classes, spells, species, and backgrounds',
-  'Character flows now support adding, updating, and removing equipment from a character',
-  'Character detail now includes initiative, passive perception, movement, inventory weight, armor class, weapon attacks, hit points, saving throws, and spellcasting data',
 ];
