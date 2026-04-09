@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Fragment,
   useEffect,
   useId,
   useMemo,
@@ -21,20 +22,18 @@ type SpellsGuideChapterProps = {
   onClose: () => void;
   onSelectLevel: (level: number) => void;
   onToggle: () => void;
-  selectedLevel: number;
   spellDetailExample: SpellDetail | null;
   spells: SpellGuideListItem[];
 };
 
 type GuideFilterSelectProps = {
+  compact?: boolean;
   isActive?: boolean;
   label: string;
   onChange: (value: string) => void;
   options: string[];
   value: string;
 };
-
-const spellLevelIndexId = 'spells-level-index';
 
 function getSpellLevelAnchor(level: number) {
   return `spells-level-${getGuideAnchorSlug(getSpellLevelLabel(level))}`;
@@ -195,6 +194,7 @@ function requiresConcentration(duration: string) {
 }
 
 function GuideFilterSelect({
+  compact = false,
   isActive = false,
   label,
   onChange,
@@ -233,20 +233,28 @@ function GuideFilterSelect({
 
   return (
     <div className="guide-filter-select" ref={rootRef}>
-      <span id={`${filterId}-label`}>{label}</span>
+      <span id={`${filterId}-label`} className={compact ? 'sr-only' : undefined}>
+        {label}
+      </span>
       <button
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-labelledby={`${filterId}-label ${filterId}-button`}
         className={`guide-filter-select__trigger${
           isActive ? ' guide-filter-select__trigger--active' : ''
-        }`}
+        }${compact ? ' guide-filter-select__trigger--compact' : ' guide-filter-select__trigger--subtle'}`}
         id={`${filterId}-button`}
         onClick={() => setIsOpen((currentValue) => !currentValue)}
         onKeyDown={handleKeyDown}
         type="button"
       >
-        <span>{value}</span>
+        <span
+          className={
+            isActive && !compact ? 'guide-filter-select__value--circled' : undefined
+          }
+        >
+          {value}
+        </span>
         <strong aria-hidden="true">▾</strong>
       </button>
 
@@ -291,7 +299,6 @@ export function SpellsGuideChapter({
   onClose,
   onSelectLevel,
   onToggle,
-  selectedLevel,
   spellDetailExample,
   spells,
 }: SpellsGuideChapterProps) {
@@ -302,6 +309,8 @@ export function SpellsGuideChapter({
   const [selectedDurationFilter, setSelectedDurationFilter] = useState('All');
   const [requiresConcentrationOnly, setRequiresConcentrationOnly] =
     useState(false);
+  const [selectedSpellLevel, setSelectedSpellLevel] = useState(0);
+  const [expandedSpellId, setExpandedSpellId] = useState<number | null>(null);
   const [selectedComponentsFilter, setSelectedComponentsFilter] = useState<
     string[]
   >([]);
@@ -385,11 +394,11 @@ export function SpellsGuideChapter({
     ],
   );
 
-  const spellLevels = Array.from(
-    new Set(filteredSpells.map((spell) => spell.level)),
-  ).sort((firstLevel, secondLevel) => firstLevel - secondLevel);
-  const activeLevel = spellLevels.includes(selectedLevel)
-    ? selectedLevel
+  const spellLevels = Array.from(new Set(spells.map((spell) => spell.level))).sort(
+    (firstLevel, secondLevel) => firstLevel - secondLevel,
+  );
+  const activeLevel = spellLevels.includes(selectedSpellLevel)
+    ? selectedSpellLevel
     : spellLevels[0] ?? 0;
   const levelSpells = filteredSpells.filter((spell) => spell.level === activeLevel);
   const hasActiveFilters =
@@ -399,6 +408,11 @@ export function SpellsGuideChapter({
     selectedDurationFilter !== 'All' ||
     requiresConcentrationOnly ||
     selectedComponentsFilter.length > 0;
+  const visibleExpandedSpellId = levelSpells.some(
+    (spell) => spell.id === expandedSpellId,
+  )
+    ? expandedSpellId
+    : null;
 
   return (
     <section
@@ -438,13 +452,47 @@ export function SpellsGuideChapter({
             response.
           </p>
 
-          <section className="guide-filter-panel" aria-label="Spell filters">
+          <section
+            aria-label="Spell filters"
+            className="guide-filter-panel"
+            id="spells-filters"
+          >
             <div className="guide-filter-panel__header">
               <p className="guide-filter-panel__eyebrow">Spellbook tools</p>
               <h3>Filter the spellbook</h3>
             </div>
 
-            <div className="guide-filter-panel__controls guide-filter-panel__controls--primary">
+            <nav
+              aria-label="Spells level index"
+              className="guide-card-index guide-card-index--inside-panel spells-level-nav"
+              id="spells-level-index"
+            >
+              <p>Spell level</p>
+              <div>
+                {spellLevels.length > 0 ? (
+                  spellLevels.map((level) => (
+                    <a
+                      aria-current={level === activeLevel ? 'true' : undefined}
+                      href={`#${getSpellLevelAnchor(level)}`}
+                      key={level}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        setSelectedSpellLevel(level);
+                        onSelectLevel(level);
+                      }}
+                    >
+                      {getSpellLevelLabel(level)}
+                    </a>
+                  ))
+                ) : (
+                  <span className="attribute-skill-chip attribute-skill-chip--empty">
+                    No spell levels match these filters
+                  </span>
+                )}
+              </div>
+            </nav>
+
+            <div className="guide-filter-panel__controls guide-filter-panel__controls--quad">
               <GuideFilterSelect
                 isActive={selectedClassFilter !== 'All'}
                 label="Class"
@@ -460,9 +508,6 @@ export function SpellsGuideChapter({
                 options={schoolOptions}
                 value={selectedSchoolFilter}
               />
-            </div>
-
-            <div className="guide-filter-panel__controls guide-filter-panel__controls--secondary">
               <GuideFilterSelect
                 isActive={selectedCastingTimeFilter !== 'All'}
                 label="Casting Time"
@@ -480,8 +525,8 @@ export function SpellsGuideChapter({
               />
             </div>
 
-            <div className="guide-filter-panel__field guide-filter-panel__field--full">
-              <label className="guide-filter-panel__field">
+            <div className="guide-filter-panel__split-row">
+              <div className="guide-filter-panel__field guide-filter-panel__field--split">
                 <span>Components</span>
                 <div className="guide-filter-panel__chips">
                   {componentOptions.map((component) => {
@@ -489,48 +534,56 @@ export function SpellsGuideChapter({
                       selectedComponentsFilter.includes(component);
 
                     return (
-                      <button
-                        aria-pressed={isSelected}
-                        className={`guide-filter-chip${
-                          isSelected ? ' guide-filter-chip--active' : ''
-                        }`}
+                      <label
+                        className="guide-filter-panel__checkbox-row guide-filter-panel__checkbox-row--chip"
                         key={component}
-                        onClick={() =>
-                          setSelectedComponentsFilter((currentValue) =>
-                            currentValue.includes(component)
-                              ? currentValue.filter((item) => item !== component)
-                              : [...currentValue, component],
-                          )
-                        }
-                        type="button"
                       >
-                        {component}
-                      </button>
+                        <input
+                          checked={isSelected}
+                          onChange={() =>
+                            setSelectedComponentsFilter((currentValue) =>
+                              currentValue.includes(component)
+                                ? currentValue.filter((item) => item !== component)
+                                : [...currentValue, component],
+                            )
+                          }
+                          type="checkbox"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="guide-filter-panel__checkbox-mark"
+                        />
+                        <span>{component}</span>
+                      </label>
                     );
                   })}
                 </div>
-              </label>
-            </div>
+              </div>
 
-            <label className="guide-filter-panel__checkbox-row">
-              <input
-                checked={requiresConcentrationOnly}
-                onChange={(event) =>
-                  setRequiresConcentrationOnly(event.target.checked)
-                }
-                type="checkbox"
-              />
-              <span
-                aria-hidden="true"
-                className="guide-filter-panel__checkbox-mark"
-              />
-              <span>Concentration</span>
-            </label>
+              <div className="guide-filter-panel__field guide-filter-panel__field--split">
+                <span>Concentration</span>
+                <label className="guide-filter-panel__checkbox-row">
+                  <input
+                    checked={requiresConcentrationOnly}
+                    onChange={(event) =>
+                      setRequiresConcentrationOnly(event.target.checked)
+                    }
+                    type="checkbox"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="guide-filter-panel__checkbox-mark"
+                  />
+                  <span>Required</span>
+                </label>
+              </div>
+            </div>
 
             <div className="guide-filter-panel__footer">
               <p className="guide-filter-panel__summary">
-                <strong>{filteredSpells.length}</strong> spells match the current
-                filters
+                <strong>{levelSpells.length}</strong> of{' '}
+                <strong>{filteredSpells.length}</strong> spells shown for the
+                current filters
               </p>
 
               <button
@@ -551,37 +604,8 @@ export function SpellsGuideChapter({
             </div>
           </section>
 
-          <nav
-            aria-label="Spells level index"
-            className="guide-card-index"
-            id={spellLevelIndexId}
-          >
-            <p>Chapter index</p>
-            <div>
-              {spellLevels.length > 0 ? (
-                spellLevels.map((level) => (
-                  <a
-                    aria-current={level === activeLevel ? 'true' : undefined}
-                    href={`#${getSpellLevelAnchor(level)}`}
-                    key={level}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      onSelectLevel(level);
-                    }}
-                  >
-                    {getSpellLevelLabel(level)}
-                  </a>
-                ))
-              ) : (
-                <span className="attribute-skill-chip attribute-skill-chip--empty">
-                  No spell levels match these filters
-                </span>
-              )}
-            </div>
-          </nav>
-
           <div className="equipment-weapon-groups">
-            <section className="species-subspecies">
+            <section className="species-subspecies spells-guide-table">
               <div className="species-subspecies__heading">
                 <p id={getSpellLevelAnchor(activeLevel)}>
                   {spellLevels.length > 0
@@ -600,34 +624,93 @@ export function SpellsGuideChapter({
                   <thead>
                     <tr>
                       <th>Name</th>
+                      <th>Level</th>
                       <th>School</th>
-                      <th>Casting Time</th>
-                      <th>Components</th>
-                      <th>Range</th>
-                      <th>Duration</th>
                       <th>Classes</th>
+                      <th>Casting Time</th>
+                      <th>Range</th>
+                      <th>Components</th>
+                      <th>Duration</th>
                     </tr>
                   </thead>
                   <tbody>
                     {levelSpells.length > 0 ? (
-                      levelSpells.map((spell) => (
-                        <tr key={spell.id}>
-                        <td data-label="Name">{spell.name}</td>
-                        <td data-label="School">{spell.school}</td>
-                        <td data-label="Casting Time">{spell.castingTime}</td>
-                        <td data-label="Components">
-                          {formatSpellGuideComponents(spell)}
-                        </td>
-                        <td data-label="Range">{spell.range}</td>
-                        <td data-label="Duration">{spell.duration}</td>
-                        <td data-label="Classes">
-                          {formatSpellClasses(spell.classes)}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                        <td colSpan={7}>No spells match the current filters.</td>
+                      levelSpells.map((spell) => {
+                        const isExpanded = visibleExpandedSpellId === spell.id;
+
+                        return (
+                          <Fragment key={spell.id}>
+                            <tr
+                              aria-controls={`spell-appendix-${spell.id}`}
+                              aria-expanded={isExpanded}
+                              className={
+                                isExpanded
+                                  ? 'spells-guide-table__row spells-guide-table__row--expanded spells-guide-table__row--clickable'
+                                  : 'spells-guide-table__row spells-guide-table__row--clickable'
+                              }
+                              onClick={() =>
+                                setExpandedSpellId((currentValue) =>
+                                  currentValue === spell.id ? null : spell.id,
+                                )
+                              }
+                              onKeyDown={(event) => {
+                                if (
+                                  event.key === 'Enter' ||
+                                  event.key === ' '
+                                ) {
+                                  event.preventDefault();
+                                  setExpandedSpellId((currentValue) =>
+                                    currentValue === spell.id ? null : spell.id,
+                                  );
+                                }
+                              }}
+                              role="button"
+                              tabIndex={0}
+                            >
+                              <td data-label="Name">
+                                <span
+                                  className={`spells-guide-table__name-button${
+                                    isExpanded
+                                      ? ' spells-guide-table__name-button--active'
+                                      : ''
+                                  }`}
+                                >
+                                  <span>{spell.name}</span>
+                                </span>
+                              </td>
+                              <td data-label="Level">{spell.levelLabel}</td>
+                              <td data-label="School">{spell.school}</td>
+                              <td data-label="Classes">
+                                {formatSpellClasses(spell.classes)}
+                              </td>
+                              <td data-label="Casting Time">{spell.castingTime}</td>
+                              <td data-label="Range">{spell.range}</td>
+                              <td data-label="Components">
+                                {formatSpellGuideComponents(spell)}
+                              </td>
+                              <td data-label="Duration">{spell.duration}</td>
+                            </tr>
+
+                            {isExpanded ? (
+                              <tr className="spells-guide-table__appendix-row">
+                                <td
+                                  className="spells-guide-table__appendix"
+                                  colSpan={8}
+                                  id={`spell-appendix-${spell.id}`}
+                                >
+                                  <div className="spells-guide-table__appendix-inner">
+                                    <p>Description</p>
+                                    <span>{spell.description}</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : null}
+                          </Fragment>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={8}>No spells match the current filters.</td>
                       </tr>
                     )}
                   </tbody>

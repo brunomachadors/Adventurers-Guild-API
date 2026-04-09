@@ -438,7 +438,6 @@ export function GuidesAccordion({
   const [selectedBackgroundIndex, setSelectedBackgroundIndex] = useState(0);
   const [selectedEquipmentCategory, setSelectedEquipmentCategory] =
     useState('Weapon');
-  const [selectedSpellLevel, setSelectedSpellLevel] = useState(0);
   const skillDetailExample =
     skills.find((skill) => skill.name === 'Athletics') ?? skills[0];
   const speciesDetailExample =
@@ -729,7 +728,6 @@ export function GuidesAccordion({
   }
 
   function selectSpellLevel(level: number) {
-    setSelectedSpellLevel(level);
     updateGuideCardHash(
       `spells-level-${getGuideAnchorSlug(level === 0 ? 'Cantrips' : `Level ${level}`)}`,
     );
@@ -2062,7 +2060,6 @@ export function GuidesAccordion({
         onClose={closeSpellsChapter}
         onSelectLevel={selectSpellLevel}
         onToggle={toggleSpells}
-        selectedLevel={selectedSpellLevel}
         spellDetailExample={spellDetailExample}
         spells={spells}
       />

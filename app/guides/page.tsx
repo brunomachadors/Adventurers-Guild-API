@@ -220,7 +220,8 @@ async function getSpells(): Promise<SpellGuideListItem[]> {
       verbal,
       somatic,
       material,
-      duration
+      duration,
+      description
     FROM spells
     ORDER BY level, name
   `;
@@ -240,6 +241,7 @@ async function getSpells(): Promise<SpellGuideListItem[]> {
     castingTime: spell.castingtime,
     range: spell.range,
     duration: spell.duration,
+    description: spell.description,
     componentsSummary: [
       spell.verbal ? 'V' : null,
       spell.somatic ? 'S' : null,

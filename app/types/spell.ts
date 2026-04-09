@@ -11,6 +11,7 @@ export interface SpellGuideListItem extends SpellListItem {
   castingTime: string;
   range: string;
   duration: string;
+  description: string;
   componentsSummary: string;
   components: {
     verbal: boolean;
