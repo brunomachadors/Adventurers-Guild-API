@@ -5,10 +5,12 @@ import { useState, type MouseEvent } from 'react';
 
 import { BackgroundsGuideChapter } from '@/app/components/guides/backgrounds-guide-chapter';
 import { EquipmentGuideChapter } from '@/app/components/guides/equipment-guide-chapter';
+import { SpellsGuideChapter } from '@/app/components/guides/spells-guide-chapter';
 import {
   getAttributeAnchor,
   getBackgroundAnchor,
   getClassAnchor,
+  getGuideAnchorSlug,
   getSkillAnchor,
   getSpeciesAnchor,
 } from '@/app/components/guides/background-guide-utils';
@@ -18,6 +20,7 @@ import type { BackgroundDetail } from '@/app/types/background';
 import type { ClassDetail } from '@/app/types/class';
 import type { EquipmentDetail } from '@/app/types/equipment';
 import type { SkillDetail } from '@/app/types/skill';
+import type { SpellDetail, SpellGuideListItem } from '@/app/types/spell';
 import type { SpeciesDetail } from '@/app/types/species';
 import charismaIcon from '@/public/images/attributes/charisma.png';
 import constitutionIcon from '@/public/images/attributes/constitution.png';
@@ -50,6 +53,8 @@ type GuidesAccordionProps = {
   classes: ClassDetail[];
   equipment: EquipmentDetail[];
   skills: SkillDetail[];
+  spellDetailExample: SpellDetail | null;
+  spells: SpellGuideListItem[];
   species: SpeciesDetail[];
 };
 
@@ -415,6 +420,8 @@ export function GuidesAccordion({
   classes,
   equipment,
   skills,
+  spellDetailExample,
+  spells,
   species,
 }: GuidesAccordionProps) {
   const [isAttributesOpen, setIsAttributesOpen] = useState(false);
@@ -423,6 +430,7 @@ export function GuidesAccordion({
   const [isSpeciesOpen, setIsSpeciesOpen] = useState(false);
   const [isBackgroundsOpen, setIsBackgroundsOpen] = useState(false);
   const [isEquipmentOpen, setIsEquipmentOpen] = useState(false);
+  const [isSpellsOpen, setIsSpellsOpen] = useState(false);
   const [selectedAttributeIndex, setSelectedAttributeIndex] = useState(0);
   const [selectedSkillIndex, setSelectedSkillIndex] = useState(0);
   const [selectedClassIndex, setSelectedClassIndex] = useState(0);
@@ -457,6 +465,10 @@ export function GuidesAccordion({
 
   function toggleEquipment() {
     setIsEquipmentOpen((currentValue) => !currentValue);
+  }
+
+  function toggleSpells() {
+    setIsSpellsOpen((currentValue) => !currentValue);
   }
 
   function openSkillCard(
@@ -715,6 +727,12 @@ export function GuidesAccordion({
     );
   }
 
+  function selectSpellLevel(level: number) {
+    updateGuideCardHash(
+      `spells-level-${getGuideAnchorSlug(level === 0 ? 'Cantrips' : `Level ${level}`)}`,
+    );
+  }
+
   function openAttributesChapter() {
     setIsAttributesOpen(true);
     scrollToChapterIndex('attributes-index');
@@ -743,6 +761,11 @@ export function GuidesAccordion({
   function openEquipmentChapter() {
     setIsEquipmentOpen(true);
     scrollToChapterIndex('equipment-category-index');
+  }
+
+  function openSpellsChapter() {
+    setIsSpellsOpen(true);
+    scrollToChapterIndex('spells-level-index');
   }
 
   function closeAttributesChapter() {
@@ -775,6 +798,11 @@ export function GuidesAccordion({
     scrollToGuideSection('equipment');
   }
 
+  function closeSpellsChapter() {
+    setIsSpellsOpen(false);
+    scrollToGuideSection('spells');
+  }
+
   return (
     <>
       <section className="section-block guide-grimoire-cover">
@@ -796,20 +824,23 @@ export function GuidesAccordion({
             const isSpecies = resource.slug === 'species';
             const isBackgrounds = resource.slug === 'backgrounds';
             const isEquipment = resource.slug === 'equipment';
+            const isSpells = resource.slug === 'spells';
             const isEnabled =
               isAttributes ||
               isSkills ||
               isClasses ||
               isSpecies ||
               isBackgrounds ||
-              isEquipment;
+              isEquipment ||
+              isSpells;
             const isOpen =
               (isAttributes && isAttributesOpen) ||
               (isSkills && isSkillsOpen) ||
               (isClasses && isClassesOpen) ||
               (isSpecies && isSpeciesOpen) ||
               (isBackgrounds && isBackgroundsOpen) ||
-              (isEquipment && isEquipmentOpen);
+              (isEquipment && isEquipmentOpen) ||
+              (isSpells && isSpellsOpen);
 
             return (
               <button
@@ -830,6 +861,8 @@ export function GuidesAccordion({
                             ? openBackgroundsChapter
                           : isEquipment
                             ? openEquipmentChapter
+                          : isSpells
+                            ? openSpellsChapter
                           : undefined
                 }
                 type="button"
@@ -2020,6 +2053,15 @@ export function GuidesAccordion({
         onSelectCategory={selectEquipmentCategory}
         onToggle={toggleEquipment}
         selectedCategory={selectedEquipmentCategory}
+      />
+
+      <SpellsGuideChapter
+        isOpen={isSpellsOpen}
+        onClose={closeSpellsChapter}
+        onSelectLevel={selectSpellLevel}
+        onToggle={toggleSpells}
+        spellDetailExample={spellDetailExample}
+        spells={spells}
       />
     </>
   );

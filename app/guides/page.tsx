@@ -6,6 +6,7 @@ import type { BackgroundDetail } from '@/app/types/background';
 import type { ClassDetail } from '@/app/types/class';
 import type { EquipmentDetail } from '@/app/types/equipment';
 import type { SkillDetail } from '@/app/types/skill';
+import type { SpellDetail, SpellGuideListItem } from '@/app/types/spell';
 import type { SpeciesDetail } from '@/app/types/species';
 
 export const dynamic = 'force-dynamic';
@@ -205,25 +206,167 @@ async function getEquipment(): Promise<EquipmentDetail[]> {
   })) as EquipmentDetail[];
 }
 
+async function getSpells(): Promise<SpellGuideListItem[]> {
+  const sql = getSql();
+  const spellRows = await sql`
+    SELECT
+      id,
+      name,
+      level,
+      levellabel,
+      school,
+      castingtime,
+      range,
+      verbal,
+      somatic,
+      material,
+      duration,
+      description
+    FROM spells
+    ORDER BY level, name
+  `;
+  const classRows = await sql`
+    SELECT spellclasses.spellid, classes.name AS classname
+    FROM spellclasses
+    INNER JOIN classes ON classes.id = spellclasses.classid
+    ORDER BY classes.name
+  `;
+
+  return spellRows.map((spell) => ({
+    id: spell.id,
+    name: spell.name,
+    level: Number(spell.level),
+    levelLabel: spell.levellabel,
+    school: spell.school,
+    castingTime: spell.castingtime,
+    range: spell.range,
+    duration: spell.duration,
+    description: spell.description,
+    componentsSummary: [
+      spell.verbal ? 'V' : null,
+      spell.somatic ? 'S' : null,
+      spell.material ? 'M' : null,
+    ]
+      .filter(Boolean)
+      .join(', '),
+    components: {
+      verbal: Boolean(spell.verbal),
+      somatic: Boolean(spell.somatic),
+      material: Boolean(spell.material),
+    },
+    classes: classRows
+      .filter((classRow) => classRow.spellid === spell.id)
+      .map((classRow) => classRow.classname),
+  })) as SpellGuideListItem[];
+}
+
+async function getSpellDetailExample(): Promise<SpellDetail | null> {
+  const sql = getSql();
+  const spellRows = await sql`
+    SELECT
+      id,
+      name,
+      slug,
+      source,
+      school,
+      level,
+      levellabel,
+      castingtime,
+      range,
+      verbal,
+      somatic,
+      material,
+      materialdescription,
+      duration,
+      description
+    FROM spells
+    ORDER BY level, name
+    LIMIT 1
+  `;
+
+  const spell = spellRows[0];
+
+  if (!spell) {
+    return null;
+  }
+
+  const classRows = await sql`
+    SELECT classes.name
+    FROM spellclasses
+    INNER JOIN classes ON classes.id = spellclasses.classid
+    WHERE spellclasses.spellid = ${spell.id}
+    ORDER BY classes.id
+  `;
+
+  const scalingRows = await sql`
+    SELECT characterlevel AS level, description
+    FROM spellscaling
+    WHERE spellid = ${spell.id}
+    ORDER BY characterlevel
+  `;
+
+  return {
+    id: spell.id,
+    name: spell.name,
+    slug: spell.slug,
+    source: spell.source,
+    school: spell.school,
+    level: Number(spell.level),
+    levelLabel: spell.levellabel,
+    castingTime: spell.castingtime,
+    range: spell.range,
+    components: {
+      verbal: Boolean(spell.verbal),
+      somatic: Boolean(spell.somatic),
+      material: Boolean(spell.material),
+      materialDescription: spell.materialdescription,
+    },
+    duration: spell.duration,
+    description: spell.description,
+    classes: classRows.map((row) => row.name),
+    scaling:
+      scalingRows.length > 0
+        ? {
+            entries: scalingRows.map((row) => ({
+              level: Number(row.level),
+              description: row.description,
+            })),
+          }
+        : null,
+  } as SpellDetail;
+}
+
 export default async function GuidesPage() {
-  const [attributes, skills, classes, species, backgrounds, equipment] =
-    await Promise.all([
+  const [
+    attributes,
+    skills,
+    classes,
+    species,
+    backgrounds,
+    equipment,
+    spells,
+    spellDetailExample,
+  ] = await Promise.all([
       getAttributes(),
       getSkills(),
       getClasses(),
       getSpecies(),
       getBackgrounds(),
       getEquipment(),
+      getSpells(),
+      getSpellDetailExample(),
     ]);
 
   return (
-    <main className="page-frame">
+    <main className="page-frame page-frame--guides">
       <GuidesAccordion
         attributes={attributes}
         backgrounds={backgrounds}
         classes={classes}
         equipment={equipment}
         skills={skills}
+        spellDetailExample={spellDetailExample}
+        spells={spells}
         species={species}
       />
     </main>

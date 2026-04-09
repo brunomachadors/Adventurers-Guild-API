@@ -5,6 +5,21 @@ export interface SpellListItem {
   levelLabel: string;
 }
 
+export interface SpellGuideListItem extends SpellListItem {
+  school: string;
+  classes: string[];
+  castingTime: string;
+  range: string;
+  duration: string;
+  description: string;
+  componentsSummary: string;
+  components: {
+    verbal: boolean;
+    somatic: boolean;
+    material: boolean;
+  };
+}
+
 export interface SpellComponents {
   verbal: boolean;
   somatic: boolean;
