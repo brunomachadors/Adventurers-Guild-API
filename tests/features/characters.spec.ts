@@ -23,6 +23,7 @@ import { CharactersClient } from '../clients/characters.client';
 import { EquipmentClient } from '../clients/equipment.client';
 import { AuthAssert } from '../helpers/auth.assertions';
 import { CharactersAssert } from '../helpers/characters.assertions';
+import { getTestAuthCredentials } from '../helpers/test-auth-env';
 import { expectedDetailedBackgrounds } from '../data/backgrounds.expected';
 import { expectedDetailedSpecies } from '../data/species.expected';
 
@@ -364,13 +365,11 @@ const wizardSkillProficiencies: SkillName[] = [
 ];
 
 async function issueDemoToken(request: APIRequestContext) {
+  const authCredentials = getTestAuthCredentials();
   const authClient = new AuthClient(request);
   const authAssert = new AuthAssert();
 
-  const tokenResponse = await authClient.issueToken({
-    username: 'demo',
-    password: 'demo123',
-  });
+  const tokenResponse = await authClient.issueToken(authCredentials);
 
   await authAssert.success(tokenResponse);
 

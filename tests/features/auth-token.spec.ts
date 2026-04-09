@@ -3,19 +3,18 @@ import { test } from '@playwright/test';
 
 import { AuthClient } from '../clients/auth.client';
 import { AuthAssert } from '../helpers/auth.assertions';
+import { getTestAuthCredentials } from '../helpers/test-auth-env';
 
 test.describe('Auth API - Token', { tag: ['@auth', '@token'] }, () => {
   test(
     'Validate token issuance with valid credentials',
     { tag: ['@post', '@smoke', '@data'] },
     async ({ request }) => {
+      const authCredentials = getTestAuthCredentials();
       const authClient = new AuthClient(request);
       const authAssert = new AuthAssert();
 
-      const response = await authClient.issueToken({
-        username: 'demo',
-        password: 'demo123',
-      });
+      const response = await authClient.issueToken(authCredentials);
 
       await authAssert.success(response);
 
@@ -52,11 +51,12 @@ test.describe('Auth API - Token', { tag: ['@auth', '@token'] }, () => {
     'Validate token issuance with invalid credentials',
     { tag: ['@post', '@negative', '@error'] },
     async ({ request }) => {
+      const authCredentials = getTestAuthCredentials();
       const authClient = new AuthClient(request);
       const authAssert = new AuthAssert();
 
       const response = await authClient.issueToken({
-        username: 'demo',
+        username: authCredentials.username,
         password: 'invalid-password',
       });
 

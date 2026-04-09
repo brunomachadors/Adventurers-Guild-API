@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useState, type MouseEvent } from 'react';
 
+import { AuthGuideChapter } from '@/app/components/guides/auth-guide-chapter';
 import { BackgroundsGuideChapter } from '@/app/components/guides/backgrounds-guide-chapter';
 import { EquipmentGuideChapter } from '@/app/components/guides/equipment-guide-chapter';
 import { SpellsGuideChapter } from '@/app/components/guides/spells-guide-chapter';
@@ -431,6 +432,7 @@ export function GuidesAccordion({
   const [isBackgroundsOpen, setIsBackgroundsOpen] = useState(false);
   const [isEquipmentOpen, setIsEquipmentOpen] = useState(false);
   const [isSpellsOpen, setIsSpellsOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedAttributeIndex, setSelectedAttributeIndex] = useState(0);
   const [selectedSkillIndex, setSelectedSkillIndex] = useState(0);
   const [selectedClassIndex, setSelectedClassIndex] = useState(0);
@@ -469,6 +471,10 @@ export function GuidesAccordion({
 
   function toggleSpells() {
     setIsSpellsOpen((currentValue) => !currentValue);
+  }
+
+  function toggleAuth() {
+    setIsAuthOpen((currentValue) => !currentValue);
   }
 
   function openSkillCard(
@@ -768,6 +774,11 @@ export function GuidesAccordion({
     scrollToChapterIndex('spells-level-index');
   }
 
+  function openAuthChapter() {
+    setIsAuthOpen(true);
+    scrollToChapterIndex('auth-index');
+  }
+
   function closeAttributesChapter() {
     setIsAttributesOpen(false);
     scrollToGuideSection('attributes');
@@ -803,6 +814,11 @@ export function GuidesAccordion({
     scrollToGuideSection('spells');
   }
 
+  function closeAuthChapter() {
+    setIsAuthOpen(false);
+    scrollToGuideSection('auth');
+  }
+
   return (
     <>
       <section className="section-block guide-grimoire-cover">
@@ -825,6 +841,7 @@ export function GuidesAccordion({
             const isBackgrounds = resource.slug === 'backgrounds';
             const isEquipment = resource.slug === 'equipment';
             const isSpells = resource.slug === 'spells';
+            const isAuth = resource.slug === 'auth';
             const isEnabled =
               isAttributes ||
               isSkills ||
@@ -832,7 +849,8 @@ export function GuidesAccordion({
               isSpecies ||
               isBackgrounds ||
               isEquipment ||
-              isSpells;
+              isSpells ||
+              isAuth;
             const isOpen =
               (isAttributes && isAttributesOpen) ||
               (isSkills && isSkillsOpen) ||
@@ -840,7 +858,8 @@ export function GuidesAccordion({
               (isSpecies && isSpeciesOpen) ||
               (isBackgrounds && isBackgroundsOpen) ||
               (isEquipment && isEquipmentOpen) ||
-              (isSpells && isSpellsOpen);
+              (isSpells && isSpellsOpen) ||
+              (isAuth && isAuthOpen);
 
             return (
               <button
@@ -863,6 +882,8 @@ export function GuidesAccordion({
                             ? openEquipmentChapter
                           : isSpells
                             ? openSpellsChapter
+                          : isAuth
+                            ? openAuthChapter
                           : undefined
                 }
                 type="button"
@@ -2062,6 +2083,12 @@ export function GuidesAccordion({
         onToggle={toggleSpells}
         spellDetailExample={spellDetailExample}
         spells={spells}
+      />
+
+      <AuthGuideChapter
+        isOpen={isAuthOpen}
+        onClose={closeAuthChapter}
+        onToggle={toggleAuth}
       />
     </>
   );
