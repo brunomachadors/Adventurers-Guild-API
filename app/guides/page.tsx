@@ -358,7 +358,7 @@ export default async function GuidesPage() {
     ]);
 
   return (
-    <main className="page-frame">
+    <main className="page-frame page-frame--guides">
       <GuidesAccordion
         attributes={attributes}
         backgrounds={backgrounds}

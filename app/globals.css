@@ -154,6 +154,10 @@ h3 {
   border-top: 1px solid rgba(255, 235, 202, 0.18);
 }
 
+.site-shell > .page-frame--guides + .site-footer {
+  margin-top: 0 !important;
+}
+
 .site-footer__inner {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
@@ -246,6 +250,49 @@ h3 {
 
 .page-frame--docs {
   width: min(1520px, calc(100% - 24px));
+}
+
+.page-frame--guides {
+  position: relative;
+  isolation: isolate;
+  padding-left: 18px;
+  padding-right: 18px;
+  padding-bottom: 32px;
+}
+
+.page-frame--guides::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: calc(50% - 50vw);
+  bottom: -1px;
+  left: calc(50% - 50vw);
+  z-index: -1;
+  border-left: 1px solid rgba(58, 16, 10, 0.46);
+  border-right: 1px solid rgba(58, 16, 10, 0.46);
+  background:
+    linear-gradient(rgba(255, 235, 205, 0.02), rgba(255, 235, 205, 0.02)),
+    url('/images/textures/wood-table.png'),
+    repeating-linear-gradient(
+      90deg,
+      rgba(32, 5, 4, 0.18) 0,
+      rgba(32, 5, 4, 0.18) 18px,
+      rgba(56, 14, 10, 0.2) 18px,
+      rgba(56, 14, 10, 0.2) 40px,
+      rgba(20, 3, 3, 0.18) 40px,
+      rgba(20, 3, 3, 0.18) 64px
+    ),
+    linear-gradient(180deg, rgba(23, 1, 0, 0.94), rgba(23, 1, 0, 0.96));
+  background-size:
+    auto,
+    700px 700px,
+    auto,
+    auto;
+  background-repeat: repeat, repeat, repeat, repeat;
+  background-blend-mode: screen, soft-light, normal, normal;
+  box-shadow:
+    inset 18px 0 28px rgba(112, 39, 22, 0.08),
+    inset -18px 0 28px rgba(112, 39, 22, 0.08);
 }
 
 .hero-panel,
@@ -430,7 +477,11 @@ li {
 .overview-path--guides {
   border: 1px solid rgba(94, 54, 30, 0.18);
   background:
-    radial-gradient(circle at top left, rgba(255, 253, 244, 0.72), transparent 38%),
+    radial-gradient(
+      circle at top left,
+      rgba(255, 253, 244, 0.72),
+      transparent 38%
+    ),
     linear-gradient(
       180deg,
       rgba(255, 250, 239, 0.82),
@@ -445,7 +496,11 @@ li {
 .overview-path--docs {
   border: 1px solid rgba(255, 221, 176, 0.14);
   background:
-    radial-gradient(circle at top right, rgba(164, 104, 67, 0.16), transparent 42%),
+    radial-gradient(
+      circle at top right,
+      rgba(164, 104, 67, 0.16),
+      transparent 42%
+    ),
     linear-gradient(180deg, rgba(90, 42, 26, 0.98), rgba(61, 25, 15, 0.98));
   box-shadow:
     inset 0 1px 0 rgba(255, 238, 211, 0.08),
@@ -531,45 +586,41 @@ li {
   position: relative;
   overflow: hidden;
   padding: 44px;
-  border: 1px solid rgba(237, 199, 122, 0.42);
+  border: 1px solid rgba(237, 199, 122, 0.46);
   border-radius: 34px;
   background:
     radial-gradient(
       circle at 50% 0%,
-      rgba(238, 189, 96, 0.16),
-      transparent 30%
+      rgba(238, 189, 96, 0.12),
+      transparent 28%
     ),
-    radial-gradient(circle at 16% 86%, rgba(124, 59, 32, 0.3), transparent 32%),
+    radial-gradient(circle at 16% 86%, rgba(70, 28, 18, 0.18), transparent 32%),
     radial-gradient(
       circle at 84% 18%,
-      rgba(238, 189, 96, 0.12),
+      rgba(238, 189, 96, 0.1),
       transparent 24%
     ),
-    repeating-linear-gradient(
+    linear-gradient(
       90deg,
-      rgba(255, 238, 190, 0.025) 0,
-      rgba(255, 238, 190, 0.025) 1px,
-      transparent 1px,
-      transparent 8px
+      rgba(255, 221, 148, 0.08) 0%,
+      rgba(255, 221, 148, 0.01) 8%,
+      transparent 8%,
+      transparent 92%,
+      rgba(255, 221, 148, 0.01) 92%,
+      rgba(255, 221, 148, 0.08) 100%
     ),
-    linear-gradient(135deg, #120f0b 0%, #28160f 38%, #5a2f1d 56%, #1a100c 100%);
+    url('/images/textures/dark-leather.png'),
+    linear-gradient(135deg, #000000 0%, #040404 28%, #0a0908 52%, #030303 76%, #000000 100%);
+  background-size: auto, auto, auto, auto, 420px 420px, auto;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, no-repeat;
+  background-blend-mode: screen, normal, screen, normal, soft-light, normal;
   box-shadow:
-    inset 0 0 0 3px rgba(31, 16, 10, 0.86),
-    inset 0 0 0 5px rgba(237, 199, 122, 0.28),
-    inset 0 0 46px rgba(0, 0, 0, 0.42),
-    0 22px 44px rgba(78, 43, 23, 0.22);
+    inset 0 0 54px rgba(0, 0, 0, 0.58),
+    0 22px 44px rgba(0, 0, 0, 0.28);
 }
 
 .guide-grimoire-cover::before {
-  position: absolute;
-  inset: 22px;
-  content: '';
-  pointer-events: none;
-  border: 2px solid rgba(237, 199, 122, 0.38);
-  border-radius: 24px;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 244, 213, 0.14),
-    inset 0 0 0 9px rgba(11, 8, 6, 0.2);
+  content: none;
 }
 
 .guide-grimoire-cover::after {
@@ -616,23 +667,23 @@ li {
 
 .guide-grimoire-cover .section-heading h1 {
   width: fit-content;
-  color: #ffe8a8;
+  color: #f7deb0;
   font-size: clamp(2rem, 5vw, 4rem);
   letter-spacing: 0.04em;
   max-width: none;
   text-shadow:
-    0 2px 0 rgba(10, 4, 2, 0.95),
-    0 4px 10px rgba(0, 0, 0, 0.62),
-    0 0 28px rgba(255, 218, 139, 0.28);
+    0 2px 0 rgba(4, 3, 2, 0.95),
+    0 4px 10px rgba(0, 0, 0, 0.72),
+    0 0 24px rgba(255, 218, 139, 0.16);
 }
 
 .guide-grimoire-cover .section-heading p:not(.kicker) {
   max-width: 760px;
-  color: #e9d2a6;
+  color: #dec699;
 }
 
 .guide-grimoire-cover .kicker {
-  color: #e8bd69;
+  color: #d8b068;
 }
 
 .guide-submenu {
@@ -652,12 +703,12 @@ li {
   border-radius: 12px;
   border: 1px solid rgba(237, 199, 122, 0.32);
   background:
-    radial-gradient(circle at top, rgba(255, 232, 176, 0.18), transparent 42%),
-    linear-gradient(180deg, rgba(51, 32, 21, 0.98), rgba(18, 13, 10, 0.98));
+    radial-gradient(circle at top, rgba(255, 232, 176, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(18, 16, 14, 0.98), rgba(5, 5, 5, 0.98));
   box-shadow:
-    inset 0 1px 0 rgba(255, 238, 211, 0.12),
-    inset 0 -6px 16px rgba(0, 0, 0, 0.22),
-    0 10px 24px rgba(0, 0, 0, 0.18);
+    inset 0 1px 0 rgba(255, 238, 211, 0.08),
+    inset 0 -8px 18px rgba(0, 0, 0, 0.3),
+    0 10px 24px rgba(0, 0, 0, 0.22);
   color: #f6d795;
   font-family: var(--font-heading), sans-serif;
   text-align: center;
@@ -673,8 +724,8 @@ li {
 .guide-submenu__item[aria-expanded='true'] {
   border-color: rgba(255, 223, 147, 0.72);
   background:
-    radial-gradient(circle at top, rgba(255, 232, 176, 0.26), transparent 42%),
-    linear-gradient(180deg, rgba(91, 47, 28, 0.98), rgba(35, 21, 14, 0.98));
+    radial-gradient(circle at top, rgba(255, 232, 176, 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(34, 29, 25, 0.98), rgba(8, 8, 8, 0.98));
   transform: translateY(-2px);
 }
 
@@ -1019,8 +1070,10 @@ li {
   transform: none;
 }
 
-.spells-level-index__item[aria-current='true'] .spells-level-index__mark::before,
-.spells-level-index__item[aria-current='true'] .spells-level-index__mark::after {
+.spells-level-index__item[aria-current='true']
+  .spells-level-index__mark::before,
+.spells-level-index__item[aria-current='true']
+  .spells-level-index__mark::after {
   width: 38px;
 }
 
@@ -2418,7 +2471,11 @@ li {
   border-right: 3px solid rgba(122, 62, 33, 0.4);
   background:
     radial-gradient(circle at top, rgba(255, 252, 245, 0.56), transparent 42%),
-    linear-gradient(180deg, rgba(248, 235, 208, 0.98), rgba(232, 210, 175, 0.94));
+    linear-gradient(
+      180deg,
+      rgba(248, 235, 208, 0.98),
+      rgba(232, 210, 175, 0.94)
+    );
   text-align: center !important;
 }
 
@@ -2670,11 +2727,10 @@ li {
   padding: 12px 16px;
   border: 1px solid rgba(90, 42, 26, 0.28);
   border-radius: 18px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 253, 246, 0.96),
-      rgba(243, 224, 192, 0.94)
+  background: linear-gradient(
+    180deg,
+    rgba(255, 253, 246, 0.96),
+    rgba(243, 224, 192, 0.94)
   );
   color: #4b2c1d;
   font-family: var(--font-body), sans-serif;
@@ -2742,8 +2798,10 @@ li {
   box-shadow: none;
 }
 
-.guide-filter-select__trigger.guide-filter-select__trigger--subtle.guide-filter-select__trigger--active span,
-.guide-filter-select__trigger.guide-filter-select__trigger--subtle.guide-filter-select__trigger--active strong {
+.guide-filter-select__trigger.guide-filter-select__trigger--subtle.guide-filter-select__trigger--active
+  span,
+.guide-filter-select__trigger.guide-filter-select__trigger--subtle.guide-filter-select__trigger--active
+  strong {
   color: #7a3e21;
 }
 
@@ -2904,8 +2962,7 @@ li {
   background: transparent;
   box-shadow: none;
   cursor: pointer;
-  transition:
-    transform 160ms ease;
+  transition: transform 160ms ease;
 }
 
 .guide-filter-panel__checkbox-row--chip:hover,
@@ -2937,15 +2994,14 @@ li {
   width: 0;
   height: 4px;
   border-radius: 999px;
-  background:
-    linear-gradient(
-      90deg,
-      rgba(90, 24, 16, 0.72),
-      rgba(90, 24, 16, 0.96) 24%,
-      rgba(90, 24, 16, 0.82) 52%,
-      rgba(90, 24, 16, 0.98) 76%,
-      rgba(90, 24, 16, 0.74)
-    );
+  background: linear-gradient(
+    90deg,
+    rgba(90, 24, 16, 0.72),
+    rgba(90, 24, 16, 0.96) 24%,
+    rgba(90, 24, 16, 0.82) 52%,
+    rgba(90, 24, 16, 0.98) 76%,
+    rgba(90, 24, 16, 0.74)
+  );
   box-shadow:
     0 0 4px rgba(90, 24, 16, 0.16),
     0 1px 0 rgba(61, 25, 15, 0.08);
@@ -2962,12 +3018,17 @@ li {
   transform: translate(-50%, -50%) rotate(-47deg);
 }
 
-.guide-filter-panel__checkbox-row input:checked + .guide-filter-panel__checkbox-mark::before,
-.guide-filter-panel__checkbox-row input:checked + .guide-filter-panel__checkbox-mark::after {
+.guide-filter-panel__checkbox-row
+  input:checked
+  + .guide-filter-panel__checkbox-mark::before,
+.guide-filter-panel__checkbox-row
+  input:checked
+  + .guide-filter-panel__checkbox-mark::after {
   width: 38px;
 }
 
-.guide-filter-panel__checkbox-row:focus-within .guide-filter-panel__checkbox-mark {
+.guide-filter-panel__checkbox-row:focus-within
+  .guide-filter-panel__checkbox-mark {
   outline: none;
 }
 
@@ -2980,7 +3041,10 @@ li {
   text-transform: none;
 }
 
-.guide-filter-panel__checkbox-row--chip input:checked + .guide-filter-panel__checkbox-mark + span {
+.guide-filter-panel__checkbox-row--chip
+  input:checked
+  + .guide-filter-panel__checkbox-mark
+  + span {
   color: #3d190f;
 }
 
@@ -3130,6 +3194,7 @@ li {
 .response-field-list {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  justify-content: center;
   gap: 12px;
 }
 

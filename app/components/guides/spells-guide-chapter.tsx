@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { getGuideAnchorSlug } from '@/app/components/guides/background-guide-utils';
+import { spellGlossaryEntries } from '@/app/components/guides/spell-glossary';
 import {
   spellDetailResponseFields,
   spellListResponseFields,
@@ -719,6 +720,38 @@ export function SpellsGuideChapter({
             </section>
           </div>
 
+          <section className="background-guide-card__details guide-glossary">
+            <p className="guide-glossary__eyebrow">Spell glossary</p>
+            <h3>Reading the spellbook</h3>
+            <span className="guide-glossary__description">
+              Spells mix filtering language and rules language. This glossary keeps
+              the core terms close to the table so readers can understand what each
+              column and filter is describing.
+            </span>
+            <div className="guide-glossary__table-wrap">
+              <table className="guide-glossary__table">
+                <thead>
+                  <tr>
+                    <th>Term</th>
+                    <th>Meaning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {spellGlossaryEntries.map((entry) => (
+                    <tr key={entry.term}>
+                      <td>{entry.term}</td>
+                      <td>
+                        <div className="guide-glossary__meaning">
+                          <p>{entry.meaning}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           <aside className="guide-how-to-use">
             <h3>How to use</h3>
             <p>
@@ -760,21 +793,26 @@ export function SpellsGuideChapter({
             </div>
 
             <div className="response-variant">
-              <h4>List response</h4>
-              <ul className="response-field-list">
+              <div className="response-variant__heading">
+                <span>List response</span>
+                <code>GET /api/spells</code>
+              </div>
+              <div className="response-field-list">
                 {spellListResponseFields.map((field) => (
-                  <li key={field.name}>
-                    <div>
-                      <strong>{field.name}</strong>
-                      <strong>{field.type}</strong>
-                    </div>
+                  <article className="response-field-card" key={field.name}>
+                    <span>{field.name}</span>
                     <p>{field.description}</p>
-                  </li>
+                    <strong>{field.type}</strong>
+                  </article>
                 ))}
-              </ul>
+              </div>
 
               {levelSpells[0] ? (
-                <div className="response-preview">
+                <div className="response-example">
+                  <div className="response-example__header">
+                    <span>Example JSON</span>
+                    <code>200 OK</code>
+                  </div>
                   <pre>
                     <code>{JSON.stringify(levelSpells[0], null, 2)}</code>
                   </pre>
@@ -783,21 +821,32 @@ export function SpellsGuideChapter({
             </div>
 
             <div className="response-variant">
-              <h4>Detail response</h4>
-              <ul className="response-field-list">
+              <div className="response-variant__heading">
+                <span>
+                  Detail response
+                  {spellDetailExample ? `: ${spellDetailExample.name}` : ''}
+                </span>
+                <code>
+                  GET /api/spells/
+                  {spellDetailExample ? spellDetailExample.slug : '{identifier}'}
+                </code>
+              </div>
+              <div className="response-field-list">
                 {spellDetailResponseFields.map((field) => (
-                  <li key={field.name}>
-                    <div>
-                      <strong>{field.name}</strong>
-                      <strong>{field.type}</strong>
-                    </div>
+                  <article className="response-field-card" key={field.name}>
+                    <span>{field.name}</span>
                     <p>{field.description}</p>
-                  </li>
+                    <strong>{field.type}</strong>
+                  </article>
                 ))}
-              </ul>
+              </div>
 
               {spellDetailExample ? (
-                <div className="response-preview">
+                <div className="response-example">
+                  <div className="response-example__header">
+                    <span>Example JSON</span>
+                    <code>200 OK</code>
+                  </div>
                   <pre>
                     <code>
                       {JSON.stringify(
