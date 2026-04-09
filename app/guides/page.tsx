@@ -4,6 +4,7 @@ import { formatSpeciesDetail } from '@/app/lib/species';
 import type { Attribute } from '@/app/types/attribute';
 import type { BackgroundDetail } from '@/app/types/background';
 import type { ClassDetail } from '@/app/types/class';
+import type { EquipmentDetail } from '@/app/types/equipment';
 import type { SkillDetail } from '@/app/types/skill';
 import type { SpeciesDetail } from '@/app/types/species';
 
@@ -165,14 +166,55 @@ async function getBackgrounds(): Promise<BackgroundDetail[]> {
   })) as BackgroundDetail[];
 }
 
+async function getEquipment(): Promise<EquipmentDetail[]> {
+  const sql = getSql();
+  const equipmentRows = await sql`
+    SELECT
+      id,
+      name,
+      slug,
+      category,
+      type,
+      description,
+      cost,
+      weight,
+      ismagical,
+      modifiers,
+      effects,
+      details
+    FROM equipment
+    ORDER BY name
+  `;
+
+  return equipmentRows.map((item) => ({
+    id: item.id,
+    name: item.name,
+    slug: item.slug,
+    category: item.category,
+    type: item.type,
+    description: item.description,
+    cost: item.cost,
+    weight: item.weight,
+    isMagical: Boolean(item.ismagical),
+    modifiers: Array.isArray(item.modifiers) ? item.modifiers : [],
+    effects: Array.isArray(item.effects) ? item.effects : [],
+    details:
+      item.details && typeof item.details === 'object'
+        ? item.details
+        : { kind: 'generic' },
+  })) as EquipmentDetail[];
+}
+
 export default async function GuidesPage() {
-  const [attributes, skills, classes, species, backgrounds] = await Promise.all([
-    getAttributes(),
-    getSkills(),
-    getClasses(),
-    getSpecies(),
-    getBackgrounds(),
-  ]);
+  const [attributes, skills, classes, species, backgrounds, equipment] =
+    await Promise.all([
+      getAttributes(),
+      getSkills(),
+      getClasses(),
+      getSpecies(),
+      getBackgrounds(),
+      getEquipment(),
+    ]);
 
   return (
     <main className="page-frame">
@@ -180,6 +222,7 @@ export default async function GuidesPage() {
         attributes={attributes}
         backgrounds={backgrounds}
         classes={classes}
+        equipment={equipment}
         skills={skills}
         species={species}
       />

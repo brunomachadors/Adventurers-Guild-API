@@ -1970,6 +1970,122 @@ li {
   justify-content: center;
 }
 
+.guide-glossary {
+  gap: 10px;
+}
+
+.guide-glossary__eyebrow {
+  margin: 0;
+  color: #7a3e21;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.guide-glossary h3 {
+  margin: 0;
+  color: #3d190f;
+  font-family: var(--font-heading), sans-serif;
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.guide-glossary__description {
+  display: block;
+  max-width: 74ch;
+  margin: 0 auto;
+  color: #4b2c1d;
+  font-family: var(--font-body), sans-serif;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.guide-glossary__table-wrap {
+  width: 100%;
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.guide-glossary__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid rgba(122, 62, 33, 0.36);
+  border-radius: 18px;
+  overflow: hidden;
+  color: #4b2c1d;
+  font-family: var(--font-body), sans-serif;
+  background: rgba(255, 249, 235, 0.54);
+}
+
+.guide-glossary__table th,
+.guide-glossary__table td {
+  padding: 16px 18px;
+  border-right: 1px solid rgba(122, 62, 33, 0.2);
+  vertical-align: top;
+  text-align: left;
+}
+
+.guide-glossary__table th:last-child,
+.guide-glossary__table td:last-child {
+  border-right: 0;
+}
+
+.guide-glossary__table tbody td {
+  border-top: 1px solid rgba(122, 62, 33, 0.24);
+}
+
+.guide-glossary__table th {
+  color: #7a3e21;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: rgba(235, 211, 172, 0.34);
+}
+
+.guide-glossary__table td:first-child {
+  width: 180px;
+  color: #3d190f;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.guide-glossary__meaning {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  justify-items: stretch;
+}
+
+.guide-glossary__meaning p {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  color: #4b2c1d;
+  font-family: var(--font-body), sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.6;
+  text-align: left;
+  text-transform: none;
+}
+
+.guide-glossary__table tbody tr:nth-child(odd) td {
+  background: rgba(255, 248, 232, 0.92);
+}
+
+.guide-glossary__table tbody tr:nth-child(even) td {
+  background: rgba(224, 188, 138, 0.34);
+}
+
 .background-guide-card__option-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2032,6 +2148,15 @@ li {
   text-align: center;
 }
 
+.equipment-weapon-groups {
+  display: grid;
+  gap: 24px;
+}
+
+.equipment-weapon-groups .species-subspecies + .species-subspecies {
+  margin-top: 24px;
+}
+
 @media (max-width: 760px) {
   .background-guide-card__option-grid {
     grid-template-columns: 1fr;
@@ -2049,6 +2174,8 @@ li {
 
 .species-subspecies {
   overflow: hidden;
+  border-radius: 24px;
+  clip-path: inset(0 round 24px);
   border-top: 3px solid rgba(61, 25, 15, 0.88);
   background:
     radial-gradient(
@@ -2066,6 +2193,7 @@ li {
   align-items: center;
   gap: 8px;
   padding: 20px 22px;
+  border-radius: 24px 24px 0 0;
   border-bottom: 1px solid rgba(255, 228, 189, 0.12);
   text-align: center;
 }
@@ -2087,6 +2215,8 @@ li {
 
 .species-subspecies__table-wrap {
   overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 0 0 24px 24px;
 }
 
 .species-subspecies table {
