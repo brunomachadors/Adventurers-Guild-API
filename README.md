@@ -34,6 +34,13 @@ Protected routes require:
 
 - `Authorization: Bearer <token>`
 
+Playwright auth tests expect these environment variables:
+
+- `E2E_AUTH_USERNAME`
+- `E2E_AUTH_PASSWORD`
+
+In GitHub Actions, store them as repository secrets and expose them to the test workflow.
+
 ## Current API Surface
 
 ### `POST /api/auth/token`
