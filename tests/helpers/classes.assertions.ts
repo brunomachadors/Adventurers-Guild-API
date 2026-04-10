@@ -15,7 +15,15 @@ type ExpectedClassDetail = Pick<
   Partial<
     Pick<
       ClassDetail,
-      'savingthrows' | 'spellcasting' | 'subclasses' | 'levelprogression'
+      | 'savingthrows'
+      | 'spellcasting'
+      | 'skillProficiencyChoices'
+      | 'weaponProficiencies'
+      | 'armorTraining'
+      | 'startingEquipmentOptions'
+      | 'equipmentOptions'
+      | 'subclasses'
+      | 'levelprogression'
     >
   >;
 
@@ -64,6 +72,11 @@ export class ClassAssert {
       expect(classItem).toHaveProperty('role');
       expect(classItem).toHaveProperty('description');
       expect(classItem).toHaveProperty('spellcasting');
+      expect(classItem).toHaveProperty('skillProficiencyChoices');
+      expect(classItem).toHaveProperty('weaponProficiencies');
+      expect(classItem).toHaveProperty('armorTraining');
+      expect(classItem).toHaveProperty('startingEquipmentOptions');
+      expect(classItem).toHaveProperty('equipmentOptions');
       expect(classItem).toHaveProperty('subclasses');
       expect(classItem).toHaveProperty('levelprogression');
 
@@ -80,6 +93,14 @@ export class ClassAssert {
         classItem.spellcasting === null ||
           typeof classItem.spellcasting === 'object',
       ).toBe(true);
+      expect(
+        classItem.skillProficiencyChoices === null ||
+          typeof classItem.skillProficiencyChoices === 'object',
+      ).toBe(true);
+      expect(Array.isArray(classItem.weaponProficiencies)).toBe(true);
+      expect(Array.isArray(classItem.armorTraining)).toBe(true);
+      expect(Array.isArray(classItem.startingEquipmentOptions)).toBe(true);
+      expect(Array.isArray(classItem.equipmentOptions)).toBe(true);
       expect(Array.isArray(classItem.subclasses)).toBe(true);
       expect(Array.isArray(classItem.levelprogression)).toBe(true);
     });
@@ -100,6 +121,36 @@ export class ClassAssert {
         }
       });
     }
+
+    await test.step('Validate derived class creation fields schema', async () => {
+      expect(typeof classItem.skillProficiencyChoices.choose).toBe('number');
+      expect(Array.isArray(classItem.skillProficiencyChoices.options)).toBe(true);
+      expect(
+        classItem.skillProficiencyChoices.options.every(
+          (option) => typeof option === 'string',
+        ),
+      ).toBe(true);
+      expect(
+        classItem.weaponProficiencies.every(
+          (proficiency) => typeof proficiency === 'string',
+        ),
+      ).toBe(true);
+      expect(
+        classItem.armorTraining.every((training) => typeof training === 'string'),
+      ).toBe(true);
+      expect(
+        classItem.equipmentOptions.every((option) => typeof option === 'string'),
+      ).toBe(true);
+      expect(
+        classItem.startingEquipmentOptions.every(
+          (option) =>
+            option !== null &&
+            typeof option === 'object' &&
+            (option.label === null || typeof option.label === 'string') &&
+            Array.isArray(option.items),
+        ),
+      ).toBe(true);
+    });
 
     for (const subclass of classItem.subclasses) {
       await test.step(`Validate subclass schema for ${subclass}`, async () => {
@@ -234,6 +285,51 @@ export class ClassAssert {
     });
   }
 
+  async validateSkillProficiencyChoices(
+    skillProficiencyChoices: ClassDetail['skillProficiencyChoices'],
+    expectedSkillProficiencyChoices: ClassDetail['skillProficiencyChoices'],
+  ) {
+    await test.step('Validate Skill Proficiency Choices', async () => {
+      expect(skillProficiencyChoices).toEqual(expectedSkillProficiencyChoices);
+    });
+  }
+
+  async validateWeaponProficiencies(
+    weaponProficiencies: ClassDetail['weaponProficiencies'],
+    expectedWeaponProficiencies: ClassDetail['weaponProficiencies'],
+  ) {
+    await test.step('Validate Weapon Proficiencies', async () => {
+      expect(weaponProficiencies).toEqual(expectedWeaponProficiencies);
+    });
+  }
+
+  async validateArmorTraining(
+    armorTraining: ClassDetail['armorTraining'],
+    expectedArmorTraining: ClassDetail['armorTraining'],
+  ) {
+    await test.step('Validate Armor Training', async () => {
+      expect(armorTraining).toEqual(expectedArmorTraining);
+    });
+  }
+
+  async validateStartingEquipmentOptions(
+    startingEquipmentOptions: ClassDetail['startingEquipmentOptions'],
+    expectedStartingEquipmentOptions: ClassDetail['startingEquipmentOptions'],
+  ) {
+    await test.step('Validate Starting Equipment Options', async () => {
+      expect(startingEquipmentOptions).toEqual(expectedStartingEquipmentOptions);
+    });
+  }
+
+  async validateEquipmentOptions(
+    equipmentOptions: ClassDetail['equipmentOptions'],
+    expectedEquipmentOptions: ClassDetail['equipmentOptions'],
+  ) {
+    await test.step('Validate Equipment Options', async () => {
+      expect(equipmentOptions).toEqual(expectedEquipmentOptions);
+    });
+  }
+
   async validateClassInList(
     classList: ClassListItem[],
     expectedClass: ClassListItem,
@@ -278,6 +374,41 @@ export class ClassAssert {
       await this.validateSpellcasting(
         actualClass.spellcasting,
         expectedClass.spellcasting,
+      );
+    }
+
+    if (expectedClass.skillProficiencyChoices) {
+      await this.validateSkillProficiencyChoices(
+        actualClass.skillProficiencyChoices,
+        expectedClass.skillProficiencyChoices,
+      );
+    }
+
+    if (expectedClass.weaponProficiencies) {
+      await this.validateWeaponProficiencies(
+        actualClass.weaponProficiencies,
+        expectedClass.weaponProficiencies,
+      );
+    }
+
+    if (expectedClass.armorTraining) {
+      await this.validateArmorTraining(
+        actualClass.armorTraining,
+        expectedClass.armorTraining,
+      );
+    }
+
+    if (expectedClass.startingEquipmentOptions) {
+      await this.validateStartingEquipmentOptions(
+        actualClass.startingEquipmentOptions,
+        expectedClass.startingEquipmentOptions,
+      );
+    }
+
+    if (expectedClass.equipmentOptions) {
+      await this.validateEquipmentOptions(
+        actualClass.equipmentOptions,
+        expectedClass.equipmentOptions,
       );
     }
 

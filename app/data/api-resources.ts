@@ -111,7 +111,7 @@ export const apiResources: ApiResource[] = [
     description:
       'Protected character management flow with creation, updates, deletion, character equipment add/update/removal, ability score selection, armor class calculation, initiative, passive perception, movement, inventory weight, weapon attack calculation, hit point calculation, saving throw calculation, skill calculation, spellcasting summary, spell slots, spell selection, and enriched responses.',
     summary:
-      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, calculated initiative, passive perception, movement, inventory weight, armor class, derived weapon attacks, hit points, saving throws, skill totals, spellcasting summary, spell slots, selected spell details, and full character equipment tracking.',
+      'Introduces authenticated player-oriented workflows with richer character payloads, nested campaign context, pending equipment choices, calculated initiative, passive perception, movement, inventory weight, armor class, derived weapon attacks, hit points, saving throws, skill totals, spellcasting summary, spell slots, selected spell details, and full character equipment tracking.',
     listFields: [
       'id',
       'name',
@@ -121,6 +121,7 @@ export const apiResources: ApiResource[] = [
       'backgroundId',
       'level',
       'missingFields',
+      'pendingChoices',
       'abilityScores',
       'abilityModifiers',
       'armorClass',
@@ -134,6 +135,7 @@ export const apiResources: ApiResource[] = [
       'spellcastingSummary',
       'spellSlots',
       'selectedSpells',
+      'pendingChoices',
       'currency',
       'skillProficiencies',
       'abilityScoreRules',
@@ -163,6 +165,8 @@ export const apiResources: ApiResource[] = [
     previewEndpoints: [
       'GET /api/characters/{id}/equipment',
       'POST /api/characters/{id}/equipment',
+      'POST /api/characters/{id}/equipment/class-choice',
+      'POST /api/characters/{id}/equipment/background-choice',
       'PATCH /api/characters/{id}/equipment/{equipmentId}',
       'DELETE /api/characters/{id}/equipment/{equipmentId}',
     ],
@@ -177,6 +181,8 @@ export const apiResources: ApiResource[] = [
       'GET /api/characters/{id}/skills',
       'GET /api/characters/{id}/equipment',
       'POST /api/characters/{id}/equipment',
+      'POST /api/characters/{id}/equipment/class-choice',
+      'POST /api/characters/{id}/equipment/background-choice',
       'PATCH /api/characters/{id}/equipment/{equipmentId}',
       'DELETE /api/characters/{id}/equipment/{equipmentId}',
       'GET /api/characters/{id}/spell-options',

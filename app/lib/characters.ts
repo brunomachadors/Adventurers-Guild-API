@@ -10,6 +10,7 @@ import {
   CharacterAbilityScoreRules,
   CharacterClassDetails,
   CharacterMissingField,
+  CharacterPendingChoice,
   CharacterResponseBody,
   CharacterStatus,
 } from '@/app/types/character';
@@ -17,7 +18,14 @@ import { Attributeshortname } from '@/app/types/attribute';
 import { BackgroundDetail } from '@/app/types/background';
 import { SpeciesDetail } from '@/app/types/species';
 import { SKILL_NAMES, SkillName } from '@/app/types/skill';
+import {
+  parseClassEquipmentOptions,
+  parseClassSkillProficiencyChoices,
+  parseClassStartingEquipmentOptions,
+  parseStringArray,
+} from './class';
 import { getCharacterArmorClass } from './character-armor-class';
+import { getCharacterEquipmentChoiceRecords } from './character-equipment-package-choices';
 import {
   getCharacterInventoryWeight,
   getCharacterMovement,
@@ -86,24 +94,57 @@ export async function getCharacterClassDetails(
   }
 
   const sql = getSql();
-  const classRows = await sql`
-    SELECT
-      id,
-      name,
-      slug,
-      description,
-      role,
-      hitdie,
-      primaryattributes,
+  let classRows;
+
+  try {
+    classRows = await sql`
+      SELECT
+        id,
+        name,
+        slug,
+        description,
+        role,
+        hitdie,
+        primaryattributes,
       recommendedskills,
       savingthrows,
       spellcasting,
+      skillproficiencychoicescount,
+      skillproficiencyoptions,
+      weaponproficiencies,
+      armortraining,
+      equipmentoptions,
       subclasses,
       levelprogression
-    FROM classes
-    WHERE id = ${classId}
-    LIMIT 1
-  `;
+      FROM classes
+      WHERE id = ${classId}
+      LIMIT 1
+    `;
+  } catch {
+    // Support environments where classes.equipmentoptions has not been added yet.
+    classRows = await sql`
+      SELECT
+        id,
+        name,
+        slug,
+        description,
+        role,
+        hitdie,
+        primaryattributes,
+        recommendedskills,
+        savingthrows,
+        spellcasting,
+        skillproficiencychoicescount,
+        skillproficiencyoptions,
+        weaponproficiencies,
+        armortraining,
+        subclasses,
+        levelprogression
+      FROM classes
+      WHERE id = ${classId}
+      LIMIT 1
+    `;
+  }
 
   if (!classRows || classRows.length === 0) {
     return null;
@@ -136,6 +177,16 @@ export async function getCharacterClassDetails(
       !Array.isArray(classItem.spellcasting)
         ? classItem.spellcasting
         : null,
+    skillProficiencyChoices: parseClassSkillProficiencyChoices(
+      classItem.skillproficiencychoicescount,
+      classItem.skillproficiencyoptions,
+    ),
+    weaponProficiencies: parseStringArray(classItem.weaponproficiencies),
+    armorTraining: parseStringArray(classItem.armortraining),
+    startingEquipmentOptions: parseClassStartingEquipmentOptions(
+      classItem.equipmentoptions,
+    ),
+    equipmentOptions: parseClassEquipmentOptions(classItem.equipmentoptions),
     subclasses: Array.isArray(classItem.subclasses) ? classItem.subclasses : [],
     featuresByLevel: levelProgression
       .filter(
@@ -502,6 +553,49 @@ export async function getCharacterBackgroundDetails(
   };
 }
 
+async function hasCharacterEquipment(characterId: number): Promise<boolean> {
+  const sql = getSql();
+  const equipmentRows = await sql`
+    SELECT 1
+    FROM characterequipment
+    WHERE characterid = ${characterId}
+    LIMIT 1
+  `;
+
+  return equipmentRows.length > 0;
+}
+
+function getCharacterPendingChoices(
+  classDetails: CharacterClassDetails | null,
+  backgroundDetails: BackgroundDetail | null,
+  hasEquipment: boolean,
+  resolvedEquipmentChoiceSources: Set<'class' | 'background'>,
+): CharacterPendingChoice[] {
+  if (hasEquipment && resolvedEquipmentChoiceSources.size === 0) {
+    return [];
+  }
+
+  const pendingChoices: CharacterPendingChoice[] = [];
+
+  if (
+    classDetails &&
+    classDetails.equipmentOptions.length > 0 &&
+    !resolvedEquipmentChoiceSources.has('class')
+  ) {
+    pendingChoices.push('classEquipmentSelection');
+  }
+
+  if (
+    backgroundDetails &&
+    backgroundDetails.equipmentOptions.length > 0 &&
+    !resolvedEquipmentChoiceSources.has('background')
+  ) {
+    pendingChoices.push('backgroundEquipmentSelection');
+  }
+
+  return pendingChoices;
+}
+
 async function getBackgroundAbilityScoreRules(
   backgroundId: number | null,
 ): Promise<unknown> {
@@ -573,6 +667,17 @@ export async function formatCharacterResponse(character: {
   const backgroundAbilityScoreRules = await getBackgroundAbilityScoreRules(
     formattedCharacter.backgroundId,
   );
+  const resolvedEquipmentChoiceSources = new Set(
+    (await getCharacterEquipmentChoiceRecords(formattedCharacter.id)).map(
+      (choice) => choice.source,
+    ),
+  );
+  const pendingChoices = getCharacterPendingChoices(
+    classDetails,
+    backgroundDetails,
+    await hasCharacterEquipment(formattedCharacter.id),
+    resolvedEquipmentChoiceSources,
+  );
   const abilityScoreRules = getCharacterAbilityScoreRules(
     backgroundDetails,
     backgroundAbilityScoreRules,
@@ -632,6 +737,7 @@ export async function formatCharacterResponse(character: {
     ...formattedCharacter,
     status: getCharacterStatus(missingFields),
     missingFields,
+    pendingChoices,
     abilityScores: formattedCharacter.abilityScores,
     abilityModifiers,
     armorClass,
@@ -652,6 +758,38 @@ export async function formatCharacterResponse(character: {
     speciesDetails,
     backgroundDetails,
   };
+}
+
+export async function getOwnedCharacterResponse(
+  ownerId: number,
+  characterId: number,
+): Promise<CharacterResponseBody | null> {
+  const sql = getSql();
+  const characterRows = await sql`
+    SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+    FROM characters
+    WHERE id = ${characterId}
+      AND ownerid = ${ownerId}
+    LIMIT 1
+  `;
+
+  if (!characterRows || characterRows.length === 0) {
+    return null;
+  }
+
+  const character = characterRows[0];
+
+  return formatCharacterResponse({
+    id: character.id,
+    name: character.name,
+    classId: character.classid,
+    speciesId: character.speciesid,
+    backgroundId: character.backgroundid,
+    level: character.level,
+    abilityScores: character.abilityscores,
+    currency: character.currency,
+    skillProficiencies: character.skillproficiencies,
+  });
 }
 
 function getCharacterSkillItems(

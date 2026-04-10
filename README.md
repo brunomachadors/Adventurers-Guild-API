@@ -215,6 +215,11 @@ Response fields:
 - `recommendedskills`
 - `savingthrows`
 - `spellcasting`
+- `skillProficiencyChoices`
+- `weaponProficiencies`
+- `armorTraining`
+- `startingEquipmentOptions`
+- `equipmentOptions`
 - `subclasses`
 - `levelprogression`
 
@@ -347,6 +352,7 @@ Response fields:
 - `backgroundId`
 - `level`
 - `missingFields`
+- `pendingChoices`
 - `abilityScores`
 - `abilityModifiers`
 - `armorClass`
@@ -396,6 +402,7 @@ Response fields:
 - `backgroundId`
 - `level`
 - `missingFields`
+- `pendingChoices`
 - `skillProficiencies`
 - `abilityScores`
 - `abilityModifiers`
@@ -437,6 +444,8 @@ Returns:
 `movement` is derived from `speciesDetails.speed` and currently uses `ft` as the unit. It is returned as `null` until species details with a numeric speed are available.
 
 `inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
+
+`pendingChoices` lists unresolved package-selection steps that still need to be completed through the dedicated equipment choice endpoints. It is currently used for `classEquipmentSelection` and `backgroundEquipmentSelection`.
 
 `spellcastingSummary` is derived from the character class spellcasting metadata, character level, resolved spellcasting ability modifier, and selected spells. For non-casters, `canCastSpells` is `false`, spellcasting ability values are `null`, and selected spell counts are `0`.
 
@@ -555,6 +564,187 @@ Returns:
 - `404` with `{ "error": "Character not found" }`
 - `404` with `{ "error": "Equipment not found" }`
 - `500` with `{ "error": "Failed to add character equipment" }`
+
+### `POST /api/characters/{id}/equipment/class-choice`
+
+Resolves a pending class equipment package and returns the updated equipment state.
+
+Requires bearer token.
+
+Request body fields:
+
+- `optionLabel` optional and preferred when the class package exposes labels like `A`
+- `optionIndex` optional fallback when the client prefers positional selection
+
+At least one of those fields must be present. When both are sent, `optionLabel` is used.
+
+Response fields:
+
+- `characterId`
+- `appliedChoice`
+- `addedEquipment`
+- `addedCurrency`
+- `skippedItems`
+- `pendingChoices`
+- `equipment`
+
+Currency found in the selected package is added to `character.currency`. Unsupported variable items are skipped instead of failing the whole request.
+
+Returns:
+
+- `200` with the package resolution response
+- `400` with `{ "error": "Invalid character equipment choice payload" }`
+- `400` with `{ "error": "No class equipment selection pending" }`
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `404` with `{ "error": "Selected package option not found" }`
+- `500` with `{ "error": "Failed to resolve class equipment choice" }`
+
+Example response:
+
+```json
+{
+  "characterId": 101,
+  "appliedChoice": {
+    "source": "class",
+    "label": "A",
+    "optionIndex": 0
+  },
+  "addedEquipment": [
+    { "id": 42, "name": "Greataxe", "quantity": 1, "isEquipped": true },
+    { "id": 43, "name": "Handaxe", "quantity": 4, "isEquipped": false }
+  ],
+  "addedCurrency": {
+    "cp": 0,
+    "sp": 0,
+    "ep": 0,
+    "gp": 15,
+    "pp": 0
+  },
+  "skippedItems": [],
+  "pendingChoices": ["backgroundEquipmentSelection"],
+  "equipment": [
+    {
+      "id": 42,
+      "name": "Greataxe",
+      "category": "Weapon",
+      "type": "Weapon",
+      "quantity": 1,
+      "isEquipped": true
+    },
+    {
+      "id": 43,
+      "name": "Handaxe",
+      "category": "Weapon",
+      "type": "Weapon",
+      "quantity": 4,
+      "isEquipped": false
+    }
+  ]
+}
+```
+
+### `POST /api/characters/{id}/equipment/background-choice`
+
+Resolves a pending background equipment package and returns the updated equipment state.
+
+Requires bearer token.
+
+Request body fields:
+
+- `optionLabel` optional
+- `optionIndex` optional and usually the simplest choice for background packages
+
+At least one of those fields must be present. When both are sent, `optionLabel` is used.
+
+Response fields:
+
+- `characterId`
+- `appliedChoice`
+- `addedEquipment`
+- `addedCurrency`
+- `skippedItems`
+- `pendingChoices`
+- `equipment`
+
+Currency found in the selected package is added to `character.currency` and returned in `addedCurrency`.
+
+Returns:
+
+- `200` with the package resolution response
+- `400` with `{ "error": "Invalid character equipment choice payload" }`
+- `400` with `{ "error": "No background equipment selection pending" }`
+- `401` with `{ "error": "Unauthorized" }`
+- `404` with `{ "error": "Character not found" }`
+- `404` with `{ "error": "Selected package option not found" }`
+- `500` with `{ "error": "Failed to resolve background equipment choice" }`
+
+Example response:
+
+```json
+{
+  "characterId": 101,
+  "appliedChoice": {
+    "source": "background",
+    "label": null,
+    "optionIndex": 0
+  },
+  "addedEquipment": [
+    { "id": 12, "name": "Spear", "quantity": 1, "isEquipped": true },
+    { "id": 42, "name": "Shortbow", "quantity": 1, "isEquipped": false },
+    { "id": 44, "name": "Arrows", "quantity": 20, "isEquipped": false },
+    { "id": 45, "name": "Quiver", "quantity": 1, "isEquipped": false }
+  ],
+  "addedCurrency": {
+    "cp": 0,
+    "sp": 0,
+    "ep": 0,
+    "gp": 14,
+    "pp": 0
+  },
+  "skippedItems": [
+    {
+      "name": "Gaming Set (same as above)",
+      "reason": "Depends on a previous choice that is not handled by this endpoint"
+    }
+  ],
+  "pendingChoices": [],
+  "equipment": [
+    {
+      "id": 12,
+      "name": "Spear",
+      "category": "Weapon",
+      "type": "Weapon",
+      "quantity": 1,
+      "isEquipped": true
+    },
+    {
+      "id": 42,
+      "name": "Shortbow",
+      "category": "Weapon",
+      "type": "Weapon",
+      "quantity": 1,
+      "isEquipped": false
+    },
+    {
+      "id": 44,
+      "name": "Arrows",
+      "category": "Ammunition",
+      "type": "Gear",
+      "quantity": 20,
+      "isEquipped": false
+    },
+    {
+      "id": 45,
+      "name": "Quiver",
+      "category": "Container",
+      "type": "Gear",
+      "quantity": 1,
+      "isEquipped": false
+    }
+  ]
+}
+```
 
 ### `PATCH /api/characters/{id}/equipment/{equipmentId}`
 
@@ -728,6 +918,7 @@ Character detail:
   "backgroundId": 13,
   "level": 1,
   "missingFields": [],
+  "pendingChoices": [],
   "skillProficiencies": ["Arcana", "History"],
   "abilityScores": {
     "base": {
@@ -997,6 +1188,33 @@ Character detail:
         "spellsAddedPerLevel": 2
       }
     },
+    "skillProficiencyChoices": {
+      "choose": 2,
+      "options": [
+        "Arcana",
+        "History",
+        "Insight",
+        "Investigation",
+        "Medicine",
+        "Religion"
+      ]
+    },
+    "weaponProficiencies": ["Simple Weapons"],
+    "armorTraining": [],
+    "startingEquipmentOptions": [
+      {
+        "label": "A",
+        "items": ["Quarterstaff", "Scholar's Pack", "Spellbook", "5 GP"]
+      },
+      {
+        "label": "B",
+        "items": ["Dagger", "Scholar's Pack", "Spellbook", "5 GP"]
+      }
+    ],
+    "equipmentOptions": [
+      "Quarterstaff, Scholar's Pack, Spellbook, and 5 GP",
+      "Dagger, Scholar's Pack, Spellbook, and 5 GP"
+    ],
     "subclasses": ["Evoker"],
     "featuresByLevel": []
   },
@@ -1222,27 +1440,49 @@ Class detail:
 
 ```json
 {
-  "id": 12,
-  "name": "Wizard",
-  "slug": "wizard",
-  "description": "A learned arcane scholar who studies the inner workings of magic to prepare spells, master rituals, and wield unmatched magical versatility.",
-  "role": "caster",
-  "hitdie": 6,
-  "primaryattributes": ["INT"],
+  "id": 1,
+  "name": "Barbarian",
+  "slug": "barbarian",
+  "description": "A fierce warrior who relies on raw strength and primal fury to overcome enemies.",
+  "role": "melee",
+  "hitdie": 12,
+  "primaryattributes": ["STR"],
   "recommendedskills": [
-    "Arcana",
-    "Investigation",
-    "History",
-    "Nature",
-    "Religion"
+    "Athletics",
+    "Survival",
+    "Intimidation"
   ],
-  "savingthrows": ["INT", "WIS"],
-  "spellcasting": {
-    "ability": "INT",
-    "usesSpellbook": true,
-    "canCastRituals": true
+  "savingthrows": ["STR", "CON"],
+  "spellcasting": null,
+  "skillProficiencyChoices": {
+    "choose": 2,
+    "options": [
+      "Animal Handling",
+      "Athletics",
+      "Intimidation",
+      "Nature",
+      "Perception",
+      "Survival"
+    ]
   },
-  "subclasses": ["Evoker"]
+  "weaponProficiencies": ["Simple Weapons", "Martial Weapons"],
+  "armorTraining": ["Light Armor", "Medium Armor", "Shield"],
+  "startingEquipmentOptions": [
+    {
+      "label": "A",
+      "items": ["Greataxe", "4 Handaxes", "Explorer's Pack", "15 GP"]
+    },
+    {
+      "label": "B",
+      "items": ["75 GP"]
+    }
+  ],
+  "equipmentOptions": [
+    "Greataxe, 4 Handaxes, Explorer's Pack, and 15 GP",
+    "75 GP"
+  ],
+  "subclasses": ["Berserker", "Wild Heart", "World Tree", "Zealot"],
+  "levelprogression": []
 }
 ```
 
