@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.17.0
+  version: 1.19.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -590,30 +590,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/ClassDetail'
               examples:
-                fighter:
-                  summary: Fighter detail
+                barbarian:
+                  summary: Barbarian detail
                   value:
-                    id: 5
-                    name: Fighter
-                    slug: fighter
-                    description: A master of weapons and armor who dominates the battlefield through martial skill, endurance, and tactical expertise.
+                    id: 1
+                    name: Barbarian
+                    slug: barbarian
+                    description: A fierce warrior who relies on raw strength and primal fury to overcome enemies.
                     role: melee
-                    hitdie: 10
+                    hitdie: 12
                     primaryattributes:
                       - STR
-                      - DEX
                     recommendedskills:
                       - Athletics
-                      - Perception
-                      - Intimidation
                       - Survival
-                      - Acrobatics
+                      - Intimidation
                     savingthrows:
                       - STR
                       - CON
                     spellcasting: null
+                    skillProficiencyChoices:
+                      choose: 2
+                      options:
+                        - Animal Handling
+                        - Athletics
+                        - Intimidation
+                        - Nature
+                        - Perception
+                        - Survival
+                    weaponProficiencies:
+                      - Simple Weapons
+                      - Martial Weapons
+                    armorTraining:
+                      - Light Armor
+                      - Medium Armor
+                      - Shield
+                    startingEquipmentOptions:
+                      - label: A
+                        items:
+                          - Greataxe
+                          - 4 Handaxes
+                          - Explorer's Pack
+                          - 15 GP
+                      - label: B
+                        items:
+                          - 75 GP
+                    equipmentOptions:
+                      - Greataxe, 4 Handaxes, Explorer's Pack, and 15 GP
+                      - 75 GP
                     subclasses:
-                      - Champion
+                      - Berserker
+                      - Wild Heart
+                      - World Tree
+                      - Zealot
                     levelprogression: []
                 wizard:
                   summary: Wizard detail
@@ -647,9 +676,37 @@ paths:
                           '1': 3
                         preparedSpells:
                           '1': 4
-                        spellbookSpells:
-                          '1': 6
-                        spellsAddedPerLevel: 2
+                      spellbookSpells:
+                        '1': 6
+                      spellsAddedPerLevel: 2
+                    skillProficiencyChoices:
+                      choose: 2
+                      options:
+                        - Arcana
+                        - History
+                        - Insight
+                        - Investigation
+                        - Medicine
+                        - Religion
+                    weaponProficiencies:
+                      - Simple Weapons
+                    armorTraining: []
+                    startingEquipmentOptions:
+                      - label: A
+                        items:
+                          - Quarterstaff
+                          - Scholar's Pack
+                          - Spellbook
+                          - 5 GP
+                      - label: B
+                        items:
+                          - Dagger
+                          - Scholar's Pack
+                          - Spellbook
+                          - 5 GP
+                    equipmentOptions:
+                      - Quarterstaff, Scholar's Pack, Spellbook, and 5 GP
+                      - Dagger, Scholar's Pack, Spellbook, and 5 GP
                     subclasses:
                       - Evoker
                     levelprogression: []
@@ -1073,6 +1130,7 @@ paths:
                   - classId
                   - speciesId
                   - backgroundId
+                pendingChoices: []
                 abilityScores: null
                 abilityModifiers: null
                 armorClass:
@@ -1152,6 +1210,7 @@ paths:
         - `weaponAttacks`
         - `hitPoints`
         - `savingThrows`
+        - `pendingChoices`
         - `initiative`
         - `passivePerception`
         - `movement`
@@ -1182,6 +1241,8 @@ paths:
 
         `inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
 
+        `pendingChoices` lists unresolved package-selection steps that still need to be completed through the dedicated equipment choice endpoints. It is currently used for `classEquipmentSelection` and `backgroundEquipmentSelection`.
+
         `spellcastingSummary` is derived from the character class spellcasting metadata, character level, resolved spellcasting ability modifier, and selected spells. For non-casters, `canCastSpells` is `false`, spellcasting ability values are `null`, and selected spell counts are `0`.
 
         `spellSlots` is derived from class spellcasting progression and character level. It is returned as an empty array for non-casters or classes without supported slot progression; `used` currently starts at `0`, and `available` is `max - used`.
@@ -1207,6 +1268,7 @@ paths:
                 backgroundId: 13
                 level: 1
                 missingFields: []
+                pendingChoices: []
                 skillProficiencies:
                   - Arcana
                   - History
@@ -1457,6 +1519,34 @@ paths:
                       spellbookSpells:
                         '1': 6
                       spellsAddedPerLevel: 2
+                  skillProficiencyChoices:
+                    choose: 2
+                    options:
+                      - Arcana
+                      - History
+                      - Insight
+                      - Investigation
+                      - Medicine
+                      - Religion
+                  weaponProficiencies:
+                    - Simple Weapons
+                  armorTraining: []
+                  startingEquipmentOptions:
+                    - label: A
+                      items:
+                        - Quarterstaff
+                        - Scholar's Pack
+                        - Spellbook
+                        - 5 GP
+                    - label: B
+                      items:
+                        - Dagger
+                        - Scholar's Pack
+                        - Spellbook
+                        - 5 GP
+                  equipmentOptions:
+                    - Quarterstaff, Scholar's Pack, Spellbook, and 5 GP
+                    - Dagger, Scholar's Pack, Spellbook, and 5 GP
                   subclasses:
                     - Evoker
                   featuresByLevel: []
@@ -1854,6 +1944,265 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 error: Failed to add character equipment
+
+  /api/characters/{id}/equipment/class-choice:
+    post:
+      tags:
+        - Characters
+      operationId: resolveCharacterClassEquipmentChoice
+      summary: Resolve class equipment package choice
+      description: |
+        Resolves a pending class equipment package and returns the updated equipment state.
+
+        At least one of `optionLabel` or `optionIndex` must be present. When both are sent, `optionLabel` is used.
+
+        Currency found in the selected package is added to `character.currency` and returned in `addedCurrency`.
+        Currently unsupported variable items are skipped instead of failing the whole request.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterEquipmentPackageChoiceRequestBody'
+            examples:
+              byLabel:
+                summary: Choose by label
+                value:
+                  optionLabel: A
+              byIndex:
+                summary: Choose by index
+                value:
+                  optionIndex: 0
+      responses:
+        '200':
+          description: Class equipment package resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterEquipmentPackageChoiceResponseBody'
+              example:
+                characterId: 101
+                appliedChoice:
+                  source: class
+                  label: A
+                  optionIndex: 0
+                addedEquipment:
+                  - id: 42
+                    name: Greataxe
+                    quantity: 1
+                    isEquipped: true
+                  - id: 43
+                    name: Handaxe
+                    quantity: 4
+                    isEquipped: false
+                addedCurrency:
+                  cp: 0
+                  sp: 0
+                  ep: 0
+                  gp: 15
+                  pp: 0
+                skippedItems: []
+                pendingChoices:
+                  - backgroundEquipmentSelection
+                equipment:
+                  - id: 42
+                    name: Greataxe
+                    category: Weapon
+                    type: Weapon
+                    quantity: 1
+                    isEquipped: true
+                  - id: 43
+                    name: Handaxe
+                    category: Weapon
+                    type: Weapon
+                    quantity: 4
+                    isEquipped: false
+        '400':
+          description: Invalid payload or no pending class equipment selection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidPayload:
+                  summary: Invalid payload
+                  value:
+                    error: Invalid character equipment choice payload
+                noPendingChoice:
+                  summary: No pending class choice
+                  value:
+                    error: No class equipment selection pending
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character or selected package option not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                characterNotFound:
+                  summary: Character not found
+                  value:
+                    error: Character not found
+                packageOptionNotFound:
+                  summary: Package option not found
+                  value:
+                    error: Selected package option not found
+        '500':
+          description: Failed to resolve class equipment choice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to resolve class equipment choice
+
+  /api/characters/{id}/equipment/background-choice:
+    post:
+      tags:
+        - Characters
+      operationId: resolveCharacterBackgroundEquipmentChoice
+      summary: Resolve background equipment package choice
+      description: |
+        Resolves a pending background equipment package and returns the updated equipment state.
+
+        At least one of `optionLabel` or `optionIndex` must be present. When both are sent, `optionLabel` is used.
+
+        Currency found in the selected package is added to `character.currency` and returned in `addedCurrency`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CharacterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterEquipmentPackageChoiceRequestBody'
+            example:
+              optionIndex: 0
+      responses:
+        '200':
+          description: Background equipment package resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterEquipmentPackageChoiceResponseBody'
+              example:
+                characterId: 101
+                appliedChoice:
+                  source: background
+                  label: null
+                  optionIndex: 0
+                addedEquipment:
+                  - id: 12
+                    name: Spear
+                    quantity: 1
+                    isEquipped: true
+                  - id: 42
+                    name: Shortbow
+                    quantity: 1
+                    isEquipped: false
+                  - id: 44
+                    name: Arrows
+                    quantity: 20
+                    isEquipped: false
+                  - id: 45
+                    name: Quiver
+                    quantity: 1
+                    isEquipped: false
+                addedCurrency:
+                  cp: 0
+                  sp: 0
+                  ep: 0
+                  gp: 14
+                  pp: 0
+                skippedItems:
+                  - name: Gaming Set (same as above)
+                    reason: Depends on a previous choice that is not handled by this endpoint
+                pendingChoices: []
+                equipment:
+                  - id: 12
+                    name: Spear
+                    category: Weapon
+                    type: Weapon
+                    quantity: 1
+                    isEquipped: true
+                  - id: 42
+                    name: Shortbow
+                    category: Weapon
+                    type: Weapon
+                    quantity: 1
+                    isEquipped: false
+                  - id: 44
+                    name: Arrows
+                    category: Ammunition
+                    type: Gear
+                    quantity: 20
+                    isEquipped: false
+                  - id: 45
+                    name: Quiver
+                    category: Container
+                    type: Gear
+                    quantity: 1
+                    isEquipped: false
+        '400':
+          description: Invalid payload or no pending background equipment selection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidPayload:
+                  summary: Invalid payload
+                  value:
+                    error: Invalid character equipment choice payload
+                noPendingChoice:
+                  summary: No pending background choice
+                  value:
+                    error: No background equipment selection pending
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized
+        '404':
+          description: Character or selected package option not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                characterNotFound:
+                  summary: Character not found
+                  value:
+                    error: Character not found
+                packageOptionNotFound:
+                  summary: Package option not found
+                  value:
+                    error: Selected package option not found
+        '500':
+          description: Failed to resolve background equipment choice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Failed to resolve background equipment choice
 
   /api/characters/{id}/equipment/{equipmentId}:
     patch:
@@ -3152,6 +3501,47 @@ components:
           items:
             $ref: '#/components/schemas/ClassFeatureItem'
 
+    ClassSkillProficiencyChoices:
+      type: object
+      required:
+        - choose
+        - options
+      properties:
+        choose:
+          type: integer
+          example: 2
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Animal Handling
+            - Athletics
+            - Intimidation
+            - Nature
+            - Perception
+            - Survival
+
+    ClassStartingEquipmentOption:
+      type: object
+      required:
+        - label
+        - items
+      properties:
+        label:
+          type: string
+          nullable: true
+          example: A
+        items:
+          type: array
+          items:
+            type: string
+          example:
+            - Greataxe
+            - 4 Handaxes
+            - Explorer's Pack
+            - 15 GP
+
     ClassDetail:
       type: object
       required:
@@ -3165,6 +3555,11 @@ components:
         - role
         - description
         - spellcasting
+        - skillProficiencyChoices
+        - weaponProficiencies
+        - armorTraining
+        - startingEquipmentOptions
+        - equipmentOptions
         - subclasses
         - levelprogression
       properties:
@@ -3212,6 +3607,34 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/ClassSpellcasting'
+        skillProficiencyChoices:
+          $ref: '#/components/schemas/ClassSkillProficiencyChoices'
+        weaponProficiencies:
+          type: array
+          items:
+            type: string
+          example:
+            - Simple Weapons
+            - Martial Weapons
+        armorTraining:
+          type: array
+          items:
+            type: string
+          example:
+            - Light Armor
+            - Medium Armor
+            - Shield
+        startingEquipmentOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassStartingEquipmentOption'
+        equipmentOptions:
+          type: array
+          items:
+            type: string
+          example:
+            - Greataxe, 4 Handaxes, Explorer's Pack, and 15 GP
+            - 75 GP
         subclasses:
           type: array
           items:
@@ -3459,6 +3882,13 @@ components:
         - speciesId
         - backgroundId
       example: classId
+
+    CharacterPendingChoice:
+      type: string
+      enum:
+        - classEquipmentSelection
+        - backgroundEquipmentSelection
+      example: classEquipmentSelection
 
     CharacterListItem:
       type: object
@@ -4202,6 +4632,11 @@ components:
         - recommendedSkills
         - savingThrows
         - spellcasting
+        - skillProficiencyChoices
+        - weaponProficiencies
+        - armorTraining
+        - startingEquipmentOptions
+        - equipmentOptions
         - subclasses
         - featuresByLevel
       properties:
@@ -4251,6 +4686,30 @@ components:
             ability: INT
             usesSpellbook: true
             canCastRituals: true
+        skillProficiencyChoices:
+          $ref: '#/components/schemas/ClassSkillProficiencyChoices'
+        weaponProficiencies:
+          type: array
+          items:
+            type: string
+          example:
+            - Simple Weapons
+        armorTraining:
+          type: array
+          items:
+            type: string
+          example: []
+        startingEquipmentOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassStartingEquipmentOption'
+        equipmentOptions:
+          type: array
+          items:
+            type: string
+          example:
+            - Quarterstaff, Scholar's Pack, Spellbook, and 5 GP
+            - Dagger, Scholar's Pack, Spellbook, and 5 GP
         subclasses:
           type: array
           items:
@@ -4273,6 +4732,7 @@ components:
         - backgroundId
         - level
         - missingFields
+        - pendingChoices
         - abilityScores
         - abilityModifiers
         - armorClass
@@ -4323,6 +4783,11 @@ components:
           example:
             - speciesId
             - backgroundId
+        pendingChoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterPendingChoice'
+          example: []
         abilityScores:
           nullable: true
           allOf:
@@ -4613,6 +5078,114 @@ components:
           type: boolean
           example: true
       minProperties: 1
+
+    CharacterEquipmentChoiceSource:
+      type: string
+      enum:
+        - class
+        - background
+      example: class
+
+    CharacterEquipmentPackageChoiceRequestBody:
+      type: object
+      description: At least one of `optionLabel` or `optionIndex` must be present. When both are sent, `optionLabel` is used.
+      properties:
+        optionLabel:
+          type: string
+          example: A
+        optionIndex:
+          type: integer
+          minimum: 0
+          example: 0
+      minProperties: 1
+
+    CharacterEquipmentPackageChoiceAppliedOption:
+      type: object
+      required:
+        - source
+        - label
+        - optionIndex
+      properties:
+        source:
+          $ref: '#/components/schemas/CharacterEquipmentChoiceSource'
+        label:
+          type: string
+          nullable: true
+          example: A
+        optionIndex:
+          type: integer
+          minimum: 0
+          example: 0
+
+    CharacterEquipmentPackageChoiceAddedItem:
+      type: object
+      required:
+        - id
+        - name
+        - quantity
+        - isEquipped
+      properties:
+        id:
+          type: integer
+          example: 42
+        name:
+          type: string
+          example: Greataxe
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+        isEquipped:
+          type: boolean
+          example: true
+
+    CharacterEquipmentPackageChoiceSkippedItem:
+      type: object
+      required:
+        - name
+        - reason
+      properties:
+        name:
+          type: string
+          example: 15 GP
+        reason:
+          type: string
+          example: Currency is not handled by this endpoint
+
+    CharacterEquipmentPackageChoiceResponseBody:
+      type: object
+      required:
+        - characterId
+        - appliedChoice
+        - addedEquipment
+        - addedCurrency
+        - skippedItems
+        - pendingChoices
+        - equipment
+      properties:
+        characterId:
+          type: integer
+          example: 101
+        appliedChoice:
+          $ref: '#/components/schemas/CharacterEquipmentPackageChoiceAppliedOption'
+        addedEquipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterEquipmentPackageChoiceAddedItem'
+        addedCurrency:
+          $ref: '#/components/schemas/CharacterCurrency'
+        skippedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterEquipmentPackageChoiceSkippedItem'
+        pendingChoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterPendingChoice'
+        equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterEquipmentItem'
 
     CharacterAbilityScoreOptionsResponseBody:
       type: object

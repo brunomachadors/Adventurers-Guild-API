@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getSql } from '@/app/lib/db';
+import {
+  parseClassEquipmentOptions,
+  normalizeSubclassName,
+  parseClassSkillProficiencyChoices,
+  parseClassStartingEquipmentOptions,
+  parseStringArray,
+} from '@/app/lib/class';
 
 interface RouteContext {
   params: Promise<{
@@ -25,40 +32,91 @@ export async function GET(_: Request, { params }: RouteContext) {
 
   try {
     if (!Number.isNaN(parsedId)) {
-      classRows = await sql`
-        SELECT
-          id,
-          name,
-          slug,
-          description,
-          role,
-          hitdie,
-          primaryattributes,
-          recommendedskills,
-          savingthrows,
-          spellcasting,
-          subclasses,
-          levelprogression
-        FROM classes
-        WHERE id = ${parsedId}
-      `;
+      try {
+        classRows = await sql`
+          SELECT
+            id,
+            name,
+            slug,
+            description,
+            role,
+            hitdie,
+            primaryattributes,
+            recommendedskills,
+            savingthrows,
+            spellcasting,
+            skillproficiencychoicescount,
+            skillproficiencyoptions,
+            weaponproficiencies,
+            armortraining,
+            equipmentoptions,
+            subclasses,
+            levelprogression
+          FROM classes
+          WHERE id = ${parsedId}
+        `;
+      } catch {
+        classRows = await sql`
+          SELECT
+            id,
+            name,
+            slug,
+            description,
+            role,
+            hitdie,
+            primaryattributes,
+            recommendedskills,
+            savingthrows,
+            spellcasting,
+            subclasses,
+            levelprogression
+          FROM classes
+          WHERE id = ${parsedId}
+        `;
+      }
     } else {
-      const allClasses = await sql`
-        SELECT
-          id,
-          name,
-          slug,
-          description,
-          role,
-          hitdie,
-          primaryattributes,
-          recommendedskills,
-          savingthrows,
-          spellcasting,
-          subclasses,
-          levelprogression
-        FROM classes
-      `;
+      let allClasses;
+
+      try {
+        allClasses = await sql`
+          SELECT
+            id,
+            name,
+            slug,
+            description,
+            role,
+            hitdie,
+            primaryattributes,
+            recommendedskills,
+            savingthrows,
+            spellcasting,
+            skillproficiencychoicescount,
+            skillproficiencyoptions,
+            weaponproficiencies,
+            armortraining,
+            equipmentoptions,
+            subclasses,
+            levelprogression
+          FROM classes
+        `;
+      } catch {
+        allClasses = await sql`
+          SELECT
+            id,
+            name,
+            slug,
+            description,
+            role,
+            hitdie,
+            primaryattributes,
+            recommendedskills,
+            savingthrows,
+            spellcasting,
+            subclasses,
+            levelprogression
+          FROM classes
+        `;
+      }
 
       const normalizedIdentifier = normalizeClassName(identifier);
 
@@ -88,12 +146,28 @@ export async function GET(_: Request, { params }: RouteContext) {
       description: classItem.description,
       role: classItem.role,
       hitdie: classItem.hitdie,
-      primaryattributes: classItem.primaryattributes,
-      recommendedskills: classItem.recommendedskills,
-      savingthrows: classItem.savingthrows,
+      primaryattributes: parseStringArray(classItem.primaryattributes),
+      recommendedskills: parseStringArray(classItem.recommendedskills),
+      savingthrows: parseStringArray(classItem.savingthrows),
       spellcasting: classItem.spellcasting,
-      subclasses: classItem.subclasses,
+      skillProficiencyChoices: parseClassSkillProficiencyChoices(
+        classItem.skillproficiencychoicescount,
+        classItem.skillproficiencyoptions,
+      ),
+      weaponProficiencies: parseStringArray(classItem.weaponproficiencies),
+      armorTraining: parseStringArray(classItem.armortraining),
+      startingEquipmentOptions: parseClassStartingEquipmentOptions(
+        classItem.equipmentoptions,
+      ),
+      equipmentOptions: parseClassEquipmentOptions(classItem.equipmentoptions),
       levelprogression: classItem.levelprogression,
+      subclasses: Array.isArray(classItem.subclasses)
+        ? classItem.subclasses
+            .map((subclass) => normalizeSubclassName(subclass))
+            .filter((subclassName): subclassName is string =>
+              Boolean(subclassName),
+            )
+        : [],
     };
 
     return NextResponse.json(formattedClass, { status: 200 });

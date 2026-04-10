@@ -570,6 +570,7 @@ export class CharactersAssert {
       expect(character).toHaveProperty('backgroundId');
       expect(character).toHaveProperty('level');
       expect(character).toHaveProperty('missingFields');
+      expect(character).toHaveProperty('pendingChoices');
       expect(character).toHaveProperty('abilityScores');
       expect(character).toHaveProperty('abilityModifiers');
       expect(character).toHaveProperty('armorClass');
@@ -605,6 +606,7 @@ export class CharactersAssert {
       ).toBe(true);
       expect(typeof character.level).toBe('number');
       expect(Array.isArray(character.missingFields)).toBe(true);
+      expect(Array.isArray(character.pendingChoices)).toBe(true);
       expect(
         character.abilityScores === null ||
           typeof character.abilityScores === 'object',
@@ -659,6 +661,15 @@ export class CharactersAssert {
       await test.step(`Validate missing field schema for ${missingField}`, async () => {
         expect(typeof missingField).toBe('string');
       });
+    }
+
+    for (const pendingChoice of character.pendingChoices) {
+      await test.step(
+        `Validate pending choice schema for ${pendingChoice}`,
+        async () => {
+          expect(typeof pendingChoice).toBe('string');
+        },
+      );
     }
 
     for (const skillProficiency of character.skillProficiencies) {
@@ -789,6 +800,11 @@ export class CharactersAssert {
       expect(classDetails).toHaveProperty('recommendedSkills');
       expect(classDetails).toHaveProperty('savingThrows');
       expect(classDetails).toHaveProperty('spellcasting');
+      expect(classDetails).toHaveProperty('skillProficiencyChoices');
+      expect(classDetails).toHaveProperty('weaponProficiencies');
+      expect(classDetails).toHaveProperty('armorTraining');
+      expect(classDetails).toHaveProperty('startingEquipmentOptions');
+      expect(classDetails).toHaveProperty('equipmentOptions');
       expect(classDetails).toHaveProperty('subclasses');
       expect(classDetails).toHaveProperty('featuresByLevel');
 
@@ -801,6 +817,11 @@ export class CharactersAssert {
       expect(Array.isArray(classDetails.primaryAttributes)).toBe(true);
       expect(Array.isArray(classDetails.recommendedSkills)).toBe(true);
       expect(Array.isArray(classDetails.savingThrows)).toBe(true);
+      expect(typeof classDetails.skillProficiencyChoices).toBe('object');
+      expect(Array.isArray(classDetails.weaponProficiencies)).toBe(true);
+      expect(Array.isArray(classDetails.armorTraining)).toBe(true);
+      expect(Array.isArray(classDetails.startingEquipmentOptions)).toBe(true);
+      expect(Array.isArray(classDetails.equipmentOptions)).toBe(true);
       expect(
         classDetails.spellcasting === null ||
           typeof classDetails.spellcasting === 'object',
@@ -828,6 +849,43 @@ export class CharactersAssert {
         });
       }
     }
+
+    await test.step('Validate class creation metadata schema', async () => {
+      expect(typeof classDetails.skillProficiencyChoices.choose).toBe('number');
+      expect(Array.isArray(classDetails.skillProficiencyChoices.options)).toBe(
+        true,
+      );
+      expect(
+        classDetails.skillProficiencyChoices.options.every(
+          (option) => typeof option === 'string',
+        ),
+      ).toBe(true);
+      expect(
+        classDetails.weaponProficiencies.every(
+          (proficiency) => typeof proficiency === 'string',
+        ),
+      ).toBe(true);
+      expect(
+        classDetails.armorTraining.every(
+          (training) => typeof training === 'string',
+        ),
+      ).toBe(true);
+      expect(
+        classDetails.equipmentOptions.every(
+          (option) => typeof option === 'string',
+        ),
+      ).toBe(true);
+      expect(
+        classDetails.startingEquipmentOptions.every(
+          (option) =>
+            option !== null &&
+            typeof option === 'object' &&
+            (option.label === null || typeof option.label === 'string') &&
+            Array.isArray(option.items) &&
+            option.items.every((item) => typeof item === 'string'),
+        ),
+      ).toBe(true);
+    });
   }
 
   async validateSpeciesDetailsSchema(speciesDetails: SpeciesDetail) {
@@ -1668,6 +1726,15 @@ export class CharactersAssert {
   ) {
     await test.step('Validate Missing Fields', async () => {
       expect(missingFields).toEqual(expectedMissingFields);
+    });
+  }
+
+  async validatePendingChoices(
+    pendingChoices: CharacterResponseBody['pendingChoices'],
+    expectedPendingChoices: CharacterResponseBody['pendingChoices'],
+  ) {
+    await test.step('Validate Pending Choices', async () => {
+      expect(pendingChoices).toEqual(expectedPendingChoices);
     });
   }
 

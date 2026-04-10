@@ -48,9 +48,23 @@ export function findAttributeByReference(
   });
 }
 
-export function splitEquipmentOptionItems(option: string) {
-  return option
-    .split(/\s*,\s*/)
-    .map((item) => item.trim())
-    .filter(Boolean);
+export function splitEquipmentOptionItems(option: unknown): string[] {
+  if (typeof option === 'string') {
+    return option
+      .split(/\s*,\s*/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (Array.isArray(option)) {
+    return option.flatMap((entry) => splitEquipmentOptionItems(entry));
+  }
+
+  if (option && typeof option === 'object') {
+    return Object.values(option).flatMap((value) =>
+      splitEquipmentOptionItems(value),
+    );
+  }
+
+  return [];
 }

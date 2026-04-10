@@ -1,6 +1,8 @@
 import { getAuthenticatedOwnerFromRequest } from '@/app/lib/auth';
+import { clearCharacterEquipmentChoiceRecords } from '@/app/lib/character-equipment-package-choices';
 import {
   formatCharacterResponse,
+  getOwnedCharacterResponse,
   isCharacterAbilityScoresOrNull,
   isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
@@ -52,36 +54,18 @@ export async function GET(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: 'Character not found' }, { status: 404 });
   }
 
-  const sql = getSql();
-
   try {
-    const characterRows = await sql`
-      SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
-      FROM characters
-      WHERE id = ${parsedId}
-        AND ownerid = ${authenticatedOwner.id}
-      LIMIT 1
-    `;
+    const responseBody = await getOwnedCharacterResponse(
+      authenticatedOwner.id,
+      parsedId,
+    );
 
-    if (!characterRows || characterRows.length === 0) {
+    if (!responseBody) {
       return NextResponse.json(
         { error: 'Character not found' },
         { status: 404 },
       );
     }
-
-    const character = characterRows[0];
-    const responseBody = await formatCharacterResponse({
-      id: character.id,
-      name: character.name,
-      classId: character.classid,
-      speciesId: character.speciesid,
-      backgroundId: character.backgroundid,
-      level: character.level,
-      abilityScores: character.abilityscores,
-      currency: character.currency,
-      skillProficiencies: character.skillproficiencies,
-    });
 
     return NextResponse.json(responseBody, { status: 200 });
   } catch (error) {
@@ -178,6 +162,9 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       nextBackgroundId !== null
         ? 'complete'
         : 'draft';
+    const shouldClearEquipmentChoiceRecords =
+      nextClassId !== existingCharacter.classid ||
+      nextBackgroundId !== existingCharacter.backgroundid;
 
     const characterRows = await sql`
       UPDATE characters
@@ -196,6 +183,10 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         AND ownerid = ${authenticatedOwner.id}
       RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
     `;
+
+    if (shouldClearEquipmentChoiceRecords) {
+      await clearCharacterEquipmentChoiceRecords(parsedId);
+    }
 
     const character = characterRows[0];
     const responseBody = await formatCharacterResponse({
@@ -255,6 +246,8 @@ export async function DELETE(request: Request, { params }: RouteContext) {
       DELETE FROM characterspells
       WHERE characterid = ${parsedId}
     `;
+
+    await clearCharacterEquipmentChoiceRecords(parsedId);
 
     await sql`
       DELETE FROM characters

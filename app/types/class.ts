@@ -38,6 +38,16 @@ export interface ClassSpellSelection {
   changesWhen?: string;
 }
 
+export interface ClassSkillProficiencyChoices {
+  choose: number;
+  options: SkillName[];
+}
+
+export interface ClassStartingEquipmentOption {
+  label: string | null;
+  items: string[];
+}
+
 export interface ClassDetail {
   id: number;
   name: string;
@@ -49,6 +59,11 @@ export interface ClassDetail {
   role: ClassRole;
   description: string;
   spellcasting: ClassSpellcasting | null;
+  skillProficiencyChoices: ClassSkillProficiencyChoices;
+  weaponProficiencies: string[];
+  armorTraining: string[];
+  startingEquipmentOptions: ClassStartingEquipmentOption[];
+  equipmentOptions: string[];
   subclasses: string[];
   levelprogression: ClassLevelProgressionItem[];
 }

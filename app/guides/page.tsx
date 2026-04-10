@@ -1,4 +1,11 @@
 import { GuidesAccordion } from '@/app/components/guides-accordion';
+import {
+  parseClassEquipmentOptions,
+  normalizeSubclassName,
+  parseClassSkillProficiencyChoices,
+  parseClassStartingEquipmentOptions,
+  parseStringArray,
+} from '@/app/lib/class';
 import { getSql } from '@/app/lib/db';
 import { formatSpeciesDetail } from '@/app/lib/species';
 import type { Attribute } from '@/app/types/attribute';
@@ -55,56 +62,65 @@ async function getSkills(): Promise<SkillDetail[]> {
     ) as SkillDetail[];
 }
 
-function getStringProperty(
-  record: Record<string, unknown>,
-  propertyNames: string[],
-) {
-  const propertyValue = propertyNames
-    .map((propertyName) => record[propertyName])
-    .find((value) => typeof value === 'string');
-
-  return typeof propertyValue === 'string' ? propertyValue : null;
-}
-
-function normalizeSubclassName(subclass: unknown) {
-  if (typeof subclass === 'string') {
-    return subclass;
-  }
-
-  if (!subclass || typeof subclass !== 'object') {
-    return null;
-  }
-
-  return getStringProperty(subclass as Record<string, unknown>, [
-    'name',
-    'subclassName',
-    'subclass',
-    'title',
-  ]);
-}
-
 async function getClasses(): Promise<ClassDetail[]> {
   const sql = getSql();
-  const classes = await sql`
-    SELECT
-      id,
-      name,
-      slug,
-      description,
-      role,
-      hitdie,
-      primaryattributes,
-      recommendedskills,
-      savingthrows,
-      spellcasting,
-      subclasses,
-      levelprogression
-    FROM classes
-    ORDER BY id
-  `;
+  let classes;
+
+  try {
+    classes = await sql`
+      SELECT
+        id,
+        name,
+        slug,
+        description,
+        role,
+        hitdie,
+        primaryattributes,
+        recommendedskills,
+        savingthrows,
+        spellcasting,
+        skillproficiencychoicescount,
+        skillproficiencyoptions,
+        weaponproficiencies,
+        armortraining,
+        equipmentoptions,
+        subclasses,
+        levelprogression
+      FROM classes
+      ORDER BY id
+    `;
+  } catch {
+    classes = await sql`
+      SELECT
+        id,
+        name,
+        slug,
+        description,
+        role,
+        hitdie,
+        primaryattributes,
+        recommendedskills,
+        savingthrows,
+        spellcasting,
+        subclasses,
+        levelprogression
+      FROM classes
+      ORDER BY id
+    `;
+  }
 
   return classes.map((classItem) => ({
     ...classItem,
+    skillProficiencyChoices: parseClassSkillProficiencyChoices(
+      classItem.skillproficiencychoicescount,
+      classItem.skillproficiencyoptions,
+    ),
+    weaponProficiencies: parseStringArray(classItem.weaponproficiencies),
+    armorTraining: parseStringArray(classItem.armortraining),
+    startingEquipmentOptions: parseClassStartingEquipmentOptions(
+      classItem.equipmentoptions,
+    ),
+    equipmentOptions: parseClassEquipmentOptions(classItem.equipmentoptions),
     subclasses: Array.isArray(classItem.subclasses)
       ? classItem.subclasses
           .map((subclass) => normalizeSubclassName(subclass))

@@ -125,7 +125,15 @@ export type ExpectedClassDetail = Pick<
   Partial<
     Pick<
       ClassDetail,
-      'savingthrows' | 'spellcasting' | 'subclasses' | 'levelprogression'
+      | 'savingthrows'
+      | 'spellcasting'
+      | 'skillProficiencyChoices'
+      | 'weaponProficiencies'
+      | 'armorTraining'
+      | 'startingEquipmentOptions'
+      | 'equipmentOptions'
+      | 'subclasses'
+      | 'levelprogression'
     >
   >;
 
@@ -138,6 +146,33 @@ export const expectedDetailedClasses: Record<string, ExpectedClassDetail> = {
     recommendedskills: ['Athletics', 'Survival', 'Intimidation'],
     savingthrows: ['STR', 'CON'],
     spellcasting: null,
+    skillProficiencyChoices: {
+      choose: 2,
+      options: [
+        'Animal Handling',
+        'Athletics',
+        'Intimidation',
+        'Nature',
+        'Perception',
+        'Survival',
+      ],
+    },
+    weaponProficiencies: ['Simple Weapons', 'Martial Weapons'],
+    armorTraining: ['Light Armor', 'Medium Armor', 'Shield'],
+    startingEquipmentOptions: [
+      {
+        label: 'A',
+        items: ['Greataxe', '4 Handaxes', "Explorer's Pack", '15 GP'],
+      },
+      {
+        label: 'B',
+        items: ['75 GP'],
+      },
+    ],
+    equipmentOptions: [
+      "Greataxe, 4 Handaxes, Explorer's Pack, and 15 GP",
+      '75 GP',
+    ],
     subclasses: ['Berserker', 'Wild Heart', 'World Tree', 'Zealot'],
     hitdie: 12,
     role: 'melee',

@@ -5,6 +5,7 @@ import { useState, type MouseEvent } from 'react';
 
 import { AuthGuideChapter } from '@/app/components/guides/auth-guide-chapter';
 import { BackgroundsGuideChapter } from '@/app/components/guides/backgrounds-guide-chapter';
+import { CharactersGuideChapter } from '@/app/components/guides/characters-guide-chapter';
 import { EquipmentGuideChapter } from '@/app/components/guides/equipment-guide-chapter';
 import { SpellsGuideChapter } from '@/app/components/guides/spells-guide-chapter';
 import {
@@ -14,6 +15,7 @@ import {
   getGuideAnchorSlug,
   getSkillAnchor,
   getSpeciesAnchor,
+  splitEquipmentOptionItems,
 } from '@/app/components/guides/background-guide-utils';
 import { apiResources } from '@/app/data/api-resources';
 import type { Attribute } from '@/app/types/attribute';
@@ -433,6 +435,7 @@ export function GuidesAccordion({
   const [isEquipmentOpen, setIsEquipmentOpen] = useState(false);
   const [isSpellsOpen, setIsSpellsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isCharactersOpen, setIsCharactersOpen] = useState(false);
   const [selectedAttributeIndex, setSelectedAttributeIndex] = useState(0);
   const [selectedSkillIndex, setSelectedSkillIndex] = useState(0);
   const [selectedClassIndex, setSelectedClassIndex] = useState(0);
@@ -475,6 +478,10 @@ export function GuidesAccordion({
 
   function toggleAuth() {
     setIsAuthOpen((currentValue) => !currentValue);
+  }
+
+  function toggleCharacters() {
+    setIsCharactersOpen((currentValue) => !currentValue);
   }
 
   function openSkillCard(
@@ -779,6 +786,11 @@ export function GuidesAccordion({
     scrollToChapterIndex('auth-index');
   }
 
+  function openCharactersChapter() {
+    setIsCharactersOpen(true);
+    scrollToChapterIndex('characters-index');
+  }
+
   function closeAttributesChapter() {
     setIsAttributesOpen(false);
     scrollToGuideSection('attributes');
@@ -819,6 +831,11 @@ export function GuidesAccordion({
     scrollToGuideSection('auth');
   }
 
+  function closeCharactersChapter() {
+    setIsCharactersOpen(false);
+    scrollToGuideSection('characters');
+  }
+
   return (
     <>
       <section className="section-block guide-grimoire-cover">
@@ -842,6 +859,7 @@ export function GuidesAccordion({
             const isEquipment = resource.slug === 'equipment';
             const isSpells = resource.slug === 'spells';
             const isAuth = resource.slug === 'auth';
+            const isCharacters = resource.slug === 'characters';
             const isEnabled =
               isAttributes ||
               isSkills ||
@@ -850,7 +868,8 @@ export function GuidesAccordion({
               isBackgrounds ||
               isEquipment ||
               isSpells ||
-              isAuth;
+              isAuth ||
+              isCharacters;
             const isOpen =
               (isAttributes && isAttributesOpen) ||
               (isSkills && isSkillsOpen) ||
@@ -859,7 +878,8 @@ export function GuidesAccordion({
               (isBackgrounds && isBackgroundsOpen) ||
               (isEquipment && isEquipmentOpen) ||
               (isSpells && isSpellsOpen) ||
-              (isAuth && isAuthOpen);
+              (isAuth && isAuthOpen) ||
+              (isCharacters && isCharactersOpen);
 
             return (
               <button
@@ -884,6 +904,8 @@ export function GuidesAccordion({
                             ? openSpellsChapter
                           : isAuth
                             ? openAuthChapter
+                          : isCharacters
+                            ? openCharactersChapter
                           : undefined
                 }
                 type="button"
@@ -1469,19 +1491,17 @@ export function GuidesAccordion({
 
                 return (
                   <article
-                    className="class-guide-card"
+                    className="species-guide-card"
                     id={getClassAnchor(classItem.name)}
                     key={classItem.id}
                   >
-                    <div className="class-guide-card__header">
-                      <p className="kicker">{classItem.role}</p>
-                      <h3>{classItem.name}</h3>
-                      <p>{classItem.description}</p>
-                    </div>
-
-                    <div className="class-guide-card__overview">
+                    <div
+                      className={`species-guide-card__overview${
+                        classImage ? '' : ' species-guide-card__overview--text-only'
+                      }`}
+                    >
                       {classImage ? (
-                        <div className="class-guide-card__media">
+                        <div className="species-guide-card__media">
                           <Image
                             alt={classImage.alt}
                             fill
@@ -1491,42 +1511,52 @@ export function GuidesAccordion({
                         </div>
                       ) : null}
 
-                      <div className="class-guide-card__content">
-                        <div className="class-guide-card__meta">
-                          <div className="class-guide-card__stat-block class-guide-card__hit-die">
-                            <p>Hit Die</p>
-                            <span
-                              className={`class-guide-card__die class-guide-card__die--d${hitDie}`}
-                              data-hit-die={hitDie}
-                            >
-                              D{hitDie}
-                            </span>
-                          </div>
+                      <div className="species-guide-card__header">
+                        <p className="kicker">{classItem.role}</p>
+                        <h3>{classItem.name}</h3>
+                        <p>{classItem.description}</p>
+                      </div>
+                    </div>
 
-                          <div className="class-guide-card__stat-block class-guide-card__primary">
-                            <p>Primary Attribute</p>
-                            <div>
-                              {classItem.primaryattributes.map(
-                                (primaryAttribute) => (
-                                  <a
-                                    href={`#${getAttributeAnchor(primaryAttribute)}`}
-                                    key={primaryAttribute}
-                                    onClick={(event) =>
-                                      openAttributeCard(event, primaryAttribute)
-                                    }
-                                  >
-                                    {primaryAttribute}
-                                  </a>
-                                ),
-                              )}
-                            </div>
-                          </div>
+                    <div className="background-guide-card__details">
+                      <p>What this class grants</p>
+                      <ul>
+                        <li>
+                          <strong>Hit die</strong>
+                          <span>{`D${hitDie}`}</span>
+                        </li>
 
-                          <div className="class-guide-card__stat-block class-guide-card__saving-throws">
-                            <p>Saving Throws</p>
-                            <div>
-                              {classItem.savingthrows.map((savingThrow) => (
+                        <li>
+                          <strong>Primary abilities</strong>
+                          <div className="attribute-skill-list">
+                            {classItem.primaryattributes.length > 0 ? (
+                              classItem.primaryattributes.map((primaryAttribute) => (
                                 <a
+                                  className="attribute-skill-chip"
+                                  href={`#${getAttributeAnchor(primaryAttribute)}`}
+                                  key={primaryAttribute}
+                                  onClick={(event) =>
+                                    openAttributeCard(event, primaryAttribute)
+                                  }
+                                >
+                                  {primaryAttribute}
+                                </a>
+                              ))
+                            ) : (
+                              <span className="attribute-skill-chip attribute-skill-chip--empty">
+                                No primary abilities listed.
+                              </span>
+                            )}
+                          </div>
+                        </li>
+
+                        <li>
+                          <strong>Saving throws</strong>
+                          <div className="attribute-skill-list">
+                            {classItem.savingthrows.length > 0 ? (
+                              classItem.savingthrows.map((savingThrow) => (
+                                <a
+                                  className="attribute-skill-chip"
                                   href={`#${getAttributeAnchor(savingThrow)}`}
                                   key={savingThrow}
                                   onClick={(event) =>
@@ -1535,17 +1565,28 @@ export function GuidesAccordion({
                                 >
                                   {savingThrow}
                                 </a>
-                              ))}
-                            </div>
+                              ))
+                            ) : (
+                              <span className="attribute-skill-chip attribute-skill-chip--empty">
+                                No saving throws listed.
+                              </span>
+                            )}
                           </div>
-                        </div>
+                        </li>
 
-                        <div className="class-guide-card__details">
-                          <div className="class-guide-card__detail-block">
-                            <p>Recommended skills</p>
-                            {classItem.recommendedskills.length > 0 ? (
+                        <li>
+                          <strong>Skill proficiency choices</strong>
+                          {classItem.skillProficiencyChoices.options.length > 0 ? (
+                            <>
+                              <span>
+                                {`Choose ${classItem.skillProficiencyChoices.choose} skill${
+                                  classItem.skillProficiencyChoices.choose === 1
+                                    ? ''
+                                    : 's'
+                                } from this class list.`}
+                              </span>
                               <div className="attribute-skill-list">
-                                {classItem.recommendedskills.map((skill) => (
+                                {classItem.skillProficiencyChoices.options.map((skill) => (
                                   <a
                                     className="attribute-skill-chip"
                                     href={`#${getSkillAnchor(skill)}`}
@@ -1558,30 +1599,127 @@ export function GuidesAccordion({
                                   </a>
                                 ))}
                               </div>
+                            </>
+                          ) : (
+                            <span>No skill choices listed.</span>
+                          )}
+                        </li>
+
+                        <li>
+                          <strong>Recommended skills</strong>
+                          <div className="attribute-skill-list">
+                            {classItem.recommendedskills.length > 0 ? (
+                              classItem.recommendedskills.map((skill) => (
+                                <a
+                                  className="attribute-skill-chip"
+                                  href={`#${getSkillAnchor(skill)}`}
+                                  key={skill}
+                                  onClick={(event) =>
+                                    openSkillCard(event, skill)
+                                  }
+                                >
+                                  {skill}
+                                </a>
+                              ))
                             ) : (
-                              <span>No recommended skills listed.</span>
+                              <span className="attribute-skill-chip attribute-skill-chip--empty">
+                                No recommended skills listed.
+                              </span>
                             )}
                           </div>
+                        </li>
 
-                          <div className="class-guide-card__detail-block">
-                            <p>Subclasses</p>
-                            <span>
-                              {classItem.subclasses.length > 0
-                                ? classItem.subclasses.join(', ')
-                                : 'No subclasses listed yet.'}
-                            </span>
-                          </div>
+                        <li>
+                          <strong>Weapon proficiencies</strong>
+                          <span>
+                            {classItem.weaponProficiencies.length > 0
+                              ? classItem.weaponProficiencies.join(', ')
+                              : 'No weapon proficiencies listed.'}
+                          </span>
+                        </li>
 
-                          {classItem.spellcasting ? (
-                            <div className="class-guide-card__detail-block">
-                              <p>Spellcasting</p>
-                              <span>
-                                Uses {classItem.spellcasting.ability}
-                              </span>
+                        <li>
+                          <strong>Armor proficiencies</strong>
+                          <span>
+                            {classItem.armorTraining.length > 0
+                              ? classItem.armorTraining.join(', ')
+                              : 'No armor proficiencies listed.'}
+                          </span>
+                        </li>
+
+                        <li>
+                          <strong>Subclasses</strong>
+                          <span>
+                            {classItem.subclasses.length > 0
+                              ? classItem.subclasses.join(', ')
+                              : 'No subclasses listed yet.'}
+                          </span>
+                        </li>
+
+                        <li>
+                          <strong>Equipment options</strong>
+                          {classItem.startingEquipmentOptions.length > 0 ? (
+                            <div className="background-guide-card__option-grid">
+                              {classItem.startingEquipmentOptions.map(
+                                (equipmentOption, optionIndex) => (
+                                  <div
+                                    className="background-guide-card__option-card"
+                                    key={`${classItem.id}-equipment-option-${optionIndex}`}
+                                  >
+                                    <p>
+                                      {equipmentOption.label
+                                        ? `Option ${equipmentOption.label}`
+                                        : `Option ${optionIndex + 1}`}
+                                    </p>
+                                    <ul>
+                                      {equipmentOption.items.map((item) => (
+                                        <li
+                                          key={`${classItem.id}-equipment-option-${optionIndex}-${item}`}
+                                        >
+                                          {item}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ),
+                              )}
                             </div>
-                          ) : null}
-                        </div>
-                      </div>
+                          ) : classItem.equipmentOptions.length > 0 ? (
+                            <div className="background-guide-card__option-grid">
+                              {classItem.equipmentOptions.map(
+                                (equipmentOption, optionIndex) => (
+                                  <div
+                                    className="background-guide-card__option-card"
+                                    key={`${classItem.id}-equipment-option-fallback-${optionIndex}`}
+                                  >
+                                    <p>{`Option ${optionIndex + 1}`}</p>
+                                    <ul>
+                                      {splitEquipmentOptionItems(
+                                        equipmentOption,
+                                      ).map((item) => (
+                                        <li
+                                          key={`${classItem.id}-equipment-option-fallback-${optionIndex}-${item}`}
+                                        >
+                                          {item}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          ) : (
+                            <span>No equipment options listed.</span>
+                          )}
+                        </li>
+
+                        {classItem.spellcasting ? (
+                          <li>
+                            <strong>Spellcasting</strong>
+                            <span>{`Uses ${classItem.spellcasting.ability}`}</span>
+                          </li>
+                        ) : null}
+                      </ul>
                     </div>
 
                     {classItem.levelprogression.length > 0 ? (
@@ -2089,6 +2227,12 @@ export function GuidesAccordion({
         isOpen={isAuthOpen}
         onClose={closeAuthChapter}
         onToggle={toggleAuth}
+      />
+
+      <CharactersGuideChapter
+        isOpen={isCharactersOpen}
+        onClose={closeCharactersChapter}
+        onToggle={toggleCharacters}
       />
     </>
   );

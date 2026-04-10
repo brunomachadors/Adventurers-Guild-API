@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 import { ClassDetail } from '@/app/types/class';
 import { ClassesClient } from '../clients/classes.client';
@@ -82,6 +82,32 @@ test.describe('Classes API - Detail', { tag: ['@classes', '@detail'] }, () => {
           body.subclasses,
           expectedClass.subclasses,
         );
+      },
+    );
+  }
+
+  for (const identifier of ['fighter', 'wizard', 'rogue', 'cleric'] as const) {
+    test(
+      `Validate Class Creation Fields Schema - ${identifier}`,
+      { tag: ['@get', '@data', '@creation-fields'] },
+      async ({ request }) => {
+        const classesClient = new ClassesClient(request);
+        const classAssert = new ClassAssert();
+
+        const response = await classesClient.getClassDetail(identifier);
+
+        await classAssert.success(response);
+
+        const body: ClassDetail = await response.json();
+
+        await classAssert.validateDetailSchema(body);
+        await test.step('Validate new class creation fields exist', async () => {
+          expect(body.skillProficiencyChoices).toBeTruthy();
+          expect(Array.isArray(body.weaponProficiencies)).toBe(true);
+          expect(Array.isArray(body.armorTraining)).toBe(true);
+          expect(Array.isArray(body.startingEquipmentOptions)).toBe(true);
+          expect(Array.isArray(body.equipmentOptions)).toBe(true);
+        });
       },
     );
   }

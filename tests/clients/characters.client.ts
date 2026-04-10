@@ -4,6 +4,7 @@ import {
   CharacterAbilityScoresUpdateRequestBody,
   CharacterCreateRequestBody,
   CharacterEquipmentAddRequestBody,
+  CharacterEquipmentPackageChoiceRequestBody,
   CharacterEquipmentUpdateRequestBody,
   CharacterSpellSelectionUpdateRequestBody,
   CharacterUpdateRequestBody,
@@ -85,6 +86,31 @@ export class CharactersClient {
       data: payload,
       headers: this.buildAuthHeaders(token),
     });
+  }
+
+  async chooseClassEquipmentPackage(
+    id: number,
+    payload: CharacterEquipmentPackageChoiceRequestBody,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.post(`/api/characters/${id}/equipment/class-choice`, {
+      data: payload,
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
+  async chooseBackgroundEquipmentPackage(
+    id: number,
+    payload: CharacterEquipmentPackageChoiceRequestBody,
+    token?: string,
+  ): Promise<APIResponse> {
+    return this.request.post(
+      `/api/characters/${id}/equipment/background-choice`,
+      {
+        data: payload,
+        headers: this.buildAuthHeaders(token),
+      },
+    );
   }
 
   async patchCharacterEquipment(

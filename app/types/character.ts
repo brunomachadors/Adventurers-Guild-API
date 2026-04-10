@@ -1,4 +1,8 @@
 import { Attributeshortname } from './attribute';
+import type {
+  ClassSkillProficiencyChoices,
+  ClassStartingEquipmentOption,
+} from './class';
 import { SkillName } from './skill';
 
 export type CharacterStatus = 'draft' | 'complete';
@@ -7,6 +11,10 @@ export type CharacterMissingField =
   | 'classId'
   | 'speciesId'
   | 'backgroundId';
+
+export type CharacterPendingChoice =
+  | 'classEquipmentSelection'
+  | 'backgroundEquipmentSelection';
 
 export interface CharacterClassFeatureItem {
   name: string;
@@ -29,6 +37,11 @@ export interface CharacterClassDetails {
   recommendedSkills: string[];
   savingThrows: string[];
   spellcasting: Record<string, unknown> | null;
+  skillProficiencyChoices: ClassSkillProficiencyChoices;
+  weaponProficiencies: string[];
+  armorTraining: string[];
+  startingEquipmentOptions: ClassStartingEquipmentOption[];
+  equipmentOptions: string[];
   subclasses: string[];
   featuresByLevel: CharacterClassProgressionItem[];
 }
@@ -271,6 +284,7 @@ export interface CharacterResponseBody {
   backgroundId: number | null;
   level: number;
   missingFields: CharacterMissingField[];
+  pendingChoices: CharacterPendingChoice[];
   abilityScores: CharacterResolvedAbilityScores | null;
   abilityModifiers: CharacterAbilityModifiers | null;
   armorClass: CharacterArmorClass;
@@ -387,4 +401,39 @@ export interface CharacterEquipmentAddRequestBody {
 export interface CharacterEquipmentUpdateRequestBody {
   quantity?: number;
   isEquipped?: boolean;
+}
+
+export type CharacterEquipmentChoiceSource = 'class' | 'background';
+
+export interface CharacterEquipmentPackageChoiceRequestBody {
+  optionLabel?: string;
+  optionIndex?: number;
+}
+
+export interface CharacterEquipmentPackageChoiceAppliedOption {
+  source: CharacterEquipmentChoiceSource;
+  label: string | null;
+  optionIndex: number;
+}
+
+export interface CharacterEquipmentPackageChoiceAddedItem {
+  id: number;
+  name: string;
+  quantity: number;
+  isEquipped: boolean;
+}
+
+export interface CharacterEquipmentPackageChoiceSkippedItem {
+  name: string;
+  reason: string;
+}
+
+export interface CharacterEquipmentPackageChoiceResponseBody {
+  characterId: number;
+  appliedChoice: CharacterEquipmentPackageChoiceAppliedOption;
+  addedEquipment: CharacterEquipmentPackageChoiceAddedItem[];
+  addedCurrency: CharacterCurrency;
+  skippedItems: CharacterEquipmentPackageChoiceSkippedItem[];
+  pendingChoices: CharacterPendingChoice[];
+  equipment: CharacterEquipmentItem[];
 }
