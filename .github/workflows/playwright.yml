@@ -16,6 +16,7 @@ jobs:
       AUTH_JWT_SECRET: ${{ secrets.AUTH_JWT_SECRET }}
       E2E_AUTH_USERNAME: ${{ secrets.E2E_AUTH_USERNAME }}
       E2E_AUTH_PASSWORD: ${{ secrets.E2E_AUTH_PASSWORD }}
+      POSTMAN_BASE_URL: https://adventurers-guild-api.vercel.app/api
 
     steps:
       - uses: actions/checkout@v4
@@ -38,3 +39,18 @@ jobs:
 
       - name: Run Playwright tests
         run: npx playwright test --reporter=line
+
+      - name: Generate Postman validation bundle
+        run: npm run postman:site -- --base-url "$POSTMAN_BASE_URL" --output-dir generated/postman-ci
+
+      - name: Run Newman validation
+        run: >
+          npx newman run generated/postman-ci/adventurers-guild.postman_collection.json
+          -e generated/postman-ci/adventurers-guild.postman_environment.json
+
+      - name: Upload Postman bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-validation-bundle
+          path: generated/postman-ci
