@@ -16,6 +16,13 @@ export class SpellAssert {
     });
   }
 
+  async badRequest(response: { status(): number; ok(): boolean }) {
+    await test.step('Should return status code 400', async () => {
+      expect(response.status()).toBe(400);
+      expect(response.ok()).toBeFalsy();
+    });
+  }
+
   async validateSchema(spellList: SpellListItem[]) {
     await test.step('Should validate spells list is not empty', async () => {
       expect(spellList).toBeTruthy();

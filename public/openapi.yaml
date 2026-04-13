@@ -741,6 +741,46 @@ paths:
         - `name`
         - `level`
         - `levelLabel`
+      parameters:
+        - name: level
+          in: query
+          required: false
+          description: Spell level filter. Accepts a non-negative integer or `cantrip` for level 0.
+          schema:
+            type: string
+          examples:
+            levelOne:
+              value: '1'
+            cantrip:
+              value: cantrip
+        - name: school
+          in: query
+          required: false
+          description: Case-insensitive spell school filter.
+          schema:
+            type: string
+          example: evocation
+        - name: class
+          in: query
+          required: false
+          description: Case-insensitive class filter by class slug or name.
+          schema:
+            type: string
+          example: wizard
+        - name: source
+          in: query
+          required: false
+          description: Case-insensitive spell source filter.
+          schema:
+            type: string
+          example: players-handbook
+        - name: name
+          in: query
+          required: false
+          description: Case-insensitive partial name match.
+          schema:
+            type: string
+          example: acid
       responses:
         '200':
           description: Spells returned successfully
@@ -763,6 +803,14 @@ paths:
                   name: Animal Friendship
                   level: 1
                   levelLabel: Level 1
+        '400':
+          description: Invalid spell filter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid level filter
         '500':
           description: Failed to fetch spells
           content:
