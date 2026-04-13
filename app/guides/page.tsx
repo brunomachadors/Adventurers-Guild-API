@@ -249,7 +249,7 @@ async function getSpells(): Promise<SpellGuideListItem[]> {
   `;
 
   return spellRows.map((spell) => ({
-    id: spell.id,
+    id: Number(spell.id),
     name: spell.name,
     level: Number(spell.level),
     levelLabel: spell.levellabel,
@@ -322,7 +322,7 @@ async function getSpellDetailExample(): Promise<SpellDetail | null> {
   `;
 
   return {
-    id: spell.id,
+    id: Number(spell.id),
     name: spell.name,
     slug: spell.slug,
     source: spell.source,

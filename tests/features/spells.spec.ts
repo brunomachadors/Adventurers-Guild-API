@@ -37,6 +37,179 @@ test.describe('Spells API - List', { tag: ['@spells', '@list'] }, () => {
       },
     );
   }
+
+  test(
+    'Filter spells by level 1',
+    { tag: ['@get', '@filters', '@data'] },
+    async ({ request }) => {
+      const spellsClient = new SpellsClient(request);
+      const spellAssert = new SpellAssert();
+
+      const response = await spellsClient.getSpells({ level: 1 });
+
+      await spellAssert.success(response);
+
+      const body: SpellListItem[] = await response.json();
+
+      await spellAssert.validateSchema(body);
+      await test.step('Validate all returned spells are level 1', async () => {
+        expect(body.length).toBeGreaterThan(0);
+        expect(body.every((spell) => spell.level === 1)).toBe(true);
+      });
+    },
+  );
+
+  test(
+    'Filter spells by cantrip level alias',
+    { tag: ['@get', '@filters', '@data'] },
+    async ({ request }) => {
+      const spellsClient = new SpellsClient(request);
+      const spellAssert = new SpellAssert();
+
+      const response = await spellsClient.getSpells({ level: 'cantrip' });
+
+      await spellAssert.success(response);
+
+      const body: SpellListItem[] = await response.json();
+
+      await spellAssert.validateSchema(body);
+      await test.step('Validate all returned spells are cantrips', async () => {
+        expect(body.length).toBeGreaterThan(0);
+        expect(body.every((spell) => spell.level === 0)).toBe(true);
+      });
+      await spellAssert.validateSpellInList(body, expectedSpellsList[0]);
+    },
+  );
+
+  test(
+    'Filter spells by school',
+    { tag: ['@get', '@filters', '@data'] },
+    async ({ request }) => {
+      const spellsClient = new SpellsClient(request);
+      const spellAssert = new SpellAssert();
+
+      const response = await spellsClient.getSpells({ school: 'evocation' });
+
+      await spellAssert.success(response);
+
+      const body: SpellListItem[] = await response.json();
+
+      await spellAssert.validateSchema(body);
+      await spellAssert.validateSpellInList(body, expectedSpellsList[0]);
+    },
+  );
+
+  test(
+    'Filter spells by class',
+    { tag: ['@get', '@filters', '@data'] },
+    async ({ request }) => {
+      const spellsClient = new SpellsClient(request);
+      const spellAssert = new SpellAssert();
+
+      const response = await spellsClient.getSpells({ class: 'wizard' });
+
+      await spellAssert.success(response);
+
+      const body: SpellListItem[] = await response.json();
+
+      await spellAssert.validateSchema(body);
+      await spellAssert.validateSpellInList(body, expectedSpellsList[0]);
+      await spellAssert.validateSpellInList(body, expectedSpellsList[1]);
+    },
+  );
+
+  test(
+    'Filter spells by source',
+    { tag: ['@get', '@filters', '@data'] },
+    async ({ request }) => {
+      const spellsClient = new SpellsClient(request);
+      const spellAssert = new SpellAssert();
+
+      const response = await spellsClient.getSpells({
+        source: "player's handbook",
+      });
+
+      await spellAssert.success(response);
+
+      const body: SpellListItem[] = await response.json();
+
+      await spellAssert.validateSchema(body);
+      await spellAssert.validateSpellInList(body, expectedSpellsList[0]);
+    },
+  );
+
+  test(
+    'Filter spells by partial name',
+    { tag: ['@get', '@filters', '@data'] },
+    async ({ request }) => {
+      const spellsClient = new SpellsClient(request);
+      const spellAssert = new SpellAssert();
+
+      const response = await spellsClient.getSpells({ name: 'acid' });
+
+      await spellAssert.success(response);
+
+      const body: SpellListItem[] = await response.json();
+
+      await spellAssert.validateSchema(body);
+      await test.step('Validate filtered names match partial search', async () => {
+        expect(body.length).toBeGreaterThan(0);
+        expect(
+          body.every((spell) => spell.name.toLowerCase().includes('acid')),
+        ).toBe(true);
+      });
+      await spellAssert.validateSpellInList(body, expectedSpellsList[0]);
+    },
+  );
+
+  test(
+    'Combine spell filters with AND',
+    { tag: ['@get', '@filters', '@data'] },
+    async ({ request }) => {
+      const spellsClient = new SpellsClient(request);
+      const spellAssert = new SpellAssert();
+
+      const response = await spellsClient.getSpells({
+        level: 'cantrip',
+        class: 'wizard',
+        school: 'evocation',
+        name: 'acid',
+      });
+
+      await spellAssert.success(response);
+
+      const body: SpellListItem[] = await response.json();
+
+      await spellAssert.validateSchema(body);
+      await test.step('Validate combined filters narrowed the result set', async () => {
+        expect(body).toEqual([
+          {
+            id: expectedDetailedSpells['acid-splash'].id,
+            name: expectedDetailedSpells['acid-splash'].name,
+            level: expectedDetailedSpells['acid-splash'].level,
+            levelLabel: expectedDetailedSpells['acid-splash'].levelLabel,
+          },
+        ]);
+      });
+    },
+  );
+
+  test(
+    'Reject invalid level filter',
+    { tag: ['@get', '@filters', '@negative', '@error'] },
+    async ({ request }) => {
+      const spellsClient = new SpellsClient(request);
+      const spellAssert = new SpellAssert();
+
+      const response = await spellsClient.getSpells({ level: 'first' });
+
+      await spellAssert.badRequest(response);
+
+      const body: { error: string } = await response.json();
+
+      await spellAssert.validateErrorResponse(body, 'Invalid level filter');
+    },
+  );
 });
 
 test.describe('Spells API - Detail', { tag: ['@spells', '@detail'] }, () => {

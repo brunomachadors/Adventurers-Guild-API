@@ -237,7 +237,33 @@ Returns a lightweight spells list with:
 - `level`
 - `levelLabel`
 
+Supported optional filters:
+
+- `level`
+  - accepts a non-negative integer or `cantrip`
+- `school`
+- `class`
+- `source`
+- `name`
+
+Filter rules:
+
+- filters are case-insensitive
+- multiple filters combine with `AND`
+- `level=cantrip` maps to level `0`
+- `name` performs a partial match
+
+Examples:
+
+- `/api/spells?level=1`
+- `/api/spells?level=cantrip`
+- `/api/spells?school=evocation`
+- `/api/spells?class=wizard`
+- `/api/spells?source=players-handbook`
+- `/api/spells?name=acid`
+
 Returns `500` with `{ "error": "Failed to fetch spells" }` if the query fails.
+Returns `400` with a clear validation error, such as `{ "error": "Invalid level filter" }`, when a filter value is invalid.
 
 ### `GET /api/spells/{identifier}`
 

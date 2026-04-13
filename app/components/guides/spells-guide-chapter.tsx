@@ -16,7 +16,11 @@ import {
   spellDetailResponseFields,
   spellListResponseFields,
 } from '@/app/components/guides/spell-response-fields';
-import type { SpellDetail, SpellGuideListItem } from '@/app/types/spell';
+import type {
+  SpellDetail,
+  SpellGuideListItem,
+  SpellListItem,
+} from '@/app/types/spell';
 
 type SpellsGuideChapterProps = {
   isOpen: boolean;
@@ -36,12 +40,49 @@ type GuideFilterSelectProps = {
   value: string;
 };
 
+const SPELLS_API_BASE_URL = '/api';
+
 function getSpellLevelAnchor(level: number) {
   return `spells-level-${getGuideAnchorSlug(getSpellLevelLabel(level))}`;
 }
 
 function getSpellLevelLabel(level: number) {
+  if (level < 0) {
+    return 'All';
+  }
+
   return level === 0 ? 'Cantrips' : `Level ${level}`;
+}
+
+function getSpellLevelQueryValue(level: number) {
+  return level === 0 ? 'cantrip' : String(level);
+}
+
+function buildSpellsApiQuery(params: {
+  level?: number | null;
+  className?: string | null;
+  school?: string | null;
+  name?: string | null;
+}) {
+  const searchParams = new URLSearchParams();
+
+  if (params.level !== null && params.level !== undefined) {
+    searchParams.set('level', getSpellLevelQueryValue(params.level));
+  }
+
+  if (params.className) {
+    searchParams.set('class', params.className);
+  }
+
+  if (params.school) {
+    searchParams.set('school', params.school);
+  }
+
+  if (params.name) {
+    searchParams.set('name', params.name);
+  }
+
+  return searchParams.toString();
 }
 
 function formatSpellComponents(spell: SpellDetail) {
@@ -310,8 +351,13 @@ export function SpellsGuideChapter({
   const [selectedDurationFilter, setSelectedDurationFilter] = useState('All');
   const [requiresConcentrationOnly, setRequiresConcentrationOnly] =
     useState(false);
-  const [selectedSpellLevel, setSelectedSpellLevel] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [hasRequestedSpellList, setHasRequestedSpellList] = useState(false);
+  const [selectedSpellLevel, setSelectedSpellLevel] = useState(-1);
   const [expandedSpellId, setExpandedSpellId] = useState<number | null>(null);
+  const [apiLevelSpellIds, setApiLevelSpellIds] = useState<number[] | null>(null);
+  const [isApiLevelLoading, setIsApiLevelLoading] = useState(false);
+  const [apiLevelError, setApiLevelError] = useState<string | null>(null);
   const [selectedComponentsFilter, setSelectedComponentsFilter] = useState<
     string[]
   >([]);
@@ -340,12 +386,6 @@ export function SpellsGuideChapter({
   const filteredSpells = useMemo(
     () =>
       spells.filter((spell) => {
-        const matchesClass =
-          selectedClassFilter === 'All' ||
-          spell.classes.includes(selectedClassFilter);
-        const matchesSchool =
-          selectedSchoolFilter === 'All' ||
-          spell.school === selectedSchoolFilter;
         const matchesCastingTime =
           matchesCastingTimeFilter(
             spell.castingTime,
@@ -376,8 +416,6 @@ export function SpellsGuideChapter({
           });
 
         return (
-          matchesClass &&
-          matchesSchool &&
           matchesCastingTime &&
           matchesDuration &&
           matchesConcentration &&
@@ -386,11 +424,9 @@ export function SpellsGuideChapter({
       }),
     [
       selectedCastingTimeFilter,
-      selectedClassFilter,
       selectedComponentsFilter,
       selectedDurationFilter,
       requiresConcentrationOnly,
-      selectedSchoolFilter,
       spells,
     ],
   );
@@ -398,15 +434,117 @@ export function SpellsGuideChapter({
   const spellLevels = Array.from(new Set(spells.map((spell) => spell.level))).sort(
     (firstLevel, secondLevel) => firstLevel - secondLevel,
   );
-  const activeLevel = spellLevels.includes(selectedSpellLevel)
-    ? selectedSpellLevel
-    : spellLevels[0] ?? 0;
-  const levelSpells = filteredSpells.filter((spell) => spell.level === activeLevel);
+  const activeLevel =
+    selectedSpellLevel === -1 || spellLevels.includes(selectedSpellLevel)
+      ? selectedSpellLevel
+      : -1;
+  const levelOptions = useMemo(
+    () => ['All', ...spellLevels.map((level) => getSpellLevelLabel(level))],
+    [spellLevels],
+  );
+  const selectedLevelLabel = getSpellLevelLabel(activeLevel);
+
+  useEffect(() => {
+    if (!isOpen || !hasRequestedSpellList) {
+      return;
+    }
+
+    let ignore = false;
+
+    async function loadLevelSpellIds() {
+      setIsApiLevelLoading(true);
+      setApiLevelError(null);
+
+      try {
+        const response = await fetch(
+          `${SPELLS_API_BASE_URL}/spells?${buildSpellsApiQuery({
+            level: activeLevel >= 0 ? activeLevel : null,
+            className:
+              selectedClassFilter !== 'All' ? selectedClassFilter : null,
+            school:
+              selectedSchoolFilter !== 'All' ? selectedSchoolFilter : null,
+            name: searchTerm.trim().length > 0 ? searchTerm.trim() : null,
+          })}`,
+          {
+            headers: {
+              Accept: 'application/json',
+            },
+          },
+        );
+
+        if (!response.ok) {
+          let message = 'Failed to fetch spells';
+
+          try {
+            const body = (await response.json()) as { error?: string };
+
+            if (body.error) {
+              message = body.error;
+            }
+          } catch {
+            // Keep the generic failure message when the API body cannot be parsed.
+          }
+
+          throw new Error(message);
+        }
+
+        const apiSpells = (await response.json()) as SpellListItem[];
+
+        if (!ignore) {
+          setApiLevelSpellIds(apiSpells.map((spell) => spell.id));
+        }
+      } catch (error) {
+        if (!ignore) {
+          setApiLevelSpellIds(null);
+          setApiLevelError(
+            error instanceof Error && error.message.length > 0
+              ? error.message
+              : 'Failed to fetch spells',
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setIsApiLevelLoading(false);
+        }
+      }
+    }
+
+    void loadLevelSpellIds();
+
+    return () => {
+      ignore = true;
+    };
+  }, [
+    activeLevel,
+    hasRequestedSpellList,
+    isOpen,
+    searchTerm,
+    selectedClassFilter,
+    selectedSchoolFilter,
+  ]);
+
+  const levelSpells = filteredSpells.filter((spell) => {
+    if (!hasRequestedSpellList) {
+      return false;
+    }
+
+    if (activeLevel >= 0 && spell.level !== activeLevel) {
+      return false;
+    }
+
+    if (apiLevelSpellIds === null) {
+      return true;
+    }
+
+    return apiLevelSpellIds.includes(spell.id);
+  });
   const hasActiveFilters =
+    selectedSpellLevel !== -1 ||
     selectedClassFilter !== 'All' ||
     selectedSchoolFilter !== 'All' ||
     selectedCastingTimeFilter !== 'All' ||
     selectedDurationFilter !== 'All' ||
+    searchTerm.trim().length > 0 ||
     requiresConcentrationOnly ||
     selectedComponentsFilter.length > 0;
   const visibleExpandedSpellId = levelSpells.some(
@@ -463,41 +601,33 @@ export function SpellsGuideChapter({
               <h3>Filter the spellbook</h3>
             </div>
 
-            <nav
-              aria-label="Spells level index"
-              className="guide-card-index guide-card-index--inside-panel spells-level-nav"
-              id="spells-level-index"
-            >
-              <p>Spell level</p>
-              <div>
-                {spellLevels.length > 0 ? (
-                  spellLevels.map((level) => (
-                    <a
-                      aria-current={level === activeLevel ? 'true' : undefined}
-                      href={`#${getSpellLevelAnchor(level)}`}
-                      key={level}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        setSelectedSpellLevel(level);
-                        onSelectLevel(level);
-                      }}
-                    >
-                      {getSpellLevelLabel(level)}
-                    </a>
-                  ))
-                ) : (
-                  <span className="attribute-skill-chip attribute-skill-chip--empty">
-                    No spell levels match these filters
-                  </span>
-                )}
-              </div>
-            </nav>
-
             <div className="guide-filter-panel__controls guide-filter-panel__controls--quad">
+              <GuideFilterSelect
+                isActive={selectedSpellLevel !== -1}
+                label="Level"
+                onChange={(value) => {
+                  setHasRequestedSpellList(true);
+                  const nextLevel =
+                    value === 'All'
+                      ? -1
+                      : spellLevels.find(
+                          (level) => getSpellLevelLabel(level) === value,
+                        ) ?? -1;
+
+                  setSelectedSpellLevel(nextLevel);
+                  onSelectLevel(nextLevel < 0 ? 0 : nextLevel);
+                }}
+                options={levelOptions}
+                value={selectedLevelLabel}
+              />
+
               <GuideFilterSelect
                 isActive={selectedClassFilter !== 'All'}
                 label="Class"
-                onChange={setSelectedClassFilter}
+                onChange={(value) => {
+                  setHasRequestedSpellList(true);
+                  setSelectedClassFilter(value);
+                }}
                 options={classOptions}
                 value={selectedClassFilter}
               />
@@ -505,14 +635,20 @@ export function SpellsGuideChapter({
               <GuideFilterSelect
                 isActive={selectedSchoolFilter !== 'All'}
                 label="School"
-                onChange={setSelectedSchoolFilter}
+                onChange={(value) => {
+                  setHasRequestedSpellList(true);
+                  setSelectedSchoolFilter(value);
+                }}
                 options={schoolOptions}
                 value={selectedSchoolFilter}
               />
               <GuideFilterSelect
                 isActive={selectedCastingTimeFilter !== 'All'}
                 label="Casting Time"
-                onChange={setSelectedCastingTimeFilter}
+                onChange={(value) => {
+                  setHasRequestedSpellList(true);
+                  setSelectedCastingTimeFilter(value);
+                }}
                 options={castingTimeFilterOptions}
                 value={selectedCastingTimeFilter}
               />
@@ -520,7 +656,10 @@ export function SpellsGuideChapter({
               <GuideFilterSelect
                 isActive={selectedDurationFilter !== 'All'}
                 label="Duration"
-                onChange={setSelectedDurationFilter}
+                onChange={(value) => {
+                  setHasRequestedSpellList(true);
+                  setSelectedDurationFilter(value);
+                }}
                 options={durationFilterOptions}
                 value={selectedDurationFilter}
               />
@@ -542,11 +681,14 @@ export function SpellsGuideChapter({
                         <input
                           checked={isSelected}
                           onChange={() =>
-                            setSelectedComponentsFilter((currentValue) =>
-                              currentValue.includes(component)
-                                ? currentValue.filter((item) => item !== component)
-                                : [...currentValue, component],
-                            )
+                            {
+                              setHasRequestedSpellList(true);
+                              setSelectedComponentsFilter((currentValue) =>
+                                currentValue.includes(component)
+                                  ? currentValue.filter((item) => item !== component)
+                                  : [...currentValue, component],
+                              );
+                            }
                           }
                           type="checkbox"
                         />
@@ -566,9 +708,10 @@ export function SpellsGuideChapter({
                 <label className="guide-filter-panel__checkbox-row">
                   <input
                     checked={requiresConcentrationOnly}
-                    onChange={(event) =>
-                      setRequiresConcentrationOnly(event.target.checked)
-                    }
+                    onChange={(event) => {
+                      setHasRequestedSpellList(true);
+                      setRequiresConcentrationOnly(event.target.checked);
+                    }}
                     type="checkbox"
                   />
                   <span
@@ -580,22 +723,46 @@ export function SpellsGuideChapter({
               </div>
             </div>
 
+            <div className="guide-filter-panel__field guide-filter-panel__field--full">
+              <span>Search by word</span>
+              <input
+                aria-label="Search spells by word"
+                className="guide-filter-panel__search-input"
+                onChange={(event) => {
+                  setHasRequestedSpellList(true);
+                  setSearchTerm(event.target.value);
+                }}
+                placeholder="acid"
+                type="search"
+                value={searchTerm}
+              />
+            </div>
+
             <div className="guide-filter-panel__footer">
               <p className="guide-filter-panel__summary">
-                <strong>{levelSpells.length}</strong> of{' '}
-                <strong>{filteredSpells.length}</strong> spells shown for the
-                current filters
+                {hasRequestedSpellList ? (
+                  <>
+                    <strong>{levelSpells.length}</strong> of{' '}
+                    <strong>{spells.length}</strong> spells shown for the current
+                    filters
+                  </>
+                ) : (
+                  <>Choose a level, class, school, or search term to load spells.</>
+                )}
               </p>
 
               <button
                 className="guide-filter-panel__reset"
                 disabled={!hasActiveFilters}
                 onClick={() => {
+                  setHasRequestedSpellList(false);
+                  setSelectedSpellLevel(-1);
                   setSelectedClassFilter('All');
                   setSelectedSchoolFilter('All');
                   setSelectedCastingTimeFilter('All');
                   setSelectedDurationFilter('All');
                   setRequiresConcentrationOnly(false);
+                  setSearchTerm('');
                   setSelectedComponentsFilter([]);
                 }}
                 type="button"
@@ -603,15 +770,26 @@ export function SpellsGuideChapter({
                 Reset filters
               </button>
             </div>
+
+            {isApiLevelLoading ? (
+              <p className="guide-accordion__description">
+                Syncing level, class, and school with the public Spells API...
+              </p>
+            ) : null}
+
+            {apiLevelError ? (
+              <p className="guide-accordion__description">
+                Public level filter unavailable right now. Showing the local
+                layout fallback for this level.
+              </p>
+            ) : null}
           </section>
 
           <div className="equipment-weapon-groups">
             <section className="species-subspecies spells-guide-table">
               <div className="species-subspecies__heading">
                 <p id={getSpellLevelAnchor(activeLevel)}>
-                  {spellLevels.length > 0
-                    ? getSpellLevelLabel(activeLevel)
-                    : 'No matching spells'}
+                  {spellLevels.length > 0 ? selectedLevelLabel : 'No matching spells'}
                 </p>
                 <span>
                   {spellLevels.length > 0
@@ -711,7 +889,11 @@ export function SpellsGuideChapter({
                       })
                     ) : (
                       <tr>
-                        <td colSpan={8}>No spells match the current filters.</td>
+                        <td colSpan={8}>
+                          {hasRequestedSpellList
+                            ? 'No spells match the current filters.'
+                            : 'Choose a level, class, school, or search term to load spells.'}
+                        </td>
                       </tr>
                     )}
                   </tbody>
@@ -755,24 +937,42 @@ export function SpellsGuideChapter({
           <aside className="guide-how-to-use">
             <h3>How to use</h3>
             <p>
-              Call <code>GET /api/spells</code> when you need a compact spell
-              index for selectors, filters, or grouped browsing by level. Use{' '}
-              <code>GET /api/spells/{'{identifier}'}</code> when you need the
-              full spell text, casting metadata, allowed classes, and scaling
-              entries.
+              Use <code>GET /api/spells</code> as the filtered spell browser
+              endpoint. You can combine <code>level</code>, <code>class</code>,{' '}
+              <code>school</code>, and <code>name</code> in the query string,
+              and the response stays compact with only <code>id</code>,{' '}
+              <code>name</code>, <code>level</code>, and <code>levelLabel</code>.
+              Use <code>GET /api/spells/{'{identifier}'}</code> when you need the
+              rich spell detail payload.
             </p>
-            <div className="endpoint-stack">
+            <div className="endpoint-stack endpoint-stack--column">
               <a
                 className="endpoint-pill"
-                href="https://adventurers-guild-api.vercel.app/api/spells"
+                href="/api/spells?level=cantrip"
                 rel="noreferrer"
                 target="_blank"
               >
-                GET /api/spells
+                GET /api/spells?level=cantrip
               </a>
               <a
                 className="endpoint-pill"
-                href="https://adventurers-guild-api.vercel.app/api/spells/fire-bolt"
+                href="/api/spells?class=wizard&level=1"
+                rel="noreferrer"
+                target="_blank"
+              >
+                GET /api/spells?class=wizard&amp;level=1
+              </a>
+              <a
+                className="endpoint-pill"
+                href="/api/spells?school=evocation&name=acid"
+                rel="noreferrer"
+                target="_blank"
+              >
+                GET /api/spells?school=evocation&amp;name=acid
+              </a>
+              <a
+                className="endpoint-pill"
+                href="/api/spells/fire-bolt"
                 rel="noreferrer"
                 target="_blank"
               >
@@ -786,9 +986,11 @@ export function SpellsGuideChapter({
               <h3>Expected return</h3>
               <h4>Response shapes</h4>
               <p>
-                The list response stays lightweight for catalog views, while the
-                detail response adds richer spellcasting context used by sheets,
-                character builders, and rules exploration.
+                The list response is intentionally lightweight even when filters
+                are applied, so the browser can search quickly without pulling
+                full descriptions, classes, source text, or scaling data on every
+                request. The detail response is where the richer spellcasting
+                context lives.
               </p>
             </div>
 
