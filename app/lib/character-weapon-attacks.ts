@@ -301,6 +301,7 @@ function formatWeaponAttack(
       damageType: weapon.details.damage.damageType,
     },
     properties: weapon.details.properties.map((property) => property.name),
+    mastery: weapon.details.mastery,
     range: weapon.details.range,
   };
 }

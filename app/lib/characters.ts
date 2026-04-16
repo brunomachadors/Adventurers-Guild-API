@@ -753,6 +753,7 @@ export async function formatCharacterResponse(character: {
     selectedSpells,
     currency: formattedCharacter.currency,
     skillProficiencies: formattedCharacter.skillProficiencies,
+    skills,
     abilityScoreRules,
     classDetails,
     speciesDetails,
@@ -770,6 +771,36 @@ export async function getOwnedCharacterResponse(
     FROM characters
     WHERE id = ${characterId}
       AND ownerid = ${ownerId}
+    LIMIT 1
+  `;
+
+  if (!characterRows || characterRows.length === 0) {
+    return null;
+  }
+
+  const character = characterRows[0];
+
+  return formatCharacterResponse({
+    id: character.id,
+    name: character.name,
+    classId: character.classid,
+    speciesId: character.speciesid,
+    backgroundId: character.backgroundid,
+    level: character.level,
+    abilityScores: character.abilityscores,
+    currency: character.currency,
+    skillProficiencies: character.skillproficiencies,
+  });
+}
+
+export async function getCharacterResponse(
+  characterId: number,
+): Promise<CharacterResponseBody | null> {
+  const sql = getSql();
+  const characterRows = await sql`
+    SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+    FROM characters
+    WHERE id = ${characterId}
     LIMIT 1
   `;
 

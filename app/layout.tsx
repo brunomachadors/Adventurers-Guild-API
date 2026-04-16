@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Cinzel, Cormorant_Garamond } from 'next/font/google';
+import { Cinzel, Cormorant_Garamond, MedievalSharp } from 'next/font/google';
 
 import { SiteHeader } from '@/app/components/site-header';
 import { SiteFooter } from '@/app/components/site-footer';
@@ -15,6 +15,12 @@ const bodyFont = Cormorant_Garamond({
   subsets: ['latin'],
   variable: '--font-body',
   weight: ['400', '500', '600', '700'],
+});
+
+const handFont = MedievalSharp({
+  subsets: ['latin'],
+  variable: '--font-hand',
+  weight: '400',
 });
 
 const sitePreviewImage =
@@ -64,7 +70,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${headingFont.variable} ${bodyFont.variable}`}>
+      <body
+        className={`${headingFont.variable} ${bodyFont.variable} ${handFont.variable}`}
+      >
         <div className="site-shell">
           <SiteHeader />
           {children}
