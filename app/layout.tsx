@@ -17,10 +17,44 @@ const bodyFont = Cormorant_Garamond({
   weight: ['400', '500', '600', '700'],
 });
 
+const sitePreviewImage =
+  'https://res.cloudinary.com/dtglidvcw/image/upload/v1776330779/adventurers/site_preview_syrxgm.jpg';
+
 export const metadata: Metadata = {
-  title: 'Adventurers Guild API',
+  metadataBase: new URL('https://adventurers-guild-api.vercel.app'),
+  title: {
+    default: 'Adventurers Guild API',
+    template: '%s | Adventurers Guild API',
+  },
   description:
-    'Fantasy-themed API project with a visual entrypoint, educational guides, and interactive documentation.',
+    'A fantasy-themed API portal with educational guides, RPG resources, and interactive documentation for building D&D-inspired character workflows.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Adventurers Guild API',
+    description:
+      'Explore a D&D-inspired API portal with guides for attributes, skills, classes, species, and character-building resources.',
+    url: '/',
+    siteName: 'Adventurers Guild API',
+    images: [
+      {
+        url: sitePreviewImage,
+        width: 1536,
+        height: 1024,
+        alt: 'Adventurers Guild API fantasy campaign codex banner',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Adventurers Guild API',
+    description:
+      'A fantasy-themed API portal with educational guides and interactive documentation for D&D-inspired resources.',
+    images: [sitePreviewImage],
+  },
 };
 
 export default function RootLayout({
