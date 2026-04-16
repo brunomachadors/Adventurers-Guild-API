@@ -2,7 +2,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { apiResources } from '@/app/data/api-resources';
-import logoImage from '@/public/images/brand/logo.png';
+
+const sitePreviewImage =
+  'https://res.cloudinary.com/dtglidvcw/image/upload/v1776330779/adventurers/site_preview_syrxgm.jpg';
 
 export default function HomePage() {
   return (
@@ -23,7 +25,7 @@ export default function HomePage() {
             className="hero-banner__image"
             height={540}
             priority
-            src={logoImage}
+            src={sitePreviewImage}
             width={1280}
           />
         </div>

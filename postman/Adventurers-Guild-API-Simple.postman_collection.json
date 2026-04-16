@@ -1,0 +1,135 @@
+{
+  "info": {
+    "_postman_id": "7c3d0a84-b413-4388-b8bc-e206561d58a6",
+    "name": "Adventurers Guild API - Simple",
+    "description": "Simple Postman collection for authenticating and creating a character.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://adventurers-guild-api.vercel.app/api"
+    },
+    {
+      "key": "username",
+      "value": "brunom"
+    },
+    {
+      "key": "password",
+      "value": "B7r@M2x!Q9p#L4vK"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "characterName",
+      "value": "Conan"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Get Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "pm.test('Response contains token', function () {",
+              "  pm.expect(responseJson.token).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.collectionVariables.set('token', responseJson.token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/token",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "token"
+          ]
+        },
+        "description": "Authenticate and store the JWT token into the collection variable `token`."
+      },
+      "response": []
+    },
+    {
+      "name": "Characters - Create Draft Character",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "pm.test('Response contains character id', function () {",
+              "  pm.expect(responseJson.id).to.be.a('number');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{characterName}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/characters",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "characters"
+          ]
+        },
+        "description": "Create a draft character using the JWT captured in the previous request."
+      },
+      "response": []
+    }
+  ]
+}
