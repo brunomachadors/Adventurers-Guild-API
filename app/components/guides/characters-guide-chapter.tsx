@@ -450,8 +450,8 @@ const characterTickets: CharacterTicket[] = [
     detailsTitle: 'Requiriments',
     details: [
       {
-        label: 'Valid token',
-        value: 'Required to review a specific character.',
+        label: 'Public access',
+        value: 'No bearer token is required to review a specific character.',
       },
       {
         label: 'Request type',
@@ -465,7 +465,7 @@ const characterTickets: CharacterTicket[] = [
     responseHeading: 'Expected return',
     responseSubheading: 'Response contract',
     responseDescription:
-      'GET /api/characters/{id} is the final review step. It returns the full detail of one specific character that belongs to the authenticated user and helps the frontend confirm the current creation state.',
+      'GET /api/characters/{id} is the final review step. It returns the full detail of one specific character by id without requiring a bearer token, and helps the frontend confirm the current creation state.',
     responseFields: [
       {
         name: 'id',

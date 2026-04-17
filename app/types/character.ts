@@ -1,4 +1,5 @@
 import { Attributeshortname } from './attribute';
+import type { EquipmentMastery, EquipmentRange } from './equipment';
 import type {
   ClassSkillProficiencyChoices,
   ClassStartingEquipmentOption,
@@ -105,6 +106,18 @@ export interface CharacterWeaponAttackDamage {
   damageType: string;
 }
 
+export interface CharacterWeaponAttackMode {
+  mode: string;
+  attackType: string;
+  ability: Attributeshortname;
+  isProficient: boolean;
+  abilityModifier: number;
+  proficiencyBonus: number;
+  attackBonus: number;
+  damage: CharacterWeaponAttackDamage;
+  range: EquipmentRange | null;
+}
+
 export interface CharacterWeaponAttack {
   equipmentId: number;
   name: string;
@@ -116,7 +129,9 @@ export interface CharacterWeaponAttack {
   attackBonus: number;
   damage: CharacterWeaponAttackDamage;
   properties: string[];
-  range: import('./equipment').EquipmentRange | null;
+  mastery: EquipmentMastery;
+  range: EquipmentRange | null;
+  attackModes: CharacterWeaponAttackMode[];
 }
 
 export interface CharacterHitPoints {
@@ -300,6 +315,7 @@ export interface CharacterResponseBody {
   selectedSpells: CharacterSelectedSpellDetail[];
   currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
+  skills: CharacterSkillItem[];
   abilityScoreRules: CharacterAbilityScoreRules | null;
   classDetails?: CharacterClassDetails | null;
   speciesDetails?: import('./species').SpeciesDetail | null;

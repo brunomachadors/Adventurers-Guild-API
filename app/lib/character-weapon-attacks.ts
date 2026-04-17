@@ -1,6 +1,8 @@
 import {
   CharacterAbilityModifiers,
   CharacterWeaponAttack,
+  CharacterWeaponAttackDamage,
+  CharacterWeaponAttackMode,
 } from '@/app/types/character';
 import {
   EquipmentDamage,
@@ -260,6 +262,17 @@ function getAttackAbility(attackType: string): Attributeshortname {
   return attackType.toLowerCase() === 'ranged' ? 'DEX' : 'STR';
 }
 
+function getAttackModeAbility(
+  weaponAttackType: string,
+  modeAttackType: string,
+): Attributeshortname {
+  if (modeAttackType === 'ranged' && weaponAttackType.toLowerCase() !== 'melee') {
+    return 'DEX';
+  }
+
+  return 'STR';
+}
+
 function formatDamageFormula(baseFormula: string, modifier: number): string {
   if (modifier === 0) {
     return baseFormula;
@@ -268,6 +281,109 @@ function formatDamageFormula(baseFormula: string, modifier: number): string {
   return modifier > 0
     ? `${baseFormula} + ${modifier}`
     : `${baseFormula} - ${Math.abs(modifier)}`;
+}
+
+function formatWeaponAttackDamage(
+  damage: EquipmentDamage,
+  modifier: number,
+): CharacterWeaponAttackDamage {
+  return {
+    formula: formatDamageFormula(damage.formula, modifier),
+    base: damage.formula,
+    modifier,
+    damageType: damage.damageType,
+  };
+}
+
+function formatWeaponAttackMode({
+  mode,
+  attackType,
+  damage,
+  range,
+  weaponAttackType,
+  abilityModifiers,
+  isProficient,
+  proficiencyBonus,
+}: {
+  mode: string;
+  attackType: string;
+  damage: EquipmentDamage;
+  range: EquipmentRange | null;
+  weaponAttackType: string;
+  abilityModifiers: CharacterAbilityModifiers | null;
+  isProficient: boolean;
+  proficiencyBonus: number;
+}): CharacterWeaponAttackMode {
+  const ability = getAttackModeAbility(weaponAttackType, attackType);
+  const abilityModifier = abilityModifiers?.[ability] ?? 0;
+  const appliedProficiencyBonus = isProficient ? proficiencyBonus : 0;
+
+  return {
+    mode,
+    attackType,
+    ability,
+    isProficient,
+    abilityModifier,
+    proficiencyBonus: appliedProficiencyBonus,
+    attackBonus: abilityModifier + appliedProficiencyBonus,
+    damage: formatWeaponAttackDamage(damage, abilityModifier),
+    range,
+  };
+}
+
+function getWeaponAttackModes(
+  weapon: EquippedWeaponItem,
+  abilityModifiers: CharacterAbilityModifiers | null,
+  isProficient: boolean,
+  proficiencyBonus: number,
+): CharacterWeaponAttackMode[] {
+  const primaryAttackType = weapon.details.attackType.toLowerCase();
+  const attackModes = [
+    formatWeaponAttackMode({
+      mode: primaryAttackType,
+      attackType: primaryAttackType,
+      damage: weapon.details.damage,
+      range: weapon.details.range,
+      weaponAttackType: weapon.details.attackType,
+      abilityModifiers,
+      isProficient,
+      proficiencyBonus,
+    }),
+  ];
+
+  for (const property of weapon.details.properties) {
+    if (property.slug === 'thrown' && property.range) {
+      attackModes.push(
+        formatWeaponAttackMode({
+          mode: 'thrown',
+          attackType: 'ranged',
+          damage: weapon.details.damage,
+          range: property.range,
+          weaponAttackType: weapon.details.attackType,
+          abilityModifiers,
+          isProficient,
+          proficiencyBonus,
+        }),
+      );
+    }
+
+    if (property.slug === 'versatile' && property.damage) {
+      attackModes.push(
+        formatWeaponAttackMode({
+          mode: 'versatile',
+          attackType: primaryAttackType,
+          damage: property.damage,
+          range: weapon.details.range,
+          weaponAttackType: weapon.details.attackType,
+          abilityModifiers,
+          isProficient,
+          proficiencyBonus,
+        }),
+      );
+    }
+  }
+
+  return attackModes;
 }
 
 function formatWeaponAttack(
@@ -281,6 +397,12 @@ function formatWeaponAttack(
   const weaponProficiencies = getClassWeaponProficiencies(classSlug);
   const isProficient = weaponProficiencies.has(weapon.details.proficiencyType);
   const appliedProficiencyBonus = isProficient ? proficiencyBonus : 0;
+  const attackModes = getWeaponAttackModes(
+    weapon,
+    abilityModifiers,
+    isProficient,
+    proficiencyBonus,
+  );
 
   return {
     equipmentId: weapon.id,
@@ -291,17 +413,11 @@ function formatWeaponAttack(
     abilityModifier,
     proficiencyBonus: appliedProficiencyBonus,
     attackBonus: abilityModifier + appliedProficiencyBonus,
-    damage: {
-      formula: formatDamageFormula(
-        weapon.details.damage.formula,
-        abilityModifier,
-      ),
-      base: weapon.details.damage.formula,
-      modifier: abilityModifier,
-      damageType: weapon.details.damage.damageType,
-    },
+    damage: formatWeaponAttackDamage(weapon.details.damage, abilityModifier),
     properties: weapon.details.properties.map((property) => property.name),
+    mastery: weapon.details.mastery,
     range: weapon.details.range,
+    attackModes,
   };
 }
 

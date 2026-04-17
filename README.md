@@ -414,9 +414,9 @@ Returns:
 
 ### `GET /api/characters/{id}`
 
-Returns the authenticated owner's character detail.
+Returns one character detail by id.
 
-Requires bearer token.
+Does not require a bearer token.
 
 Response fields:
 
@@ -444,6 +444,7 @@ Response fields:
 - `spellSlots`
 - `selectedSpells`
 - `currency`
+- `skills`
 - `abilityScoreRules`
 - `classDetails`
 - `speciesDetails`
@@ -451,7 +452,6 @@ Response fields:
 
 Returns:
 
-- `401` with `{ "error": "Unauthorized" }`
 - `404` with `{ "error": "Character not found" }`
 - `500` with `{ "error": "Failed to fetch character detail" }`
 

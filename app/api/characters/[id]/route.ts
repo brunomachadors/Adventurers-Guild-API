@@ -2,7 +2,7 @@ import { getAuthenticatedOwnerFromRequest } from '@/app/lib/auth';
 import { clearCharacterEquipmentChoiceRecords } from '@/app/lib/character-equipment-package-choices';
 import {
   formatCharacterResponse,
-  getOwnedCharacterResponse,
+  getCharacterResponse,
   isCharacterAbilityScoresOrNull,
   isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
@@ -41,24 +41,16 @@ function isCharacterUpdateRequestBody(
   );
 }
 
-export async function GET(request: Request, { params }: RouteContext) {
+export async function GET(_request: Request, { params }: RouteContext) {
   const { id } = await params;
   const parsedId = Number(id);
-  const authenticatedOwner = getAuthenticatedOwnerFromRequest(request);
-
-  if (!authenticatedOwner) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
 
   if (!Number.isInteger(parsedId) || parsedId <= 0) {
     return NextResponse.json({ error: 'Character not found' }, { status: 404 });
   }
 
   try {
-    const responseBody = await getOwnedCharacterResponse(
-      authenticatedOwner.id,
-      parsedId,
-    );
+    const responseBody = await getCharacterResponse(parsedId);
 
     if (!responseBody) {
       return NextResponse.json(

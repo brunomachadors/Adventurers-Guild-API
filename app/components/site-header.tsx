@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 const navigationItems = [
   { href: '/', label: 'Overview' },
   { href: '/guides', label: 'Guides' },
+  { href: '/character', label: 'Character' },
   { href: '/docs', label: 'Docs' },
 ] as const;
 
@@ -38,7 +39,8 @@ export function SiteHeader() {
             const isActive =
               item.href === '/'
                 ? pathname === item.href
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                : pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`);
 
             return (
               <Link
