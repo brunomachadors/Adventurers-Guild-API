@@ -106,6 +106,18 @@ export interface CharacterWeaponAttackDamage {
   damageType: string;
 }
 
+export interface CharacterWeaponAttackMode {
+  mode: string;
+  attackType: string;
+  ability: Attributeshortname;
+  isProficient: boolean;
+  abilityModifier: number;
+  proficiencyBonus: number;
+  attackBonus: number;
+  damage: CharacterWeaponAttackDamage;
+  range: EquipmentRange | null;
+}
+
 export interface CharacterWeaponAttack {
   equipmentId: number;
   name: string;
@@ -119,6 +131,7 @@ export interface CharacterWeaponAttack {
   properties: string[];
   mastery: EquipmentMastery;
   range: EquipmentRange | null;
+  attackModes: CharacterWeaponAttackMode[];
 }
 
 export interface CharacterHitPoints {

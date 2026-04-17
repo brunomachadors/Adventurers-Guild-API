@@ -1787,6 +1787,51 @@ test.describe(
             },
             properties: ['Thrown', 'Versatile'],
             rangeExists: false,
+            attackModes: [
+              {
+                mode: 'melee',
+                attackType: 'melee',
+                ability: 'STR',
+                attackBonus: 5,
+                damage: {
+                  formula: '1d6 + 3',
+                  base: '1d6',
+                  modifier: 3,
+                  damageType: 'Piercing',
+                },
+                range: null,
+              },
+              {
+                mode: 'thrown',
+                attackType: 'ranged',
+                ability: 'STR',
+                attackBonus: 5,
+                damage: {
+                  formula: '1d6 + 3',
+                  base: '1d6',
+                  modifier: 3,
+                  damageType: 'Piercing',
+                },
+                range: {
+                  normal: 20,
+                  long: 60,
+                  unit: 'ft',
+                },
+              },
+              {
+                mode: 'versatile',
+                attackType: 'melee',
+                ability: 'STR',
+                attackBonus: 5,
+                damage: {
+                  formula: '1d8 + 3',
+                  base: '1d8',
+                  modifier: 3,
+                  damageType: 'Piercing',
+                },
+                range: null,
+              },
+            ],
           },
         );
         await charactersAssert.validateWeaponAttackAbsent(
@@ -5656,19 +5701,25 @@ test.describe(
     );
 
     test(
-      'Get Character Without Token Is Unauthorized',
-      { tag: ['@get', '@negative', '@error'] },
+      'Get Geralt Detail Without Token Is Public',
+      { tag: ['@get', '@public', '@data'] },
       async ({ request }) => {
         const charactersClient = new CharactersClient(request);
         const charactersAssert = new CharactersAssert();
 
-        const response = await charactersClient.getCharacterDetail(1);
+        const response = await charactersClient.getCharacterDetail(
+          geraltCharacterId,
+        );
 
-        await charactersAssert.unauthorized(response);
+        await charactersAssert.success(response);
 
-        const body: { error: string } = await response.json();
+        const character: CharacterResponseBody = await response.json();
 
-        await charactersAssert.validateErrorResponse(body, 'Unauthorized');
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateId(character.id, geraltCharacterId);
+        await charactersAssert.validateClassId(character.classId, 11);
+        await charactersAssert.validateSpeciesId(character.speciesId, 1);
+        await charactersAssert.validateBackgroundId(character.backgroundId, 1);
       },
     );
 
@@ -5679,9 +5730,12 @@ test.describe(
         const charactersClient = new CharactersClient(request);
         const charactersAssert = new CharactersAssert();
 
-        const response = await charactersClient.updateCharacter(1, {
-          classId: 11,
-        });
+        const response = await charactersClient.updateCharacter(
+          geraltCharacterId,
+          {
+            classId: 11,
+          },
+        );
 
         await charactersAssert.unauthorized(response);
 
@@ -5698,7 +5752,7 @@ test.describe(
         const charactersClient = new CharactersClient(request);
         const charactersAssert = new CharactersAssert();
 
-        const response = await charactersClient.deleteCharacter(1);
+        const response = await charactersClient.deleteCharacter(geraltCharacterId);
 
         await charactersAssert.unauthorized(response);
 
@@ -5715,7 +5769,9 @@ test.describe(
         const charactersClient = new CharactersClient(request);
         const charactersAssert = new CharactersAssert();
 
-        const response = await charactersClient.getCharacterEquipment(1);
+        const response = await charactersClient.getCharacterEquipment(
+          geraltCharacterId,
+        );
 
         await charactersAssert.unauthorized(response);
 
@@ -5732,11 +5788,14 @@ test.describe(
         const charactersClient = new CharactersClient(request);
         const charactersAssert = new CharactersAssert();
 
-        const response = await charactersClient.addCharacterEquipment(1, {
-          equipmentId: 1,
-          quantity: 1,
-          isEquipped: true,
-        });
+        const response = await charactersClient.addCharacterEquipment(
+          geraltCharacterId,
+          {
+            equipmentId: 1,
+            quantity: 1,
+            isEquipped: true,
+          },
+        );
 
         await charactersAssert.unauthorized(response);
 
@@ -5753,9 +5812,13 @@ test.describe(
         const charactersClient = new CharactersClient(request);
         const charactersAssert = new CharactersAssert();
 
-        const response = await charactersClient.patchCharacterEquipment(1, 1, {
-          quantity: 1,
-        });
+        const response = await charactersClient.patchCharacterEquipment(
+          geraltCharacterId,
+          1,
+          {
+            quantity: 1,
+          },
+        );
 
         await charactersAssert.unauthorized(response);
 
@@ -5772,7 +5835,10 @@ test.describe(
         const charactersClient = new CharactersClient(request);
         const charactersAssert = new CharactersAssert();
 
-        const response = await charactersClient.deleteCharacterEquipment(1, 1);
+        const response = await charactersClient.deleteCharacterEquipment(
+          geraltCharacterId,
+          1,
+        );
 
         await charactersAssert.unauthorized(response);
 

@@ -314,6 +314,7 @@ export class CharactersAssert {
           expect(weaponAttack).toHaveProperty('damage');
           expect(weaponAttack).toHaveProperty('properties');
           expect(weaponAttack).toHaveProperty('range');
+          expect(weaponAttack).toHaveProperty('attackModes');
 
           expect(typeof weaponAttack.equipmentId).toBe('number');
           expect(typeof weaponAttack.name).toBe('string');
@@ -327,6 +328,7 @@ export class CharactersAssert {
           expect(
             weaponAttack.range === null || typeof weaponAttack.range === 'object',
           ).toBe(true);
+          expect(Array.isArray(weaponAttack.attackModes)).toBe(true);
         },
       );
 
@@ -353,6 +355,38 @@ export class CharactersAssert {
           },
         );
       }
+
+      for (const attackMode of weaponAttack.attackModes) {
+        await test.step(
+          `Validate weapon attack mode schema for ${weaponAttack.name} ${attackMode.mode}`,
+          async () => {
+            expect(attackMode).toHaveProperty('mode');
+            expect(attackMode).toHaveProperty('attackType');
+            expect(attackMode).toHaveProperty('ability');
+            expect(attackMode).toHaveProperty('isProficient');
+            expect(attackMode).toHaveProperty('abilityModifier');
+            expect(attackMode).toHaveProperty('proficiencyBonus');
+            expect(attackMode).toHaveProperty('attackBonus');
+            expect(attackMode).toHaveProperty('damage');
+            expect(attackMode).toHaveProperty('range');
+
+            expect(typeof attackMode.mode).toBe('string');
+            expect(typeof attackMode.attackType).toBe('string');
+            expect(typeof attackMode.ability).toBe('string');
+            expect(typeof attackMode.isProficient).toBe('boolean');
+            expect(typeof attackMode.abilityModifier).toBe('number');
+            expect(typeof attackMode.proficiencyBonus).toBe('number');
+            expect(typeof attackMode.attackBonus).toBe('number');
+            expect(
+              attackMode.range === null || typeof attackMode.range === 'object',
+            ).toBe(true);
+            expect(attackMode.damage).toHaveProperty('formula');
+            expect(attackMode.damage).toHaveProperty('base');
+            expect(attackMode.damage).toHaveProperty('modifier');
+            expect(attackMode.damage).toHaveProperty('damageType');
+          },
+        );
+      }
     }
   }
 
@@ -370,6 +404,7 @@ export class CharactersAssert {
       damage?: Partial<CharacterWeaponAttack['damage']>;
       properties?: string[];
       rangeExists?: boolean;
+      attackModes?: Partial<CharacterWeaponAttack['attackModes'][number]>[];
     },
   ) {
     await test.step(`Validate weapon attack for ${expectedAttack.name}`, async () => {
@@ -426,6 +461,17 @@ export class CharactersAssert {
           expect(weaponAttack?.range).not.toBeNull();
         } else {
           expect(weaponAttack?.range).toBeNull();
+        }
+      }
+
+      if (expectedAttack.attackModes) {
+        for (const expectedMode of expectedAttack.attackModes) {
+          const attackMode = weaponAttack?.attackModes.find(
+            (mode) => mode.mode === expectedMode.mode,
+          );
+
+          expect(attackMode).toBeDefined();
+          expect(attackMode).toMatchObject(expectedMode);
         }
       }
     });
