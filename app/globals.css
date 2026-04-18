@@ -3858,7 +3858,7 @@ li {
 }
 
 .character-sheet__masthead--form .character-sheet__masthead-details {
-  width: min(100%, 1040px);
+  width: min(100%, 1180px);
   margin-top: 16px;
 }
 
@@ -3887,7 +3887,16 @@ li {
   grid-column: 1 / -1;
 }
 
+.character-sheet__masthead--form .character-sheet__masthead-field--line {
+  display: grid;
+  grid-template-columns: auto clamp(128px, 10vw, 180px);
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+}
+
 .character-sheet__masthead--form .character-sheet__masthead-details dt {
+  flex: 0 0 auto;
   color: #2f120b;
   font-family: var(--font-heading), sans-serif;
   font-size: 0.84rem;
@@ -3906,6 +3915,7 @@ li {
 }
 
 .character-sheet__masthead--form .character-sheet__masthead-details dd {
+  display: inline-block;
   color: #2f120b;
   font-family: var(--font-hand), var(--font-body), serif;
   font-size: 1.16rem;
@@ -3913,7 +3923,7 @@ li {
   font-weight: 400;
   letter-spacing: 0;
   line-height: 1;
-  min-width: 72px;
+  min-width: clamp(128px, 10vw, 180px);
   padding: 0 9px 4px;
   border-bottom: 1.5px dashed rgba(90, 42, 26, 0.54);
   overflow-wrap: normal;
@@ -3921,8 +3931,17 @@ li {
   text-shadow: 0 0.5px 0 rgba(255, 249, 235, 0.5);
 }
 
+.character-sheet__masthead--form .character-sheet__masthead-field--line dd {
+  width: clamp(128px, 10vw, 180px);
+}
+
+.character-sheet__masthead--form .character-sheet__masthead-details dd:empty::before {
+  content: '\00a0';
+}
+
 .character-sheet__masthead--form .character-sheet__masthead-field--name dd {
   font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  min-width: min(100%, 520px);
   overflow-wrap: anywhere;
   white-space: normal;
 }
@@ -4476,6 +4495,15 @@ li {
   background: none;
 }
 
+.character-sheet-block--training-table .character-sheet-table tbody,
+.character-sheet-block--training-table .character-sheet-table tr,
+.character-sheet-block--training-table .character-sheet-table th,
+.character-sheet-block--training-table .character-sheet-table td {
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
 .character-sheet-block--training-table .character-sheet-table th,
 .character-sheet-block--training-table .character-sheet-table td {
   border-right-color: rgba(47, 18, 11, 0.22);
@@ -4723,11 +4751,15 @@ li {
 
 .character-check-table__mark {
   position: relative;
-  width: 14px;
-  height: 14px;
-  border: 1.5px dashed rgba(90, 42, 26, 0.34);
-  border-radius: 4px;
-  background: rgba(246, 232, 203, 0.2);
+  width: 13px;
+  height: 13px;
+  border: 1.4px dashed rgba(90, 42, 26, 0.42);
+  border-radius: 3px;
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none;
 }
 
 .character-check-table__mark::before,
@@ -4930,10 +4962,7 @@ li {
 }
 
 .character-attack-card header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  display: block;
   text-align: left;
 }
 
@@ -4944,68 +4973,82 @@ li {
   line-height: 1.1;
 }
 
-.character-attack-card header span {
-  flex: 0 0 auto;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(47, 18, 11, 0.36);
+.character-attack-mode-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  border: 0;
+  border-radius: 0;
   background: none;
+}
+
+.character-attack-mode-table th,
+.character-attack-mode-table td {
+  padding: 8px 10px;
+  border-right: 1.6px solid rgba(47, 18, 11, 0.3);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.character-attack-mode-table th:last-child,
+.character-attack-mode-table td:last-child {
+  border-right: 0;
+}
+
+.character-attack-mode-table th {
   color: #2f120b;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
+  line-height: 1;
   text-transform: uppercase;
+  border-bottom: 1.8px solid rgba(47, 18, 11, 0.34);
+  background: none;
 }
 
-.character-attack-card .character-attack-metrics {
-  display: grid !important;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
-  width: 100%;
+.character-attack-mode-table td {
+  color: #3d190f;
 }
 
-.character-attack-card .character-attack-metric {
-  display: grid !important;
-  gap: 4px;
-  align-content: center;
-  justify-items: center;
-  min-width: 0;
-  padding: 8px;
-  border: 1px solid rgba(47, 18, 11, 0.34);
-  border-radius: 8px;
-  text-align: center;
+.character-attack-mode-table tbody tr:not(:last-child) td {
+  border-bottom: 1.6px solid rgba(47, 18, 11, 0.3);
 }
 
-.character-attack-card .character-attack-metric--attack,
-.character-attack-card .character-attack-metric--damage {
-  grid-column: span 3;
+.character-attack-mode-table th:nth-child(1),
+.character-attack-mode-table td:nth-child(1) {
+  width: 34%;
 }
 
-.character-attack-card .character-attack-metric--range,
-.character-attack-card .character-attack-metric:nth-child(4),
-.character-attack-card .character-attack-metric:nth-child(5) {
-  grid-column: span 2;
+.character-attack-mode-table th:nth-child(2),
+.character-attack-mode-table td:nth-child(2) {
+  width: 36%;
 }
 
-.character-attack-card .character-attack-metric--attack {
-  border-color: rgba(113, 36, 29, 0.7);
+.character-attack-mode-table th:nth-child(3),
+.character-attack-mode-table td:nth-child(3) {
+  width: 30%;
 }
 
-.character-attack-card .character-attack-metric--damage {
-  border-color: rgba(44, 91, 55, 0.72);
-}
-
-.character-attack-card .character-attack-metric--range {
-  border-color: rgba(48, 82, 122, 0.72);
-}
-
-.character-attack-card .character-attack-metric small,
-.character-attack-card .character-attack-metric strong {
+.character-attack-mode-table span,
+.character-attack-mode-table strong {
   display: block;
 }
 
-.character-attack-card .character-attack-metric strong {
+.character-attack-mode-table span {
+  min-height: 1em;
+  margin-bottom: 4px;
+  color: #7a3e21;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.character-attack-mode-table strong {
   color: #3d190f;
   font-family: var(--font-hand), var(--font-heading), serif;
   font-size: 1rem;
@@ -5458,6 +5501,15 @@ button.character-weapon-mastery--expandable small,
 
 .character-sheet-block--training-table .character-sheet-table th {
   color: #2f120b !important;
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.character-sheet-block--training-table .character-sheet-table tbody,
+.character-sheet-block--training-table .character-sheet-table tr,
+.character-sheet-block--training-table .character-sheet-table th,
+.character-sheet-block--training-table .character-sheet-table td {
   background: none !important;
   background-color: transparent !important;
   background-image: none !important;
