@@ -8,6 +8,8 @@ import type {
   CharacterAbilityScores,
   CharacterEquipmentItem,
   CharacterResponseBody,
+  CharacterWeaponAttack,
+  CharacterWeaponAttackMode,
 } from '@/app/types/character';
 import type { EquipmentRange } from '@/app/types/equipment';
 
@@ -31,7 +33,7 @@ const abilityOrder: Array<keyof CharacterAbilityScores> = [
 ];
 
 const currencyOrder = ['cp', 'sp', 'ep', 'gp', 'pp'] as const;
-const exampleCharacterId = '1771';
+const exampleCharacterId = '1871';
 const weaponProficiencyOptions = [
   {
     label: 'Simple Melee Weapons',
@@ -64,6 +66,14 @@ function formatFallback(value: unknown, fallback = 'Not returned') {
 
   if (typeof value === 'boolean') {
     return value ? 'Yes' : 'No';
+  }
+
+  return String(value);
+}
+
+function formatSheetFieldValue(value: unknown) {
+  if (value === null || value === undefined || value === '') {
+    return '\u00a0';
   }
 
   return String(value);
@@ -106,16 +116,55 @@ function formatWeaponAttackRange(
   return formattedRange;
 }
 
+function formatWeaponAttackTypeLabel(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+}
+
+function formatWeaponAttackModeLabel(mode: CharacterWeaponAttackMode) {
+  const modeLabel =
+    mode.mode === 'thrown'
+      ? 'Thrown'
+      : mode.mode === 'versatile'
+        ? 'Versatile'
+        : formatWeaponAttackTypeLabel(mode.attackType);
+  const attackTypeLabel = formatWeaponAttackTypeLabel(mode.attackType);
+
+  if (modeLabel.toLowerCase() === attackTypeLabel.toLowerCase()) {
+    return modeLabel;
+  }
+
+  return `${modeLabel} / ${attackTypeLabel}`;
+}
+
+function getRenderedWeaponAttackModes(
+  attack: CharacterWeaponAttack,
+): CharacterWeaponAttackMode[] {
+  if (attack.attackModes.length > 0) {
+    return attack.attackModes;
+  }
+
+  return [
+    {
+      mode: attack.attackType,
+      attackType: attack.attackType,
+      ability: attack.ability,
+      isProficient: attack.isProficient,
+      abilityModifier: attack.abilityModifier,
+      proficiencyBonus: attack.proficiencyBonus,
+      attackBonus: attack.attackBonus,
+      damage: attack.damage,
+      range: attack.range,
+    },
+  ];
+}
+
 const weaponPropertyDescriptions: Record<string, string> = {
   ammunition:
     'You can make a ranged attack only if you have ammunition to fire.',
-  finesse:
-    'Choose Strength or Dexterity for the attack and damage rolls.',
-  heavy:
-    'Small creatures have disadvantage on attack rolls with this weapon.',
+  finesse: 'Choose Strength or Dexterity for the attack and damage rolls.',
+  heavy: 'Small creatures have disadvantage on attack rolls with this weapon.',
   light: 'Ideal for two-weapon fighting with another Light weapon.',
-  loading:
-    'You can fire only one piece of ammunition from it when you attack.',
+  loading: 'You can fire only one piece of ammunition from it when you attack.',
   range: 'This weapon can attack targets at a distance.',
   ranged: 'This weapon can attack targets at a distance.',
   reach: 'This weapon adds 5 feet to your reach when you attack.',
@@ -160,9 +209,10 @@ function getWeaponPropertySlug(property: string) {
     'versatile',
     'special',
   ];
-  const matchedPropertySlug = knownPropertySlugs.find((knownSlug) =>
-    normalizedProperty.includes(knownSlug.replace('-', ' ')) ||
-    propertySlug.includes(knownSlug),
+  const matchedPropertySlug = knownPropertySlugs.find(
+    (knownSlug) =>
+      normalizedProperty.includes(knownSlug.replace('-', ' ')) ||
+      propertySlug.includes(knownSlug),
   );
 
   return matchedPropertySlug ?? propertySlug;
@@ -358,7 +408,9 @@ function ProficiencyChecklist({
       <h3>{label}</h3>
       <div>
         {items.map((item) => {
-          const isActive = item.matches.some((match) => activeItemSet.has(match));
+          const isActive = item.matches.some((match) =>
+            activeItemSet.has(match),
+          );
 
           return (
             <span className="character-proficiency-check" key={item.label}>
@@ -384,7 +436,9 @@ function ProficiencyChecklist({
 
 function getReturnedProficiencyBonus(character: CharacterPreviewResponse) {
   const returnedBonuses = [
-    ...character.savingThrows.map((savingThrow) => savingThrow.proficiencyBonus),
+    ...character.savingThrows.map(
+      (savingThrow) => savingThrow.proficiencyBonus,
+    ),
     ...character.skills.map((skill) => skill.proficiencyBonus),
     ...character.weaponAttacks.map((attack) => attack.proficiencyBonus),
   ].filter((bonus) => bonus > 0);
@@ -404,6 +458,10 @@ function CharacterSheet({
   const featureGroups = getCharacterFeatures(character);
   const proficiencyBonus = getReturnedProficiencyBonus(character);
   const spellcasting = character.spellcastingSummary;
+  const renderedWeaponAttacks = character.weaponAttacks.map((attack) => ({
+    attack,
+    attackModes: getRenderedWeaponAttackModes(attack),
+  }));
 
   function toggleExpandedProperty(propertyKey: string) {
     setExpandedProperties((currentProperties) => {
@@ -437,28 +495,18 @@ function CharacterSheet({
                 <dt>Level</dt>
                 <dd>{character.level}</dd>
               </div>
-              <div className="character-sheet__masthead-field">
+              <div className="character-sheet__masthead-field character-sheet__masthead-field--line">
                 <dt>Class</dt>
-                <dd>
-                  {formatFallback(character.classDetails?.name, 'Unknown class')}
-                </dd>
+                <dd>{formatSheetFieldValue(character.classDetails?.name)}</dd>
               </div>
-              <div className="character-sheet__masthead-field">
+              <div className="character-sheet__masthead-field character-sheet__masthead-field--line">
                 <dt>Species</dt>
-                <dd>
-                  {formatFallback(
-                    character.speciesDetails?.name,
-                    'Unknown species',
-                  )}
-                </dd>
+                <dd>{formatSheetFieldValue(character.speciesDetails?.name)}</dd>
               </div>
-              <div className="character-sheet__masthead-field">
+              <div className="character-sheet__masthead-field character-sheet__masthead-field--line">
                 <dt>Background</dt>
                 <dd>
-                  {formatFallback(
-                    character.backgroundDetails?.name,
-                    'Unknown background',
-                  )}
+                  {formatSheetFieldValue(character.backgroundDetails?.name)}
                 </dd>
               </div>
             </dl>
@@ -586,7 +634,6 @@ function CharacterSheet({
                         <td data-label="Name">
                           <span className="character-check-table__name">
                             <strong>{savingThrow.ability}</strong>
-                            <small>Saving throw</small>
                           </span>
                         </td>
                         <td data-label="Prof">
@@ -736,9 +783,9 @@ function CharacterSheet({
           eyebrow="Combat"
           title="Attacks"
         >
-          {character.weaponAttacks.length > 0 ? (
+          {renderedWeaponAttacks.length > 0 ? (
             <div className="character-attack-list">
-              {character.weaponAttacks.map((attack) => {
+              {renderedWeaponAttacks.map(({ attack, attackModes }) => {
                 const masterySlug = attack.mastery.slug;
                 const masteryDescription =
                   weaponMasteryDescriptions[masterySlug];
@@ -746,118 +793,124 @@ function CharacterSheet({
                 const isMasteryExpanded = expandedProperties.has(masteryKey);
 
                 return (
-                <article className="character-attack-card" key={attack.equipmentId}>
-                  <header>
-                    <strong>{attack.name}</strong>
-                    <span>{attack.attackType}</span>
-                  </header>
+                  <article
+                    className="character-attack-card"
+                    key={attack.equipmentId}
+                  >
+                    <header>
+                      <strong>{attack.name}</strong>
+                    </header>
 
-                  <div className="character-attack-metrics">
-                    <div className="character-attack-metric character-attack-metric--attack">
-                      <small>Attack</small>
-                      <strong>{formatSigned(attack.attackBonus)}</strong>
-                    </div>
-                    <div className="character-attack-metric character-attack-metric--damage">
-                      <small>Damage</small>
-                      <strong>
-                        {attack.damage.formula} {attack.damage.damageType}
-                      </strong>
-                    </div>
-                    <div className="character-attack-metric character-attack-metric--range">
-                      <small>Range</small>
-                      <strong>
-                        {formatWeaponAttackRange(
-                          attack.attackType,
-                          attack.range,
-                        )}
-                      </strong>
-                    </div>
-                    <div className="character-attack-metric">
-                      <small>Ability</small>
-                      <strong>{attack.ability}</strong>
-                    </div>
-                    <div className="character-attack-metric">
-                      <small>Prof.</small>
-                      <strong>
-                        {attack.isProficient
-                          ? formatSigned(attack.proficiencyBonus)
-                          : 'No'}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div className="character-attack-card__traits">
-                    <div className="character-attack-card__properties">
-                      <small>Properties</small>
-                      <div>
-                        {attack.properties.length > 0 ? (
-                          attack.properties.map((property) => {
-                            const propertySlug =
-                              getWeaponPropertySlug(property);
-                            const propertyDescription =
-                              weaponPropertyDescriptions[propertySlug];
-                            const propertyKey = `${attack.equipmentId}-${property}`;
-                            const isExpanded =
-                              expandedProperties.has(propertyKey);
-
-                            if (propertyDescription) {
-                              return (
-                                <button
-                                  aria-expanded={isExpanded}
-                                  className={`${getWeaponPropertyClassName(
-                                    property,
-                                  )} character-weapon-property--expandable`}
-                                  key={propertyKey}
-                                  onClick={() =>
-                                    toggleExpandedProperty(propertyKey)
-                                  }
-                                  type="button"
-                                >
-                                  <span>{property}</span>
-                                  {isExpanded ? (
-                                    <small>{propertyDescription}</small>
-                                  ) : null}
-                                </button>
-                              );
-                            }
-
-                            return (
-                              <span
-                                className={getWeaponPropertyClassName(property)}
-                                key={`${attack.equipmentId}-${property}`}
-                              >
-                                {property}
+                    <table className="character-attack-mode-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Attack</th>
+                          <th scope="col">Damage</th>
+                          <th scope="col">Range</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {attackModes.map((attackMode) => (
+                          <tr key={`${attack.equipmentId}-${attackMode.mode}`}>
+                            <td data-label="Attack">
+                              <span>
+                                {formatWeaponAttackModeLabel(attackMode)}
                               </span>
-                            );
-                          })
-                        ) : (
-                          <span className="character-weapon-property">
-                            None returned
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                              <strong>
+                                {formatSigned(attackMode.attackBonus)}
+                              </strong>
+                            </td>
+                            <td data-label="Damage">
+                              <strong>{attackMode.damage.formula}</strong>
+                              <span>{attackMode.damage.damageType}</span>
+                            </td>
+                            <td data-label="Range">
+                              <strong>
+                                {formatWeaponAttackRange(
+                                  attackMode.attackType,
+                                  attackMode.range,
+                                )}
+                              </strong>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
 
-                    <div className="character-attack-card__mastery">
-                      <small>Mastery</small>
-                      <div>
-                        <button
-                          aria-expanded={isMasteryExpanded}
-                          className={`${getWeaponMasteryClassName(
-                            masterySlug,
-                          )} character-weapon-mastery--expandable`}
-                          onClick={() => toggleExpandedProperty(masteryKey)}
-                          type="button"
-                        >
-                          <span>{attack.mastery.name}</span>
-                          {isMasteryExpanded && masteryDescription ? (
-                            <small>{masteryDescription}</small>
-                          ) : null}
-                        </button>
+                    <div className="character-attack-card__traits">
+                      <div className="character-attack-card__properties">
+                        <small>Properties</small>
+                        <div>
+                          {attack.properties.length > 0 ? (
+                            attack.properties.map((property) => {
+                              const propertySlug =
+                                getWeaponPropertySlug(property);
+                              const propertyDescription =
+                                weaponPropertyDescriptions[propertySlug];
+                              const propertyKey = `${attack.equipmentId}-${property}`;
+                              const isExpanded =
+                                expandedProperties.has(propertyKey);
+
+                              if (propertyDescription) {
+                                return (
+                                  <button
+                                    aria-expanded={isExpanded}
+                                    className={`${getWeaponPropertyClassName(
+                                      property,
+                                    )} character-weapon-property--expandable`}
+                                    key={propertyKey}
+                                    onClick={() =>
+                                      toggleExpandedProperty(propertyKey)
+                                    }
+                                    type="button"
+                                  >
+                                    <span>{property}</span>
+                                    {isExpanded ? (
+                                      <small>{propertyDescription}</small>
+                                    ) : null}
+                                  </button>
+                                );
+                              }
+
+                              return (
+                                <span
+                                  className={getWeaponPropertyClassName(
+                                    property,
+                                  )}
+                                  key={propertyKey}
+                                >
+                                  {property}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="character-weapon-property">
+                              None returned
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="character-attack-card__mastery">
+                        <small>Mastery</small>
+                        <div>
+                          <button
+                            aria-expanded={isMasteryExpanded}
+                            className={`${getWeaponMasteryClassName(
+                              masterySlug,
+                            )} character-weapon-mastery--expandable`}
+                            onClick={() => toggleExpandedProperty(masteryKey)}
+                            type="button"
+                          >
+                            <span>{attack.mastery.name}</span>
+                            {isMasteryExpanded && masteryDescription ? (
+                              <small>{masteryDescription}</small>
+                            ) : null}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </article>
+                  </article>
                 );
               })}
             </div>
@@ -1116,7 +1169,7 @@ export function CharacterPreviewClient() {
           {previewState.status === 'loading'
             ? 'Opening sheet...'
             : normalizedCharacterId === exampleCharacterId
-              ? 'Open #1771 sheet'
+              ? `Open #${exampleCharacterId} sheet`
               : 'Open sheet'}
         </button>
       </form>
@@ -1142,12 +1195,14 @@ export function CharacterPreviewClient() {
       {previewState.status === 'idle' ? (
         <div className="character-preview-state">
           <p className="kicker">Example character ready</p>
-          <h2>Open character #1771 to preview the finished sheet.</h2>
+          <h2>
+            Open character #{exampleCharacterId} to preview the finished sheet.
+          </h2>
           <p>
-            The field stays editable for any other ID, but #1771 is set as the
-            baseline display sample. The page reads the character detail
-            endpoint and renders the data without recalculating derived values
-            in the browser.
+            The field stays editable for any other ID, but #{exampleCharacterId}{' '}
+            is set as the baseline display sample. The page reads the character
+            detail endpoint and renders the data without recalculating derived
+            values in the browser.
           </p>
         </div>
       ) : null}
