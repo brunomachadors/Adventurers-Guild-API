@@ -485,6 +485,9 @@ function CharacterSheet({
             <p className="kicker">Character ID</p>
             <h2>#{character.id}</h2>
           </div>
+          <strong className="character-sheet__masthead-status">
+            {character.status}
+          </strong>
           <div className="character-sheet__masthead-details">
             <dl>
               <div className="character-sheet__masthead-field character-sheet__masthead-field--name">
@@ -512,7 +515,6 @@ function CharacterSheet({
             </dl>
           </div>
         </div>
-        <strong>{character.status}</strong>
       </header>
 
       <div className="character-sheet__stats">
