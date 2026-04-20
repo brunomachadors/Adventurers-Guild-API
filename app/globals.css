@@ -3836,8 +3836,8 @@ li {
   display: inline-flex;
   align-items: baseline;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 14px;
+  margin-bottom: 10px;
 }
 
 .character-sheet__masthead--form .kicker {
@@ -3851,20 +3851,29 @@ li {
 
 .character-sheet__masthead--form h2 {
   color: #2f120b;
-  font-size: 0.92rem;
-  letter-spacing: 0.06em;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
   line-height: 1;
   overflow-wrap: anywhere;
 }
 
+.character-sheet__masthead-id .kicker {
+  font-size: 1.08rem;
+  letter-spacing: 0.16em;
+}
+
+.character-sheet__masthead-id h2 {
+  font-size: 1.14rem;
+}
+
 .character-sheet__masthead--form .character-sheet__masthead-details {
   width: min(100%, 1180px);
-  margin-top: 16px;
+  margin-top: 26px;
 }
 
 .character-sheet__masthead--form .character-sheet__masthead-details dl {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 12px 22px;
   padding: 6px 0 0;
   text-align: center;
@@ -3880,16 +3889,20 @@ li {
 }
 
 .character-sheet__masthead--form .character-sheet__masthead-field {
-  grid-column: span 2;
+  grid-column: span 4;
 }
 
 .character-sheet__masthead--form .character-sheet__masthead-field--name {
-  grid-column: 1 / -1;
+  grid-column: span 9;
+}
+
+.character-sheet__masthead--form .character-sheet__masthead-field--level {
+  grid-column: span 3;
 }
 
 .character-sheet__masthead--form .character-sheet__masthead-field--line {
   display: grid;
-  grid-template-columns: auto clamp(128px, 10vw, 180px);
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: baseline;
   justify-content: center;
   gap: 10px;
@@ -3923,16 +3936,16 @@ li {
   font-weight: 400;
   letter-spacing: 0;
   line-height: 1;
-  min-width: clamp(128px, 10vw, 180px);
+  min-width: 0;
   padding: 0 9px 4px;
   border-bottom: 1.5px dashed rgba(90, 42, 26, 0.54);
-  overflow-wrap: normal;
+  overflow-wrap: anywhere;
   white-space: nowrap;
   text-shadow: 0 0.5px 0 rgba(255, 249, 235, 0.5);
 }
 
 .character-sheet__masthead--form .character-sheet__masthead-field--line dd {
-  width: clamp(128px, 10vw, 180px);
+  width: 100%;
 }
 
 .character-sheet__masthead--form .character-sheet__masthead-details dd:empty::before {
@@ -3946,17 +3959,17 @@ li {
   white-space: normal;
 }
 
-.character-sheet__masthead--form > strong {
+.character-sheet__masthead-status {
   position: relative;
-  grid-column: 3;
-  justify-self: end;
+  justify-self: center;
+  margin-bottom: 4px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 122px;
-  min-height: 54px;
-  padding: 12px 24px;
+  min-width: 112px;
+  min-height: 38px;
+  padding: 8px 22px;
   border-radius: 999px;
   border: 1px solid rgba(255, 210, 150, 0.22);
   background:
@@ -3968,7 +3981,7 @@ li {
     linear-gradient(180deg, #9f372c 0%, #661b16 100%);
   color: #ffe6bd;
   font-family: var(--font-heading), sans-serif;
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   letter-spacing: 0.14em;
   line-height: 1;
   text-align: center;
@@ -5814,8 +5827,7 @@ button.character-weapon-mastery--expandable small,
     grid-template-columns: 1fr;
   }
 
-  .character-sheet__masthead-copy,
-  .character-sheet__masthead > strong {
+  .character-sheet__masthead-copy {
     grid-column: 1;
     justify-self: center;
   }
