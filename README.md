@@ -2,6 +2,18 @@
 
 Fantasy-themed REST API built with Next.js to support learning and practice around backend testing, API automation, contract validation, and documentation.
 
+## Public API Version
+
+Current public API version: `0.2.0`
+
+Public API behavior changes are documented in [CHANGELOG.md](CHANGELOG.md).
+
+This project uses Semantic Versioning while the API is pre-1.0:
+
+- `MINOR` versions document meaningful API behavior changes, new endpoints, or stricter validation.
+- `PATCH` versions document fixes that do not intentionally change public behavior.
+- `MAJOR` is reserved for a future stable `1.0.0` API contract.
+
 ## Purpose
 
 This project is designed to provide a stable API surface that can be used to practice:
@@ -368,6 +380,8 @@ Request body fields:
 - `currency` optional
 - `skillProficiencies` optional
 
+If `abilityScores` is provided, it uses the same validation rules as `PUT /api/characters/{id}/ability-scores`: complete `base` and `bonuses` blocks, integer `STR`, `DEX`, `CON`, `INT`, `WIS`, and `CHA` values, level 1 to 3 base scores between `8` and `15`, bonuses between `0` and `2`, and background-compatible bonus choices.
+
 Response fields:
 
 - `id`
@@ -409,6 +423,7 @@ Returns:
 
 - `201` when the character is created
 - `400` with `{ "error": "Invalid character request payload" }`
+- `400` with a specific ability score validation message, for example `{ "error": "Invalid character ability scores payload: base.STR must be between 8 and 15 for character levels 1 to 3; received 16" }`
 - `401` with `{ "error": "Unauthorized" }`
 - `500` with `{ "error": "Failed to create character" }`
 
@@ -496,10 +511,13 @@ Accepted fields:
 - `currency`
 - `skillProficiencies`
 
+If `abilityScores` is provided, it uses the same validation rules as `PUT /api/characters/{id}/ability-scores`. Sending `abilityScores: null` clears the saved scores.
+
 Returns:
 
 - `200` with the updated character response
 - `400` with `{ "error": "Invalid character request payload" }`
+- `400` with a specific ability score validation message, for example `{ "error": "Invalid character ability scores payload: bonuses.STR is not allowed by this character's background. Allowed abilities: INT, WIS, CHA" }`
 - `401` with `{ "error": "Unauthorized" }`
 - `404` with `{ "error": "Character not found" }`
 - `500` with `{ "error": "Failed to update character" }`
@@ -840,10 +858,19 @@ Request body fields:
 - `abilityScores.base`
 - `abilityScores.bonuses`
 
+Validation rules:
+
+- `base` and `bonuses` must each contain exactly `STR`, `DEX`, `CON`, `INT`, `WIS`, and `CHA`.
+- All values must be integers.
+- For character levels `1` to `3`, each base score must be between `8` and `15`.
+- Each bonus must be between `0` and `2`.
+- Positive bonuses must target abilities allowed by the character's background.
+- The current background rule requires a `+2/+1` split across different allowed abilities.
+
 Returns:
 
 - `200` with the updated ability score selection response
-- `400` with `{ "error": "Invalid character ability scores payload" }`
+- `400` with a specific validation message, for example `{ "error": "Invalid character ability scores payload: base.DEX must be between 8 and 15 for character levels 1 to 3; received 16" }`
 - `400` with `{ "error": "Ability score selection is not available for this character" }`
 - `401` with `{ "error": "Unauthorized" }`
 - `404` with `{ "error": "Character not found" }`
