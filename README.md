@@ -2,6 +2,18 @@
 
 Fantasy-themed REST API built with Next.js to support learning and practice around backend testing, API automation, contract validation, and documentation.
 
+## Public API Version
+
+Current public API version: `0.2.0`
+
+Public API behavior changes are documented in [CHANGELOG.md](CHANGELOG.md).
+
+This project uses Semantic Versioning while the API is pre-1.0:
+
+- `MINOR` versions document meaningful API behavior changes, new endpoints, or stricter validation.
+- `PATCH` versions document fixes that do not intentionally change public behavior.
+- `MAJOR` is reserved for a future stable `1.0.0` API contract.
+
 ## Purpose
 
 This project is designed to provide a stable API surface that can be used to practice:
