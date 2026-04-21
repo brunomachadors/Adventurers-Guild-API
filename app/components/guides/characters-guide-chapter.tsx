@@ -1327,17 +1327,29 @@ const characterTickets: CharacterTicket[] = [
       },
       {
         label: 'Request types',
-        value: 'GET and PUT',
+        value: 'GET, PUT, and PATCH',
+      },
+      {
+        label: 'Path parameter',
+        value: 'Use the character id as {id} in both attribute routes.',
       },
       {
         label: 'Related routes',
         value: 'Use ability-score-options and ability-scores for the full attribute flow.',
       },
+      {
+        label: 'Base score range',
+        value: 'For levels 1 to 3, each base ability score must be between 8 and 15.',
+      },
+      {
+        label: 'Bonus rule',
+        value: 'Bonuses must follow a +2/+1 split across different background-allowed abilities.',
+      },
     ],
     responseHeading: 'Expected return',
     responseSubheading: 'Response contract',
     responseDescription:
-      'Attribute flow is split into helper routes. First read the available ability score rules with GET /api/characters/{id}/ability-score-options, then update the chosen values with PUT /api/characters/{id}/ability-scores.',
+      'Attribute flow is split into helper routes. First read the available ability score rules with GET /api/characters/{id}/ability-score-options, then update the chosen values with PUT /api/characters/{id}/ability-scores. POST /api/characters and PATCH /api/characters/{id} apply the same validation whenever abilityScores is provided.',
     responseFields: [
       {
         name: 'allowedChoices',
@@ -1352,12 +1364,17 @@ const characterTickets: CharacterTicket[] = [
       {
         name: 'abilityScores',
         type: 'object | null',
-        description: 'Resolved ability score block returned after the update.',
+        description: 'Resolved ability score block returned after the update. The request must include complete base and bonuses blocks for STR, DEX, CON, INT, WIS, and CHA.',
       },
       {
         name: 'abilityModifiers',
         type: 'object | null',
         description: 'Derived modifiers calculated from the final ability scores.',
+      },
+      {
+        name: 'error',
+        type: 'string',
+        description: 'Validation failures include the invalid field and received value when possible.',
       },
     ],
     responseExamples: [
@@ -1434,6 +1451,14 @@ const characterTickets: CharacterTicket[] = [
           },
         },
       },
+      {
+        label: 'Invalid base score',
+        status: '400 Bad Request',
+        payload: {
+          error:
+            'Invalid character ability scores payload: base.DEX must be between 8 and 15 for character levels 1 to 3; received 16',
+        },
+      },
     ],
   },
 ];
@@ -1476,7 +1501,7 @@ function getRequestMethodBadgeClass(value: string) {
 
 function renderDetailValue(value: string) {
   const methodParts = value
-    .split(' and ')
+    .split(/\s*(?:,|and)\s*/g)
     .map((part) => part.trim())
     .filter(Boolean);
 
@@ -1508,7 +1533,7 @@ function renderDetailValue(value: string) {
 function renderMethodBadges(value: string, keyPrefix: string) {
   return (
     <span className="guide-method-badge-row">
-      {value.split(' and ').map((part) => {
+      {value.split(/\s*(?:,|and)\s*/g).map((part) => {
         const trimmedPart = part.trim();
 
         return (

@@ -1,5 +1,9 @@
 import { getAuthenticatedOwnerFromRequest } from '@/app/lib/auth';
 import {
+  getCharacterAbilityScoreRulesByBackgroundId,
+  validateCharacterAbilityScoresInput,
+} from '@/app/lib/character-ability-scores';
+import {
   formatCharacterResponse,
   getCharacterMissingFields,
   getCharacterStatus,
@@ -13,6 +17,7 @@ import {
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
 import {
+  CharacterAbilityScoresInput,
   CharacterCreateRequestBody,
   CharacterListItem,
 } from '@/app/types/character';
@@ -140,10 +145,28 @@ export async function POST(request: Request) {
     const speciesId = body.speciesId ?? null;
     const backgroundId = body.backgroundId ?? null;
     const level = body.level ?? 1;
-    const abilityScores =
-      body.abilityScores === undefined || body.abilityScores === null
-        ? null
-        : serializeCharacterAbilityScoresInput(body.abilityScores);
+    let abilityScores: CharacterAbilityScoresInput | null = null;
+
+    if (body.abilityScores !== undefined && body.abilityScores !== null) {
+      const selectionRules =
+        await getCharacterAbilityScoreRulesByBackgroundId(backgroundId);
+      const validationResult = validateCharacterAbilityScoresInput({
+        abilityScores: body.abilityScores,
+        characterLevel: level,
+        selectionRules,
+      });
+
+      if (!validationResult.valid) {
+        return NextResponse.json(
+          { error: validationResult.error },
+          { status: 400 },
+        );
+      }
+
+      abilityScores = serializeCharacterAbilityScoresInput(
+        validationResult.abilityScores,
+      );
+    }
     const currency =
       body.currency === undefined || body.currency === null
         ? null

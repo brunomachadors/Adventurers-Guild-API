@@ -58,7 +58,7 @@ const paladinAbilityScores: CharacterAbilityScores = {
 
 const aangAbilityScores: CharacterAbilityScores = {
   STR: 10,
-  DEX: 16,
+  DEX: 15,
   CON: 14,
   INT: 8,
   WIS: 15,
@@ -287,9 +287,9 @@ const paladinArmorClass: CharacterArmorClass = {
 };
 
 const aangArmorClass: CharacterArmorClass = {
-  total: 16,
+  total: 15,
   base: 10,
-  dexModifierApplied: 3,
+  dexModifierApplied: 2,
   classBonus: 3,
   shieldBonus: 0,
   sources: [
@@ -2119,9 +2119,9 @@ test.describe(
         );
         await charactersAssert.validateInitiative(character.initiative, {
           ability: 'DEX',
-          abilityModifier: 3,
+          abilityModifier: 2,
           bonus: 0,
-          total: 3,
+          total: 2,
         });
         await charactersAssert.validatePassivePerception(
           character.passivePerception,
@@ -4264,6 +4264,59 @@ test.describe(
     );
 
     test(
+      'Reject Invalid Drizzt Scores And Keep Previous Scores',
+      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          drizztCharacterId,
+          {
+            abilityScores: {
+              ...drizztAbilityScoresInput,
+              base: {
+                ...drizztAbilityScoresInput.base,
+                DEX: 16,
+              },
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          'Invalid character ability scores payload: base.DEX must be between 8 and 15 for character levels 1 to 3; received 16',
+        );
+
+        const detailResponse = await charactersClient.getCharacterDetail(
+          drizztCharacterId,
+          authToken,
+        );
+
+        await charactersAssert.success(detailResponse);
+
+        const character: CharacterResponseBody = await detailResponse.json();
+
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateName(
+          character.name,
+          drizztCharacterName,
+        );
+        await validateDrizztRangerBuild(character);
+        await charactersAssert.validateAbilityScores(
+          character.abilityScores,
+          drizztAbilityScores,
+          drizztAbilityBonuses,
+        );
+      },
+    );
+
+    test(
       'Clear Scores Drizzt',
       { tag: ['@patch', '@data'] },
       async ({ request }) => {
@@ -6292,6 +6345,303 @@ test.describe(
         await charactersAssert.validateErrorResponse(
           body,
           'Invalid character request payload',
+        );
+      },
+    );
+
+    test(
+      'Put Geralt Scores With Base Above Creation Maximum',
+      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          geraltCharacterId,
+          {
+            abilityScores: {
+              ...yenneferAbilityScoresInput,
+              base: {
+                ...yenneferAbilityScoresInput.base,
+                STR: 16,
+              },
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          'Invalid character ability scores payload: base.STR must be between 8 and 15 for character levels 1 to 3; received 16',
+        );
+      },
+    );
+
+    test(
+      'Put Geralt Scores With Base Below Creation Minimum',
+      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          geraltCharacterId,
+          {
+            abilityScores: {
+              ...yenneferAbilityScoresInput,
+              base: {
+                ...yenneferAbilityScoresInput.base,
+                INT: 7,
+              },
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          'Invalid character ability scores payload: base.INT must be between 8 and 15 for character levels 1 to 3; received 7',
+        );
+      },
+    );
+
+    test(
+      'Put Geralt Scores With Bonus Above Maximum',
+      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          geraltCharacterId,
+          {
+            abilityScores: {
+              ...yenneferAbilityScoresInput,
+              bonuses: {
+                ...yenneferAbilityScoresInput.bonuses,
+                WIS: 3,
+              },
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          'Invalid character ability scores payload: bonuses.WIS must be between 0 and 2; received 3',
+        );
+      },
+    );
+
+    test(
+      'Put Geralt Scores With Negative Bonus',
+      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          geraltCharacterId,
+          {
+            abilityScores: {
+              ...yenneferAbilityScoresInput,
+              bonuses: {
+                ...yenneferAbilityScoresInput.bonuses,
+                WIS: -1,
+              },
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          'Invalid character ability scores payload: bonuses.WIS must be between 0 and 2; received -1',
+        );
+      },
+    );
+
+    test(
+      'Put Geralt Scores With Bonus Outside Background Choices',
+      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          geraltCharacterId,
+          {
+            abilityScores: {
+              ...yenneferAbilityScoresInput,
+              bonuses: {
+                STR: 1,
+                DEX: 0,
+                CON: 0,
+                INT: 0,
+                WIS: 0,
+                CHA: 2,
+              },
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          "Invalid character ability scores payload: bonuses.STR is not allowed by this character's background. Allowed abilities: INT, WIS, CHA",
+        );
+      },
+    );
+
+    test(
+      'Put Geralt Scores With Bonus Total Mismatch',
+      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          geraltCharacterId,
+          {
+            abilityScores: {
+              ...yenneferAbilityScoresInput,
+              bonuses: {
+                STR: 0,
+                DEX: 0,
+                CON: 0,
+                INT: 0,
+                WIS: 2,
+                CHA: 0,
+              },
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          'Invalid character ability scores payload: bonuses must follow a +2/+1 split across different allowed abilities; received WIS +2',
+        );
+      },
+    );
+
+    test(
+      'Put Geralt Scores With Incomplete Payload',
+      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          geraltCharacterId,
+          {
+            abilityScores: {
+              base: {
+                STR: 15,
+              },
+              bonuses: yenneferAbilityScoresInput.bonuses,
+            } as unknown as CharacterAbilityScoresInput,
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          'Invalid character ability scores payload: abilityScores must contain exactly base and bonuses with integer STR, DEX, CON, INT, WIS, and CHA values',
+        );
+      },
+    );
+
+    test(
+      'Patch Geralt Scores With Base Above Creation Maximum',
+      { tag: ['@patch', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacter(
+          geraltCharacterId,
+          {
+            abilityScores: {
+              ...yenneferAbilityScoresInput,
+              base: {
+                ...yenneferAbilityScoresInput.base,
+                STR: 16,
+              },
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          'Invalid character ability scores payload: base.STR must be between 8 and 15 for character levels 1 to 3; received 16',
+        );
+      },
+    );
+
+    test(
+      'Create Geralt With Base Above Creation Maximum',
+      { tag: ['@post', '@negative', '@error', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.createCharacter(
+          buildGeraltWarlockPayload(
+            `Geralt Of Rivia High Score ${Date.now()}`,
+            {
+              abilityScores: {
+                ...yenneferAbilityScoresInput,
+                base: {
+                  ...yenneferAbilityScoresInput.base,
+                  STR: 16,
+                },
+              },
+            },
+          ),
+          authToken,
+        );
+
+        await charactersAssert.badRequest(response);
+
+        const body: { error: string } = await response.json();
+
+        await charactersAssert.validateErrorResponse(
+          body,
+          'Invalid character ability scores payload: base.STR must be between 8 and 15 for character levels 1 to 3; received 16',
         );
       },
     );

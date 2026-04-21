@@ -1,7 +1,9 @@
 import { getAuthenticatedOwnerFromRequest } from '@/app/lib/auth';
-import { getCharacterAbilityScoreSelectionContext } from '@/app/lib/character-ability-scores';
 import {
-  isCharacterAbilityScoresInput,
+  getCharacterAbilityScoreSelectionContext,
+  validateCharacterAbilityScoresInput,
+} from '@/app/lib/character-ability-scores';
+import {
   serializeCharacterAbilityScoresInput,
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
@@ -23,8 +25,7 @@ function isCharacterAbilityScoresUpdateRequestBody(
   return (
     typeof value === 'object' &&
     value !== null &&
-    'abilityScores' in value &&
-    isCharacterAbilityScoresInput(value.abilityScores)
+    'abilityScores' in value
   );
 }
 
@@ -70,10 +71,23 @@ export async function PUT(request: Request, { params }: RouteContext) {
       );
     }
 
+    const validationResult = validateCharacterAbilityScoresInput({
+      abilityScores: body.abilityScores,
+      characterLevel: context.characterLevel,
+      selectionRules: context.selectionRules,
+    });
+
+    if (!validationResult.valid) {
+      return NextResponse.json(
+        { error: validationResult.error },
+        { status: 400 },
+      );
+    }
+
     const sql = getSql();
     await sql`
       UPDATE characters
-      SET abilityscores = ${serializeCharacterAbilityScoresInput(body.abilityScores)}, updatedat = NOW()
+      SET abilityscores = ${serializeCharacterAbilityScoresInput(validationResult.abilityScores)}, updatedat = NOW()
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
     `;

@@ -1,4 +1,8 @@
 import { getAuthenticatedOwnerFromRequest } from '@/app/lib/auth';
+import {
+  getCharacterAbilityScoreRulesByBackgroundId,
+  validateCharacterAbilityScoresInput,
+} from '@/app/lib/character-ability-scores';
 import { clearCharacterEquipmentChoiceRecords } from '@/app/lib/character-equipment-package-choices';
 import {
   formatCharacterResponse,
@@ -132,12 +136,32 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         : existingCharacter.backgroundid;
     const nextLevel =
       body.level !== undefined ? body.level : Number(existingCharacter.level);
-    const nextAbilityScores =
-      body.abilityScores !== undefined
-        ? body.abilityScores === null
-          ? null
-          : serializeCharacterAbilityScoresInput(body.abilityScores)
-        : existingCharacter.abilityscores;
+    let nextAbilityScores = existingCharacter.abilityscores;
+
+    if (body.abilityScores !== undefined) {
+      if (body.abilityScores === null) {
+        nextAbilityScores = null;
+      } else {
+        const selectionRules =
+          await getCharacterAbilityScoreRulesByBackgroundId(nextBackgroundId);
+        const validationResult = validateCharacterAbilityScoresInput({
+          abilityScores: body.abilityScores,
+          characterLevel: nextLevel ?? 1,
+          selectionRules,
+        });
+
+        if (!validationResult.valid) {
+          return NextResponse.json(
+            { error: validationResult.error },
+            { status: 400 },
+          );
+        }
+
+        nextAbilityScores = serializeCharacterAbilityScoresInput(
+          validationResult.abilityScores,
+        );
+      }
+    }
     const nextCurrency =
       body.currency !== undefined
         ? body.currency === null

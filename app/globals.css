@@ -2204,11 +2204,16 @@ li {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  column-gap: 18px;
+  row-gap: 12px;
 }
 
 .background-guide-card__details .guide-method-badge-row {
   justify-content: center;
+}
+
+.guide-method-badge-row .guide-method-badge + .guide-method-badge {
+  margin-left: 18px;
 }
 
 .guide-method-badge {
