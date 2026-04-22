@@ -7,7 +7,6 @@ import {
   CharacterAbilityScores,
   CharacterAbilityScoresInput,
   CharacterAbilityScoreRules,
-  CharacterAbilityScoreRuleOption,
 } from '@/app/types/character';
 import { Attributeshortname } from '@/app/types/attribute';
 
@@ -154,50 +153,6 @@ function getDisallowedBonusMessage(
   return `${INVALID_ABILITY_SCORES_ERROR}: bonuses.${invalidKey} is not allowed by this character's background. Allowed abilities: ${allowedChoices.join(', ')}`;
 }
 
-function matchesPlusTwoPlusOneRule(
-  bonuses: CharacterAbilityScores,
-  option: Extract<CharacterAbilityScoreRuleOption, { type: 'plus2_plus1' }>,
-): boolean {
-  const positiveBonuses = ABILITY_SCORE_KEYS.filter((key) => bonuses[key] > 0);
-  const expectedPositiveCount = option.choices.reduce(
-    (total, choice) => total + choice.count,
-    0,
-  );
-  const expectedTotalBonus = option.choices.reduce(
-    (total, choice) => total + choice.bonus * choice.count,
-    0,
-  );
-  const actualTotalBonus = ABILITY_SCORE_KEYS.reduce(
-    (total, key) => total + bonuses[key],
-    0,
-  );
-
-  if (
-    positiveBonuses.length !== expectedPositiveCount ||
-    actualTotalBonus !== expectedTotalBonus
-  ) {
-    return false;
-  }
-
-  return option.choices.every((choice) => {
-    const matchingAbilities = ABILITY_SCORE_KEYS.filter(
-      (key) => bonuses[key] === choice.bonus,
-    );
-
-    if (matchingAbilities.length !== choice.count) {
-      return false;
-    }
-
-    if (choice.mustBeDifferentFromBonus === undefined) {
-      return true;
-    }
-
-    return matchingAbilities.every(
-      (key) => bonuses[key] !== choice.mustBeDifferentFromBonus,
-    );
-  });
-}
-
 function matchesPlusOneEachSuggestedRule(
   bonuses: CharacterAbilityScores,
   allowedChoices: Attributeshortname[],
@@ -216,10 +171,6 @@ function matchesBonusRule(
   const options = selectionRules.bonusRules?.options ?? [];
 
   return options.some((option) => {
-    if (option.type === 'plus2_plus1') {
-      return matchesPlusTwoPlusOneRule(bonuses, option);
-    }
-
     if (option.type === 'plus1_each_suggested') {
       return matchesPlusOneEachSuggestedRule(
         bonuses,
@@ -294,24 +245,10 @@ export function validateCharacterAbilityScoresInput({
     };
   }
 
-  const hasPlusTwoPlusOneRule = selectionRules.bonusRules.options.some(
-    (option) => option.type === 'plus2_plus1',
-  );
-
-  if (
-    hasPlusTwoPlusOneRule &&
-    !matchesBonusRule(parsedAbilityScores.bonuses, selectionRules)
-  ) {
-    return {
-      valid: false,
-      error: `${INVALID_ABILITY_SCORES_ERROR}: bonuses must follow a +2/+1 split across different allowed abilities; received ${describeSelectedBonuses(parsedAbilityScores.bonuses)}`,
-    };
-  }
-
   if (!matchesBonusRule(parsedAbilityScores.bonuses, selectionRules)) {
     return {
       valid: false,
-      error: `${INVALID_ABILITY_SCORES_ERROR}: bonuses do not match the background ability score rules; received ${describeSelectedBonuses(parsedAbilityScores.bonuses)}`,
+      error: `${INVALID_ABILITY_SCORES_ERROR}: bonuses must apply +1 to each background-allowed ability; received ${describeSelectedBonuses(parsedAbilityScores.bonuses)}`,
     };
   }
 

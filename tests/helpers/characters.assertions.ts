@@ -1880,7 +1880,7 @@ export class CharactersAssert {
       expect(abilityScoreRules?.allowedChoices).toEqual(expectedAllowedChoices);
       expect(abilityScoreRules?.bonusRules).not.toBeNull();
       expect(abilityScoreRules?.bonusRules?.mode).toBe('standard_background');
-      expect(abilityScoreRules?.bonusRules?.options).toHaveLength(2);
+      expect(abilityScoreRules?.bonusRules?.options).toHaveLength(1);
     });
 
     if (abilityScoreRules) {
@@ -1891,23 +1891,11 @@ export class CharactersAssert {
 
     if (bonusRules) {
       await test.step('Validate Ability Score Bonus Rules', async () => {
-        const plusTwoPlusOneOption = bonusRules.options.find(
-          (option) => option.type === 'plus2_plus1',
-        );
         const plusOneEachSuggestedOption = bonusRules.options.find(
           (option) => option.type === 'plus1_each_suggested',
         );
 
-        expect(plusTwoPlusOneOption).toBeDefined();
         expect(plusOneEachSuggestedOption).toBeDefined();
-
-        expect(plusTwoPlusOneOption).toEqual({
-          type: 'plus2_plus1',
-          choices: [
-            { bonus: 2, count: 1 },
-            { bonus: 1, count: 1, mustBeDifferentFromBonus: 2 },
-          ],
-        });
 
         expect(plusOneEachSuggestedOption).toEqual({
           type: 'plus1_each_suggested',
