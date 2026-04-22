@@ -2032,13 +2032,13 @@ test.describe(
     );
 
     test(
-      'Select Scores Aang',
-      { tag: ['@put', '@data'] },
+      'Patch Scores Aang',
+      { tag: ['@patch', '@data'] },
       async ({ request }) => {
         const charactersClient = new CharactersClient(request);
         const charactersAssert = new CharactersAssert();
 
-        const response = await charactersClient.updateCharacterAbilityScores(
+        const response = await charactersClient.updateCharacter(
           createdCharacterId,
           {
             abilityScores: aangAbilityScoresInput,
@@ -2048,13 +2048,11 @@ test.describe(
 
         await charactersAssert.success(response);
 
-        const abilityScoreOptions = await response.json();
+        const character: CharacterResponseBody = await response.json();
 
-        await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
-          abilityScoreOptions,
-        );
-        await charactersAssert.validateSelectedAbilityScores(
-          abilityScoreOptions.selectedAbilityScores,
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateAbilityScores(
+          character.abilityScores,
           aangAbilityScores,
           aangAbilityBonuses,
         );
