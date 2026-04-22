@@ -865,7 +865,7 @@ Validation rules:
 - For character levels `1` to `3`, each base score must be between `8` and `15`.
 - Each bonus must be between `0` and `2`.
 - Positive bonuses must target abilities allowed by the character's background.
-- The current background rule requires a `+2/+1` split across different allowed abilities.
+- The current background rules allow either a `+2/+1` split across different allowed abilities or `+1/+1/+1` across all background-allowed abilities.
 
 Returns:
 
@@ -985,16 +985,16 @@ Character detail:
     "bonuses": {
       "STR": 0,
       "DEX": 0,
-      "CON": 0,
-      "INT": 2,
+      "CON": 1,
+      "INT": 1,
       "WIS": 1,
       "CHA": 0
     },
     "final": {
       "STR": 8,
       "DEX": 14,
-      "CON": 13,
-      "INT": 17,
+      "CON": 14,
+      "INT": 16,
       "WIS": 13,
       "CHA": 10
     }
@@ -1002,7 +1002,7 @@ Character detail:
   "abilityModifiers": {
     "STR": -1,
     "DEX": 2,
-    "CON": 1,
+    "CON": 2,
     "INT": 3,
     "WIS": 1,
     "CHA": 0
@@ -1046,12 +1046,12 @@ Character detail:
     }
   ],
   "hitPoints": {
-    "max": 7,
-    "current": 7,
+    "max": 8,
+    "current": 8,
     "temporary": 0,
     "hitDie": 6,
-    "conModifier": 1,
-    "calculation": "6 + 1"
+    "conModifier": 2,
+    "calculation": "6 + 2"
   },
   "savingThrows": [
     {
@@ -1383,16 +1383,16 @@ Character ability score options:
     "bonuses": {
       "STR": 0,
       "DEX": 0,
-      "CON": 0,
-      "INT": 2,
+      "CON": 1,
+      "INT": 1,
       "WIS": 1,
       "CHA": 0
     },
     "final": {
       "STR": 8,
       "DEX": 14,
-      "CON": 13,
-      "INT": 17,
+      "CON": 14,
+      "INT": 16,
       "WIS": 13,
       "CHA": 10
     }

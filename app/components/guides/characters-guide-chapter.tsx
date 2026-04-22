@@ -775,6 +775,19 @@ const characterTickets: CharacterTicket[] = [
             allowedChoices: ['CON', 'INT', 'WIS'],
             bonusRules: {
               mode: 'standard_background',
+              options: [
+                {
+                  type: 'plus2_plus1',
+                  choices: [
+                    { bonus: 2, count: 1 },
+                    { bonus: 1, count: 1, mustBeDifferentFromBonus: 2 },
+                  ],
+                },
+                {
+                  type: 'plus1_each_suggested',
+                  basedOn: 'abilityscores',
+                },
+              ],
             },
           },
         },
@@ -1343,7 +1356,7 @@ const characterTickets: CharacterTicket[] = [
       },
       {
         label: 'Bonus rule',
-        value: 'Bonuses must follow a +2/+1 split across different background-allowed abilities.',
+        value: 'Bonuses can use +2/+1 across different allowed abilities or +1/+1/+1 across all allowed abilities.',
       },
     ],
     responseHeading: 'Expected return',
@@ -1386,6 +1399,19 @@ const characterTickets: CharacterTicket[] = [
           allowedChoices: ['CON', 'INT', 'WIS'],
           bonusRules: {
             mode: 'standard_background',
+            options: [
+              {
+                type: 'plus2_plus1',
+                choices: [
+                  { bonus: 2, count: 1 },
+                  { bonus: 1, count: 1, mustBeDifferentFromBonus: 2 },
+                ],
+              },
+              {
+                type: 'plus1_each_suggested',
+                basedOn: 'abilityscores',
+              },
+            ],
           },
         },
       },
@@ -1404,8 +1430,8 @@ const characterTickets: CharacterTicket[] = [
           bonuses: {
             STR: 0,
             DEX: 0,
-            CON: 0,
-            INT: 2,
+            CON: 1,
+            INT: 1,
             WIS: 1,
             CHA: 0,
           },
@@ -1427,16 +1453,16 @@ const characterTickets: CharacterTicket[] = [
             bonuses: {
               STR: 0,
               DEX: 0,
-              CON: 0,
-              INT: 2,
+              CON: 1,
+              INT: 1,
               WIS: 1,
               CHA: 0,
             },
             final: {
               STR: 8,
               DEX: 14,
-              CON: 13,
-              INT: 17,
+              CON: 14,
+              INT: 16,
               WIS: 13,
               CHA: 10,
             },
@@ -1444,7 +1470,7 @@ const characterTickets: CharacterTicket[] = [
           abilityModifiers: {
             STR: -1,
             DEX: 2,
-            CON: 1,
+            CON: 2,
             INT: 3,
             WIS: 1,
             CHA: 0,

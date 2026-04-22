@@ -102,8 +102,8 @@ const casterCoverageAbilityScores: CharacterAbilityScores = {
 };
 
 const barbarianAbilityBonuses: CharacterAbilityScores = {
-  STR: 2,
-  DEX: 0,
+  STR: 1,
+  DEX: 1,
   CON: 1,
   INT: 0,
   WIS: 0,
@@ -113,17 +113,17 @@ const barbarianAbilityBonuses: CharacterAbilityScores = {
 const wizardAbilityBonuses: CharacterAbilityScores = {
   STR: 0,
   DEX: 0,
-  CON: 0,
-  INT: 2,
+  CON: 1,
+  INT: 1,
   WIS: 1,
   CHA: 0,
 };
 
 const paladinAbilityBonuses: CharacterAbilityScores = {
-  STR: 2,
+  STR: 1,
   DEX: 0,
   CON: 0,
-  INT: 0,
+  INT: 1,
   WIS: 0,
   CHA: 1,
 };
@@ -133,11 +133,20 @@ const aangAbilityBonuses: CharacterAbilityScores = {
   DEX: 0,
   CON: 0,
   INT: 1,
-  WIS: 2,
-  CHA: 0,
+  WIS: 1,
+  CHA: 1,
 };
 
 const drizztAbilityBonuses: CharacterAbilityScores = {
+  STR: 1,
+  DEX: 1,
+  CON: 1,
+  INT: 0,
+  WIS: 0,
+  CHA: 0,
+};
+
+const drizztPlusTwoPlusOneAbilityBonuses: CharacterAbilityScores = {
   STR: 0,
   DEX: 2,
   CON: 1,
@@ -147,8 +156,8 @@ const drizztAbilityBonuses: CharacterAbilityScores = {
 };
 
 const gimliAbilityBonuses: CharacterAbilityScores = {
-  STR: 2,
-  DEX: 0,
+  STR: 1,
+  DEX: 1,
   CON: 1,
   INT: 0,
   WIS: 0,
@@ -159,18 +168,18 @@ const yenneferAbilityBonuses: CharacterAbilityScores = {
   STR: 0,
   DEX: 0,
   CON: 0,
-  INT: 0,
+  INT: 1,
   WIS: 1,
-  CHA: 2,
+  CHA: 1,
 };
 
 const casterCoverageAbilityBonuses: CharacterAbilityScores = {
   STR: 0,
   DEX: 0,
   CON: 0,
-  INT: 0,
+  INT: 1,
   WIS: 1,
-  CHA: 2,
+  CHA: 1,
 };
 
 const barbarianAbilityScoresInput: CharacterAbilityScoresInput = {
@@ -254,9 +263,9 @@ const acolyteCurrency: CharacterCurrency = {
 };
 
 const barbarianArmorClass: CharacterArmorClass = {
-  total: 13,
+  total: 14,
   base: 10,
-  dexModifierApplied: 1,
+  dexModifierApplied: 2,
   classBonus: 2,
   shieldBonus: 0,
   sources: [
@@ -326,12 +335,12 @@ const paladinHitPoints: CharacterHitPoints = {
 };
 
 const wizardHitPoints: CharacterHitPoints = {
-  max: 7,
-  current: 7,
+  max: 8,
+  current: 8,
   temporary: 0,
   hitDie: 6,
-  conModifier: 1,
-  calculation: '6 + 1',
+  conModifier: 2,
+  calculation: '6 + 2',
 };
 
 const fighterHitPoints: CharacterHitPoints = {
@@ -1303,7 +1312,7 @@ test.describe(
           name: 'Stealth',
           ability: 'DEX',
           isProficient: false,
-          abilityModifier: 1,
+          abilityModifier: 2,
           level: 1,
         });
       },
@@ -1655,9 +1664,9 @@ test.describe(
         );
         await charactersAssert.validateInitiative(finalCharacter.initiative, {
           ability: 'DEX',
-          abilityModifier: 1,
+          abilityModifier: 2,
           bonus: 0,
-          total: 1,
+          total: 2,
         });
         await charactersAssert.validatePassivePerception(
           finalCharacter.passivePerception,
@@ -1743,10 +1752,10 @@ test.describe(
           {
             ability: 'DEX',
             isProficient: false,
-            abilityModifier: 1,
+            abilityModifier: 2,
             proficiencyBonus: 0,
             bonus: 0,
-            total: 1,
+            total: 2,
           },
         );
         await charactersAssert.validateWeaponAttack(
@@ -2023,13 +2032,13 @@ test.describe(
     );
 
     test(
-      'Select Scores Aang',
-      { tag: ['@put', '@data'] },
+      'Patch Scores Aang',
+      { tag: ['@patch', '@data'] },
       async ({ request }) => {
         const charactersClient = new CharactersClient(request);
         const charactersAssert = new CharactersAssert();
 
-        const response = await charactersClient.updateCharacterAbilityScores(
+        const response = await charactersClient.updateCharacter(
           createdCharacterId,
           {
             abilityScores: aangAbilityScoresInput,
@@ -2039,13 +2048,11 @@ test.describe(
 
         await charactersAssert.success(response);
 
-        const abilityScoreOptions = await response.json();
+        const character: CharacterResponseBody = await response.json();
 
-        await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
-          abilityScoreOptions,
-        );
-        await charactersAssert.validateSelectedAbilityScores(
-          abilityScoreOptions.selectedAbilityScores,
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateAbilityScores(
+          character.abilityScores,
           aangAbilityScores,
           aangAbilityBonuses,
         );
@@ -4317,6 +4324,40 @@ test.describe(
     );
 
     test(
+      'Accept Drizzt Scores With Plus Two Plus One Bonuses',
+      { tag: ['@put', '@data', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          drizztCharacterId,
+          {
+            abilityScores: {
+              base: drizztAbilityScores,
+              bonuses: drizztPlusTwoPlusOneAbilityBonuses,
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.success(response);
+
+        const abilityScoreOptions: CharacterAbilityScoreOptionsResponseBody =
+          await response.json();
+
+        await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
+          abilityScoreOptions,
+        );
+        await charactersAssert.validateSelectedAbilityScores(
+          abilityScoreOptions.selectedAbilityScores,
+          drizztAbilityScores,
+          drizztPlusTwoPlusOneAbilityBonuses,
+        );
+      },
+    );
+
+    test(
       'Clear Scores Drizzt',
       { tag: ['@patch', '@data'] },
       async ({ request }) => {
@@ -5202,9 +5243,9 @@ test.describe(
         );
         await charactersAssert.validateInitiative(character.initiative, {
           ability: 'DEX',
-          abilityModifier: 1,
+          abilityModifier: 2,
           bonus: 0,
-          total: 1,
+          total: 2,
         });
         await charactersAssert.validatePassivePerception(
           character.passivePerception,
@@ -5255,10 +5296,10 @@ test.describe(
         await charactersAssert.validateSavingThrow(character.savingThrows, {
           ability: 'DEX',
           isProficient: false,
-          abilityModifier: 1,
+          abilityModifier: 2,
           proficiencyBonus: 0,
           bonus: 0,
-          total: 1,
+          total: 2,
         });
         await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
           equipmentId: greataxeEquipmentId,
@@ -5284,13 +5325,13 @@ test.describe(
           attackType: 'ranged',
           ability: 'DEX',
           isProficient: true,
-          abilityModifier: 1,
+          abilityModifier: 2,
           proficiencyBonus: 2,
-          attackBonus: 3,
+          attackBonus: 4,
           damage: {
-            formula: '1d6 + 1',
+            formula: '1d6 + 2',
             base: '1d6',
-            modifier: 1,
+            modifier: 2,
             damageType: 'Piercing',
           },
           properties: ['Ammunition', 'Two-Handed'],
@@ -5554,9 +5595,9 @@ test.describe(
           attackType: 'ranged',
           ability: 'DEX',
           isProficient: true,
-          abilityModifier: 1,
+          abilityModifier: 2,
           proficiencyBonus: 2,
-          attackBonus: 3,
+          attackBonus: 4,
         });
         await charactersAssert.validateWeaponAttackAbsent(
           character.weaponAttacks,
@@ -6544,7 +6585,7 @@ test.describe(
 
         await charactersAssert.validateErrorResponse(
           body,
-          'Invalid character ability scores payload: bonuses must follow a +2/+1 split across different allowed abilities; received WIS +2',
+          'Invalid character ability scores payload: bonuses must match one of the background ability score rules (+2/+1 across different allowed abilities or +1 to each background-allowed ability); received WIS +2',
         );
       },
     );

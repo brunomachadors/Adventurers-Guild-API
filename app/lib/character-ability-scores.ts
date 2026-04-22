@@ -294,24 +294,10 @@ export function validateCharacterAbilityScoresInput({
     };
   }
 
-  const hasPlusTwoPlusOneRule = selectionRules.bonusRules.options.some(
-    (option) => option.type === 'plus2_plus1',
-  );
-
-  if (
-    hasPlusTwoPlusOneRule &&
-    !matchesBonusRule(parsedAbilityScores.bonuses, selectionRules)
-  ) {
-    return {
-      valid: false,
-      error: `${INVALID_ABILITY_SCORES_ERROR}: bonuses must follow a +2/+1 split across different allowed abilities; received ${describeSelectedBonuses(parsedAbilityScores.bonuses)}`,
-    };
-  }
-
   if (!matchesBonusRule(parsedAbilityScores.bonuses, selectionRules)) {
     return {
       valid: false,
-      error: `${INVALID_ABILITY_SCORES_ERROR}: bonuses do not match the background ability score rules; received ${describeSelectedBonuses(parsedAbilityScores.bonuses)}`,
+      error: `${INVALID_ABILITY_SCORES_ERROR}: bonuses must match one of the background ability score rules (+2/+1 across different allowed abilities or +1 to each background-allowed ability); received ${describeSelectedBonuses(parsedAbilityScores.bonuses)}`,
     };
   }
 

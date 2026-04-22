@@ -32,7 +32,7 @@ This project follows Semantic Versioning while the API is pre-1.0:
 - For character levels `1` to `3`, each base score must be between `8` and `15`.
 - Each bonus must be between `0` and `2`.
 - Positive bonuses must target abilities allowed by the character's background.
-- The current background rule requires a `+2/+1` split across different allowed abilities.
+- The current background rules allow either a `+2/+1` split across different allowed abilities or `+1/+1/+1` across all background-allowed abilities.
 
 ### Examples
 
@@ -59,7 +59,7 @@ Bonus outside background choices:
 
 ### Tests
 
-- Added regression tests for invalid base scores, invalid bonuses, background choice violations, invalid `+2/+1` splits, incomplete payloads, and invalid `POST`/`PATCH` submissions.
+- Added regression tests for invalid base scores, invalid bonuses, background choice violations, invalid bonus distributions, incomplete payloads, and invalid `POST`/`PATCH` submissions.
 - Added a flow that verifies invalid updates do not overwrite previously saved valid scores.
 
 ## [0.1.0] - Previous
