@@ -922,10 +922,7 @@ function parseCharacterAbilityScoreBonusRules(
 
   const options = rules.options
     .map(parseCharacterAbilityScoreRuleOption)
-    .filter(
-      (option): option is CharacterAbilityScoreRuleOption =>
-        option !== null && option.type === 'plus1_each_suggested',
-    );
+    .filter((option): option is CharacterAbilityScoreRuleOption => option !== null);
 
   if (options.length === 0) {
     return null;

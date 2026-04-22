@@ -865,7 +865,7 @@ Validation rules:
 - For character levels `1` to `3`, each base score must be between `8` and `15`.
 - Each bonus must be between `0` and `2`.
 - Positive bonuses must target abilities allowed by the character's background.
-- The current background rule applies `+1/+1/+1`: one `+1` bonus to each background-allowed ability.
+- The current background rules allow either a `+2/+1` split across different allowed abilities or `+1/+1/+1` across all background-allowed abilities.
 
 Returns:
 
@@ -1198,6 +1198,13 @@ Character detail:
       "mode": "standard_background",
       "options": [
         {
+          "type": "plus2_plus1",
+          "choices": [
+            { "bonus": 2, "count": 1 },
+            { "bonus": 1, "count": 1, "mustBeDifferentFromBonus": 2 }
+          ]
+        },
+        {
           "type": "plus1_each_suggested",
           "basedOn": "abilityscores"
         }
@@ -1350,6 +1357,13 @@ Character ability score options:
     "bonusRules": {
       "mode": "standard_background",
       "options": [
+        {
+          "type": "plus2_plus1",
+          "choices": [
+            { "bonus": 2, "count": 1 },
+            { "bonus": 1, "count": 1, "mustBeDifferentFromBonus": 2 }
+          ]
+        },
         {
           "type": "plus1_each_suggested",
           "basedOn": "abilityscores"

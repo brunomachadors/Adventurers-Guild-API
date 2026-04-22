@@ -775,6 +775,19 @@ const characterTickets: CharacterTicket[] = [
             allowedChoices: ['CON', 'INT', 'WIS'],
             bonusRules: {
               mode: 'standard_background',
+              options: [
+                {
+                  type: 'plus2_plus1',
+                  choices: [
+                    { bonus: 2, count: 1 },
+                    { bonus: 1, count: 1, mustBeDifferentFromBonus: 2 },
+                  ],
+                },
+                {
+                  type: 'plus1_each_suggested',
+                  basedOn: 'abilityscores',
+                },
+              ],
             },
           },
         },
@@ -1343,7 +1356,7 @@ const characterTickets: CharacterTicket[] = [
       },
       {
         label: 'Bonus rule',
-        value: 'Bonuses apply +1 to each background-allowed ability.',
+        value: 'Bonuses can use +2/+1 across different allowed abilities or +1/+1/+1 across all allowed abilities.',
       },
     ],
     responseHeading: 'Expected return',
@@ -1386,6 +1399,19 @@ const characterTickets: CharacterTicket[] = [
           allowedChoices: ['CON', 'INT', 'WIS'],
           bonusRules: {
             mode: 'standard_background',
+            options: [
+              {
+                type: 'plus2_plus1',
+                choices: [
+                  { bonus: 2, count: 1 },
+                  { bonus: 1, count: 1, mustBeDifferentFromBonus: 2 },
+                ],
+              },
+              {
+                type: 'plus1_each_suggested',
+                basedOn: 'abilityscores',
+              },
+            ],
           },
         },
       },

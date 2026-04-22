@@ -146,6 +146,15 @@ const drizztAbilityBonuses: CharacterAbilityScores = {
   CHA: 0,
 };
 
+const drizztPlusTwoPlusOneAbilityBonuses: CharacterAbilityScores = {
+  STR: 0,
+  DEX: 2,
+  CON: 1,
+  INT: 0,
+  WIS: 0,
+  CHA: 0,
+};
+
 const gimliAbilityBonuses: CharacterAbilityScores = {
   STR: 1,
   DEX: 1,
@@ -4317,6 +4326,40 @@ test.describe(
     );
 
     test(
+      'Accept Drizzt Scores With Plus Two Plus One Bonuses',
+      { tag: ['@put', '@data', '@ability-scores'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacterAbilityScores(
+          drizztCharacterId,
+          {
+            abilityScores: {
+              base: drizztAbilityScores,
+              bonuses: drizztPlusTwoPlusOneAbilityBonuses,
+            },
+          },
+          authToken,
+        );
+
+        await charactersAssert.success(response);
+
+        const abilityScoreOptions: CharacterAbilityScoreOptionsResponseBody =
+          await response.json();
+
+        await charactersAssert.validateCharacterAbilityScoreOptionsSchema(
+          abilityScoreOptions,
+        );
+        await charactersAssert.validateSelectedAbilityScores(
+          abilityScoreOptions.selectedAbilityScores,
+          drizztAbilityScores,
+          drizztPlusTwoPlusOneAbilityBonuses,
+        );
+      },
+    );
+
+    test(
       'Clear Scores Drizzt',
       { tag: ['@patch', '@data'] },
       async ({ request }) => {
@@ -6544,7 +6587,7 @@ test.describe(
 
         await charactersAssert.validateErrorResponse(
           body,
-          'Invalid character ability scores payload: bonuses must apply +1 to each background-allowed ability; received WIS +2',
+          'Invalid character ability scores payload: bonuses must match one of the background ability score rules (+2/+1 across different allowed abilities or +1 to each background-allowed ability); received WIS +2',
         );
       },
     );
