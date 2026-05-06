@@ -1,5 +1,7 @@
 'use client';
 
+import { ResponseFieldName } from '@/app/components/guides/response-field-name';
+
 type AuthGuideChapterProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -282,7 +284,7 @@ export function AuthGuideChapter({
               <div className="response-field-list response-field-list--compact">
                 {authRequestFields.map((field) => (
                   <article className="response-field-card" key={field.name}>
-                    <span>{field.name}</span>
+                    <ResponseFieldName name={field.name} />
                     <p>{field.description}</p>
                     <strong>{field.type}</strong>
                   </article>
@@ -307,7 +309,7 @@ export function AuthGuideChapter({
               <div className="response-field-list response-field-list--compact">
                 {authResponseFields.map((field) => (
                   <article className="response-field-card" key={field.name}>
-                    <span>{field.name}</span>
+                    <ResponseFieldName name={field.name} />
                     <p>{field.description}</p>
                     <strong>{field.type}</strong>
                   </article>

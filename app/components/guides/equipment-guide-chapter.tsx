@@ -7,6 +7,7 @@ import {
   type EquipmentWeaponDetails,
 } from '@/app/types/equipment';
 import { getGuideAnchorSlug } from '@/app/components/guides/background-guide-utils';
+import { ResponseFieldName } from '@/app/components/guides/response-field-name';
 import {
   equipmentDetailResponseFields,
   equipmentListResponseFields,
@@ -849,7 +850,7 @@ export function EquipmentGuideChapter({
               <div className="response-field-list">
                 {equipmentListResponseFields.map((field) => (
                   <article className="response-field-card" key={field.name}>
-                    <span>{field.name}</span>
+                    <ResponseFieldName name={field.name} />
                     <p>{field.description}</p>
                     <strong>{field.type}</strong>
                   </article>
@@ -889,7 +890,7 @@ export function EquipmentGuideChapter({
                 <div className="response-field-list">
                   {equipmentDetailResponseFields.map((field) => (
                     <article className="response-field-card" key={field.name}>
-                      <span>{field.name}</span>
+                      <ResponseFieldName name={field.name} />
                       <p>{field.description}</p>
                       <strong>{field.type}</strong>
                     </article>

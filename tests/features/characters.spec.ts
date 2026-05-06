@@ -3467,41 +3467,40 @@ test.describe(
 
         await test.step('Validate wizard spell selection rules', async () => {
           expect(spellSelection.selectionRules.canSelectSpells).toBe(true);
-          expect(spellSelection.selectionRules.selectionType).toBe('prepared');
+          expect(spellSelection.selectionRules.selectionType).toBe('known');
           expect(spellSelection.selectionRules.maxCantrips).toBe(3);
-          expect(spellSelection.selectionRules.maxSpells).toBe(0);
+          expect(spellSelection.selectionRules.maxSpells).toBe(6);
           expect(spellSelection.selectedSpells).toEqual([]);
           expect(spellSelection.availableSpells.length).toBeGreaterThan(0);
+          expect(
+            spellSelection.availableSpells.filter((spell) => spell.level === 0)
+              .length,
+          ).toBeGreaterThanOrEqual(3);
+          expect(
+            spellSelection.availableSpells.filter((spell) => spell.level === 1)
+              .length,
+          ).toBeGreaterThanOrEqual(1);
         });
 
-        const firstCantrip = spellSelection.availableSpells.find(
-          (spell) => spell.level === 0,
-        );
-        const secondCantrip = spellSelection.availableSpells.find(
-          (spell) => spell.level === 0 && spell.id !== firstCantrip?.id,
-        );
-        const thirdCantrip = spellSelection.availableSpells.find(
-          (spell) =>
-            spell.level === 0 &&
-            spell.id !== firstCantrip?.id &&
-            spell.id !== secondCantrip?.id,
-        );
-        const firstLeveledSpell = spellSelection.availableSpells.find(
-          (spell) => spell.level > 0,
-        );
+        const selectedCantripIds = spellSelection.availableSpells
+          .filter((spell) => spell.level === 0)
+          .slice(0, spellSelection.selectionRules.maxCantrips)
+          .map((spell) => spell.id);
+        const selectedLeveledSpellIds = spellSelection.availableSpells
+          .filter((spell) => spell.level > 0)
+          .slice(0, spellSelection.selectionRules.maxSpells)
+          .map((spell) => spell.id);
 
-        await test.step('Choose cantrips for wizard selection update', async () => {
-          expect(firstCantrip).toBeDefined();
-          expect(secondCantrip).toBeDefined();
-          expect(thirdCantrip).toBeDefined();
-          expect(firstLeveledSpell).toBeDefined();
+        await test.step('Choose wizard max cantrips and max leveled spells for selection update', async () => {
+          expect(selectedCantripIds).toHaveLength(
+            spellSelection.selectionRules.maxCantrips,
+          );
+          expect(selectedLeveledSpellIds).toHaveLength(
+            spellSelection.selectionRules.maxSpells,
+          );
         });
 
-        selectedSpellIds = [
-          firstCantrip!.id,
-          secondCantrip!.id,
-          thirdCantrip!.id,
-        ];
+        selectedSpellIds = [...selectedCantripIds, ...selectedLeveledSpellIds];
       },
     );
 
@@ -3546,6 +3545,23 @@ test.describe(
           expect(
             spellSelection.selectedSpells.map((spell) => spell.id),
           ).toEqual(selectedSpellIds);
+          expect(
+            spellSelection.selectedSpells.filter((spell) => spell.level === 0),
+          ).toHaveLength(3);
+          expect(
+            spellSelection.selectedSpells.filter((spell) => spell.level > 0),
+          ).toHaveLength(6);
+          expect(
+            spellSelection.selectedSpells.filter(
+              (spell) =>
+                spell.level === 0 && spell.selectionType === 'cantrip',
+            ),
+          ).toHaveLength(3);
+          expect(
+            spellSelection.selectedSpells
+              .filter((spell) => spell.level > 0)
+              .every((spell) => spell.selectionType === 'known'),
+          ).toBe(true);
         });
       },
     );
@@ -3588,6 +3604,17 @@ test.describe(
           expect(
             spellSelection.selectedSpells.map((spell) => spell.id),
           ).toEqual(selectedSpellIds);
+          expect(
+            spellSelection.selectedSpells.filter(
+              (spell) =>
+                spell.level === 0 && spell.selectionType === 'cantrip',
+            ),
+          ).toHaveLength(3);
+          expect(
+            spellSelection.selectedSpells
+              .filter((spell) => spell.level > 0)
+              .every((spell) => spell.selectionType === 'known'),
+          ).toBe(true);
         });
       },
     );
@@ -3951,8 +3978,8 @@ test.describe(
             abilityModifier: 3,
             spellSaveDc: 13,
             spellAttackBonus: 5,
-            selectedSpellsCount: 0,
-            selectedCantripsCount: selectedSpellIds.length,
+            selectedSpellsCount: 6,
+            selectedCantripsCount: 3,
           },
         );
         await charactersAssert.validateSpellSlot(finalCharacter.spellSlots, {
@@ -3970,9 +3997,18 @@ test.describe(
           ).toEqual(selectedSpellIds);
 
           for (const spell of finalCharacter.selectedSpells) {
-            expect(spell.level).toBe(0);
-            expect(spell.selectionType).toBe('cantrip');
+            if (spell.level === 0) {
+              expect(spell.selectionType).toBe('cantrip');
+            } else {
+              expect(spell.selectionType).toBe('known');
+            }
           }
+          expect(
+            finalCharacter.selectedSpells.filter((spell) => spell.level === 0),
+          ).toHaveLength(3);
+          expect(
+            finalCharacter.selectedSpells.filter((spell) => spell.level > 0),
+          ).toHaveLength(6);
         });
         await charactersAssert.validateSavingThrowOrder(
           finalCharacter.savingThrows,

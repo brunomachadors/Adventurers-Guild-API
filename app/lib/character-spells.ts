@@ -8,8 +8,11 @@ import { getSql } from './db';
 
 type CharacterSpellcastingSelection = {
   selectionType: CharacterSpellSelectionType;
+  mode?: string;
   spells?: Record<string, number>;
   cantrips?: Record<string, number>;
+  preparedSpells?: Record<string, number>;
+  spellbookSpells?: Record<string, number>;
 };
 
 type CharacterSpellcastingConfig = {
@@ -78,12 +81,19 @@ export function getSpellSelectionRule(
   const cantrips = isNumberRecord(selection.cantrips)
     ? selection.cantrips
     : undefined;
+  const spellbookSpells = isNumberRecord(selection.spellbookSpells)
+    ? selection.spellbookSpells
+    : undefined;
+  const usesSpellbookSelection =
+    selection.mode === 'spellbook_plus_prepared' && spellbookSpells;
 
   return {
     canSelectSpells: true,
-    selectionType: selection.selectionType,
+    selectionType: usesSpellbookSelection ? 'known' : selection.selectionType,
     maxCantrips: getSelectionLimitByLevel(cantrips, level),
-    maxSpells: getSelectionLimitByLevel(spells, level),
+    maxSpells: usesSpellbookSelection
+      ? getSelectionLimitByLevel(spellbookSpells, level)
+      : getSelectionLimitByLevel(spells, level),
   };
 }
 

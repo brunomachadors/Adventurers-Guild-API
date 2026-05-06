@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.19.0
+  version: 1.20.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -2677,6 +2677,8 @@ paths:
       summary: Get character spell selection state
       description: |
         Returns current selection rules, selected spells, and available spells for the character.
+
+        For classes that use `spellbook_plus_prepared`, the selection flow exposes cantrips plus the spellbook spells available at the current level. In that case, leveled spells use `selectionType: "known"` and `maxSpells` is derived from `spellbookSpells`.
       security:
         - bearerAuth: []
       parameters:
@@ -2695,9 +2697,9 @@ paths:
                 level: 1
                 selectionRules:
                   canSelectSpells: true
-                  selectionType: prepared
+                  selectionType: known
                   maxCantrips: 3
-                  maxSpells: 0
+                  maxSpells: 6
                 selectedSpells: []
                 availableSpells:
                   - id: 1
@@ -2741,6 +2743,8 @@ paths:
       summary: Replace selected character spells
       description: |
         Replaces the character's selected spells based on the current spell selection rules.
+
+        For classes that use `spellbook_plus_prepared`, leveled spells selected through this endpoint are stored as `known`, while cantrips continue to use `cantrip`.
       security:
         - bearerAuth: []
       parameters:
@@ -5311,7 +5315,7 @@ components:
         - known
         - prepared
         - cantrip
-      example: prepared
+      example: known
 
     CharacterSpellSelectionRule:
       type: object
@@ -5333,7 +5337,7 @@ components:
           example: 3
         maxSpells:
           type: integer
-          example: 0
+          example: 6
 
     CharacterSelectedSpellItem:
       allOf:
