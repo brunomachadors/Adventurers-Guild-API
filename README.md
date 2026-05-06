@@ -472,7 +472,7 @@ Returns:
 
 `armorClass` is calculated from the character's resolved DEX modifier and currently equipped armor or shield. If no armor is equipped, the base AC is `10`; Barbarian and Monk unarmored defense can contribute a `class` source when their rules apply.
 
-`weaponAttacks` is derived from currently equipped weapons, class weapon proficiencies, character level, and resolved ability modifiers. If no weapon is equipped, it is returned as an empty array.
+`weaponAttacks` is derived from currently equipped weapons, class weapon proficiencies, character level, and resolved ability modifiers. It can also include synthetic class-derived attacks that are not backed by a character equipment row, such as `Unarmed Strike` for Monks. Synthetic attacks should be shown in combat UI, but they do not belong to the character inventory. If the character has no available weapon attacks, it is returned as an empty array.
 
 `hitPoints` is derived from the character's class hit die, level, and resolved CON modifier. It is returned as `null` until class details and ability modifiers are available; when calculated, `current` starts equal to `max` and `temporary` starts at `0`.
 
@@ -1042,11 +1042,37 @@ Character detail:
         "damageType": "Piercing"
       },
       "properties": ["Ammunition", "Two-Handed"],
+      "mastery": {
+        "name": "Vex",
+        "slug": "vex"
+      },
       "range": {
         "normal": 80,
         "long": 320,
         "unit": "ft"
-      }
+      },
+      "attackModes": [
+        {
+          "mode": "ranged",
+          "attackType": "ranged",
+          "ability": "DEX",
+          "isProficient": true,
+          "abilityModifier": 2,
+          "proficiencyBonus": 2,
+          "attackBonus": 4,
+          "damage": {
+            "formula": "1d6 + 2",
+            "base": "1d6",
+            "modifier": 2,
+            "damageType": "Piercing"
+          },
+          "range": {
+            "normal": 80,
+            "long": 320,
+            "unit": "ft"
+          }
+        }
+      ]
     }
   ],
   "hitPoints": {

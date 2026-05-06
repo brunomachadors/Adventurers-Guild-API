@@ -182,6 +182,24 @@ const casterCoverageAbilityBonuses: CharacterAbilityScores = {
   CHA: 1,
 };
 
+const bilboAbilityScores: CharacterAbilityScores = {
+  STR: 8,
+  DEX: 15,
+  CON: 13,
+  INT: 12,
+  WIS: 10,
+  CHA: 14,
+};
+
+const bilboAbilityBonuses: CharacterAbilityScores = {
+  STR: 0,
+  DEX: 1,
+  CON: 1,
+  INT: 1,
+  WIS: 0,
+  CHA: 0,
+};
+
 const barbarianAbilityScoresInput: CharacterAbilityScoresInput = {
   base: barbarianAbilityScores,
   bonuses: barbarianAbilityBonuses,
@@ -220,6 +238,11 @@ const yenneferAbilityScoresInput: CharacterAbilityScoresInput = {
 const casterCoverageAbilityScoresInput: CharacterAbilityScoresInput = {
   base: casterCoverageAbilityScores,
   bonuses: casterCoverageAbilityBonuses,
+};
+
+const bilboAbilityScoresInput: CharacterAbilityScoresInput = {
+  base: bilboAbilityScores,
+  bonuses: bilboAbilityBonuses,
 };
 
 const patchedCurrency: CharacterCurrency = {
@@ -2155,6 +2178,38 @@ test.describe(
             ],
           },
         );
+        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+          name: 'Unarmed Strike',
+          attackType: 'melee',
+          ability: 'DEX',
+          isProficient: true,
+          abilityModifier: 2,
+          proficiencyBonus: 2,
+          attackBonus: 4,
+          damage: {
+            formula: '1d6 + 2',
+            base: '1d6',
+            modifier: 2,
+            damageType: 'Bludgeoning',
+          },
+          properties: [],
+          rangeExists: false,
+          attackModes: [
+            {
+              mode: 'melee',
+              attackType: 'melee',
+              ability: 'DEX',
+              attackBonus: 4,
+              damage: {
+                formula: '1d6 + 2',
+                base: '1d6',
+                modifier: 2,
+                damageType: 'Bludgeoning',
+              },
+              range: null,
+            },
+          ],
+        });
         await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
           name: 'Quarterstaff',
           attackType: 'melee',
@@ -4307,6 +4362,76 @@ test.describe(
     );
 
     test(
+      'Add Rapier To Drizzt And Use Finesse Dexterity',
+      { tag: ['@post', '@get', '@data'] },
+      async ({ request }) => {
+        const charactersAssert = new CharactersAssert();
+        const charactersClient = new CharactersClient(request);
+
+        const characterEquipment = await addCharacterEquipmentBySlug(
+          request,
+          drizztCharacterId,
+          authToken,
+          [{ slug: 'rapier', quantity: 1, isEquipped: true }],
+        );
+
+        await charactersAssert.validateCharacterEquipmentSchema(
+          characterEquipment,
+        );
+        await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+          {
+            name: 'Rapier',
+            quantity: 1,
+            isEquipped: true,
+          },
+        ]);
+
+        const response = await charactersClient.getCharacterDetail(
+          drizztCharacterId,
+          authToken,
+        );
+
+        await charactersAssert.success(response);
+
+        const character: CharacterResponseBody = await response.json();
+
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+          name: 'Rapier',
+          attackType: 'melee',
+          ability: 'DEX',
+          isProficient: true,
+          abilityModifier: 3,
+          proficiencyBonus: 2,
+          attackBonus: 5,
+          damage: {
+            formula: '1d8 + 3',
+            base: '1d8',
+            modifier: 3,
+            damageType: 'Piercing',
+          },
+          properties: ['Finesse'],
+          rangeExists: false,
+          attackModes: [
+            {
+              mode: 'melee',
+              attackType: 'melee',
+              ability: 'DEX',
+              attackBonus: 5,
+              damage: {
+                formula: '1d8 + 3',
+                base: '1d8',
+                modifier: 3,
+                damageType: 'Piercing',
+              },
+              range: null,
+            },
+          ],
+        });
+      },
+    );
+
+    test(
       'Reject Invalid Drizzt Scores And Keep Previous Scores',
       { tag: ['@put', '@negative', '@error', '@ability-scores'] },
       async ({ request }) => {
@@ -5677,6 +5802,7 @@ test.describe(
             speciesId: 7,
             backgroundId: 5,
             level: 1,
+            abilityScores: bilboAbilityScoresInput,
           },
           authToken,
         );
@@ -5701,6 +5827,115 @@ test.describe(
           character.missingFields,
           [],
         );
+        await charactersAssert.validateAbilityScores(
+          character.abilityScores,
+          bilboAbilityScores,
+          bilboAbilityBonuses,
+        );
+      },
+    );
+
+    test(
+      'Add Bilbo Finesse Weapon And Bow',
+      { tag: ['@post', '@get', '@data', '@equipment', '@rogue'] },
+      async ({ request }) => {
+        const charactersAssert = new CharactersAssert();
+        const charactersClient = new CharactersClient(request);
+
+        const characterEquipment = await addCharacterEquipmentBySlug(
+          request,
+          createdCharacterId,
+          authToken,
+          [
+            { slug: 'dagger', quantity: 1, isEquipped: true },
+            { slug: 'shortbow', quantity: 1, isEquipped: true },
+          ],
+        );
+
+        await charactersAssert.validateCharacterEquipmentSchema(
+          characterEquipment,
+        );
+        await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+          { name: 'Dagger', quantity: 1, isEquipped: true },
+          { name: 'Shortbow', quantity: 1, isEquipped: true },
+        ]);
+
+        const detailResponse = await charactersClient.getCharacterDetail(
+          createdCharacterId,
+          authToken,
+        );
+
+        await charactersAssert.success(detailResponse);
+
+        const character: CharacterResponseBody = await detailResponse.json();
+
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+          name: 'Dagger',
+          attackType: 'melee',
+          ability: 'DEX',
+          isProficient: true,
+          abilityModifier: 3,
+          proficiencyBonus: 2,
+          attackBonus: 5,
+          damage: {
+            formula: '1d4 + 3',
+            base: '1d4',
+            modifier: 3,
+            damageType: 'Piercing',
+          },
+          properties: ['Finesse', 'Light', 'Thrown'],
+          rangeExists: false,
+          attackModes: [
+            {
+              mode: 'melee',
+              attackType: 'melee',
+              ability: 'DEX',
+              attackBonus: 5,
+              damage: {
+                formula: '1d4 + 3',
+                base: '1d4',
+                modifier: 3,
+                damageType: 'Piercing',
+              },
+              range: null,
+            },
+            {
+              mode: 'thrown',
+              attackType: 'ranged',
+              ability: 'DEX',
+              attackBonus: 5,
+              damage: {
+                formula: '1d4 + 3',
+                base: '1d4',
+                modifier: 3,
+                damageType: 'Piercing',
+              },
+              range: {
+                normal: 20,
+                long: 60,
+                unit: 'ft',
+              },
+            },
+          ],
+        });
+        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+          name: 'Shortbow',
+          attackType: 'ranged',
+          ability: 'DEX',
+          isProficient: true,
+          abilityModifier: 3,
+          proficiencyBonus: 2,
+          attackBonus: 5,
+          damage: {
+            formula: '1d6 + 3',
+            base: '1d6',
+            modifier: 3,
+            damageType: 'Piercing',
+          },
+          properties: ['Ammunition', 'Two-Handed'],
+          rangeExists: true,
+        });
       },
     );
 
@@ -5769,6 +6004,170 @@ test.describe(
           expect(
             characters.some((character) => character.id === createdCharacterId),
           ).toBe(false);
+        });
+      },
+    );
+  },
+);
+
+test.describe(
+  'Characters API - Robin The Rogue Equipment Preview Flow',
+  { tag: ['@characters', '@flow', '@rogue', '@equipment', '@preview'] },
+  () => {
+    test.describe.configure({ mode: 'serial' });
+
+    let authToken: string;
+    let createdCharacterId: number;
+    let createdCharacterName: string;
+
+    test.beforeAll(async ({ request }) => {
+      authToken = await issueDemoToken(request);
+    });
+
+    test(
+      'Create Robin The Rogue For Equipment Preview',
+      { tag: ['@post', '@data'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+        createdCharacterName = `Robin The Rogue ${Date.now()}`;
+
+        const response = await charactersClient.createCharacter(
+          {
+            name: createdCharacterName,
+            classId: 9,
+            speciesId: 7,
+            backgroundId: 5,
+            level: 1,
+            abilityScores: bilboAbilityScoresInput,
+          },
+          authToken,
+        );
+
+        await charactersAssert.created(response);
+
+        const character: CharacterResponseBody = await response.json();
+        createdCharacterId = character.id;
+
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateId(character.id, createdCharacterId);
+        await charactersAssert.validateName(
+          character.name,
+          createdCharacterName,
+        );
+        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateClassId(character.classId, 9);
+        await charactersAssert.validateSpeciesId(character.speciesId, 7);
+        await charactersAssert.validateBackgroundId(character.backgroundId, 5);
+        await charactersAssert.validateLevel(character.level, 1);
+        await charactersAssert.validateAbilityScores(
+          character.abilityScores,
+          bilboAbilityScores,
+          bilboAbilityBonuses,
+        );
+      },
+    );
+
+    test(
+      'Add Robin Finesse Weapon And Bow',
+      { tag: ['@post', '@get', '@data'] },
+      async ({ request }) => {
+        const charactersAssert = new CharactersAssert();
+        const charactersClient = new CharactersClient(request);
+
+        const characterEquipment = await addCharacterEquipmentBySlug(
+          request,
+          createdCharacterId,
+          authToken,
+          [
+            { slug: 'dagger', quantity: 1, isEquipped: true },
+            { slug: 'shortbow', quantity: 1, isEquipped: true },
+          ],
+        );
+
+        await charactersAssert.validateCharacterEquipmentSchema(
+          characterEquipment,
+        );
+        await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
+          { name: 'Dagger', quantity: 1, isEquipped: true },
+          { name: 'Shortbow', quantity: 1, isEquipped: true },
+        ]);
+
+        const detailResponse = await charactersClient.getCharacterDetail(
+          createdCharacterId,
+          authToken,
+        );
+
+        await charactersAssert.success(detailResponse);
+
+        const character: CharacterResponseBody = await detailResponse.json();
+
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+          name: 'Dagger',
+          attackType: 'melee',
+          ability: 'DEX',
+          isProficient: true,
+          abilityModifier: 3,
+          proficiencyBonus: 2,
+          attackBonus: 5,
+          damage: {
+            formula: '1d4 + 3',
+            base: '1d4',
+            modifier: 3,
+            damageType: 'Piercing',
+          },
+          properties: ['Finesse', 'Light', 'Thrown'],
+          rangeExists: false,
+          attackModes: [
+            {
+              mode: 'melee',
+              attackType: 'melee',
+              ability: 'DEX',
+              attackBonus: 5,
+              damage: {
+                formula: '1d4 + 3',
+                base: '1d4',
+                modifier: 3,
+                damageType: 'Piercing',
+              },
+              range: null,
+            },
+            {
+              mode: 'thrown',
+              attackType: 'ranged',
+              ability: 'DEX',
+              attackBonus: 5,
+              damage: {
+                formula: '1d4 + 3',
+                base: '1d4',
+                modifier: 3,
+                damageType: 'Piercing',
+              },
+              range: {
+                normal: 20,
+                long: 60,
+                unit: 'ft',
+              },
+            },
+          ],
+        });
+        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
+          name: 'Shortbow',
+          attackType: 'ranged',
+          ability: 'DEX',
+          isProficient: true,
+          abilityModifier: 3,
+          proficiencyBonus: 2,
+          attackBonus: 5,
+          damage: {
+            formula: '1d6 + 3',
+            base: '1d6',
+            modifier: 3,
+            damageType: 'Piercing',
+          },
+          properties: ['Ammunition', 'Two-Handed'],
+          rangeExists: true,
         });
       },
     );

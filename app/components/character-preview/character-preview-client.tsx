@@ -139,7 +139,7 @@ function formatWeaponAttackModeLabel(mode: CharacterWeaponAttackMode) {
 function getRenderedWeaponAttackModes(
   attack: CharacterWeaponAttack,
 ): CharacterWeaponAttackMode[] {
-  if (attack.attackModes.length > 0) {
+  if (attack.attackModes?.length > 0) {
     return attack.attackModes;
   }
 
@@ -235,6 +235,13 @@ function getWeaponMasteryClassName(mastery: string) {
   const masterySlug = getWeaponMasterySlug(mastery);
 
   return `character-weapon-mastery character-weapon-mastery--${masterySlug}`;
+}
+
+function hasRenderedWeaponMastery(attack: CharacterWeaponAttack) {
+  return (
+    attack.mastery.slug !== 'none' &&
+    attack.mastery.name.trim().toLowerCase() !== 'none'
+  );
 }
 
 function getErrorMessage(status: number) {
@@ -458,8 +465,9 @@ function CharacterSheet({
   const featureGroups = getCharacterFeatures(character);
   const proficiencyBonus = getReturnedProficiencyBonus(character);
   const spellcasting = character.spellcastingSummary;
-  const renderedWeaponAttacks = character.weaponAttacks.map((attack) => ({
+  const renderedWeaponAttacks = character.weaponAttacks.map((attack, index) => ({
     attack,
+    attackKey: `${attack.equipmentId}-${attack.name}-${index}`,
     attackModes: getRenderedWeaponAttackModes(attack),
   }));
 
@@ -787,134 +795,140 @@ function CharacterSheet({
         >
           {renderedWeaponAttacks.length > 0 ? (
             <div className="character-attack-list">
-              {renderedWeaponAttacks.map(({ attack, attackModes }) => {
-                const masterySlug = attack.mastery.slug;
-                const masteryDescription =
-                  weaponMasteryDescriptions[masterySlug];
-                const masteryKey = `${attack.equipmentId}-mastery-${masterySlug}`;
-                const isMasteryExpanded = expandedProperties.has(masteryKey);
+              {renderedWeaponAttacks.map(
+                ({ attack, attackKey, attackModes }) => {
+                  const masterySlug = attack.mastery.slug;
+                  const masteryDescription =
+                    weaponMasteryDescriptions[masterySlug];
+                  const masteryKey = `${attackKey}-mastery-${masterySlug}`;
+                  const isMasteryExpanded = expandedProperties.has(masteryKey);
+                  const shouldRenderMastery = hasRenderedWeaponMastery(attack);
 
-                return (
-                  <article
-                    className="character-attack-card"
-                    key={attack.equipmentId}
-                  >
-                    <header>
-                      <strong>{attack.name}</strong>
-                    </header>
+                  return (
+                    <article className="character-attack-card" key={attackKey}>
+                      <header>
+                        <strong>{attack.name}</strong>
+                      </header>
 
-                    <table className="character-attack-mode-table">
-                      <thead>
-                        <tr>
-                          <th scope="col">Attack</th>
-                          <th scope="col">Damage</th>
-                          <th scope="col">Range</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {attackModes.map((attackMode) => (
-                          <tr key={`${attack.equipmentId}-${attackMode.mode}`}>
-                            <td data-label="Attack">
-                              <span>
-                                {formatWeaponAttackModeLabel(attackMode)}
-                              </span>
-                              <strong>
-                                {formatSigned(attackMode.attackBonus)}
-                              </strong>
-                            </td>
-                            <td data-label="Damage">
-                              <strong>{attackMode.damage.formula}</strong>
-                              <span>{attackMode.damage.damageType}</span>
-                            </td>
-                            <td data-label="Range">
-                              <strong>
-                                {formatWeaponAttackRange(
-                                  attackMode.attackType,
-                                  attackMode.range,
-                                )}
-                              </strong>
-                            </td>
+                      <table className="character-attack-mode-table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Attack</th>
+                            <th scope="col">Damage</th>
+                            <th scope="col">Range</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    <div className="character-attack-card__traits">
-                      <div className="character-attack-card__properties">
-                        <small>Properties</small>
-                        <div>
-                          {attack.properties.length > 0 ? (
-                            attack.properties.map((property) => {
-                              const propertySlug =
-                                getWeaponPropertySlug(property);
-                              const propertyDescription =
-                                weaponPropertyDescriptions[propertySlug];
-                              const propertyKey = `${attack.equipmentId}-${property}`;
-                              const isExpanded =
-                                expandedProperties.has(propertyKey);
-
-                              if (propertyDescription) {
-                                return (
-                                  <button
-                                    aria-expanded={isExpanded}
-                                    className={`${getWeaponPropertyClassName(
-                                      property,
-                                    )} character-weapon-property--expandable`}
-                                    key={propertyKey}
-                                    onClick={() =>
-                                      toggleExpandedProperty(propertyKey)
-                                    }
-                                    type="button"
-                                  >
-                                    <span>{property}</span>
-                                    {isExpanded ? (
-                                      <small>{propertyDescription}</small>
-                                    ) : null}
-                                  </button>
-                                );
-                              }
-
-                              return (
-                                <span
-                                  className={getWeaponPropertyClassName(
-                                    property,
-                                  )}
-                                  key={propertyKey}
-                                >
-                                  {property}
+                        </thead>
+                        <tbody>
+                          {attackModes.map((attackMode, attackModeIndex) => (
+                            <tr
+                              key={`${attackKey}-${attackMode.mode}-${attackModeIndex}`}
+                            >
+                              <td data-label="Attack">
+                                <span>
+                                  {formatWeaponAttackModeLabel(attackMode)}
                                 </span>
-                              );
-                            })
-                          ) : (
-                            <span className="character-weapon-property">
-                              None returned
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                                <strong>
+                                  {formatSigned(attackMode.attackBonus)}
+                                </strong>
+                              </td>
+                              <td data-label="Damage">
+                                <strong>{attackMode.damage.formula}</strong>
+                                <span>{attackMode.damage.damageType}</span>
+                              </td>
+                              <td data-label="Range">
+                                <strong>
+                                  {formatWeaponAttackRange(
+                                    attackMode.attackType,
+                                    attackMode.range,
+                                  )}
+                                </strong>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
 
-                      <div className="character-attack-card__mastery">
-                        <small>Mastery</small>
-                        <div>
-                          <button
-                            aria-expanded={isMasteryExpanded}
-                            className={`${getWeaponMasteryClassName(
-                              masterySlug,
-                            )} character-weapon-mastery--expandable`}
-                            onClick={() => toggleExpandedProperty(masteryKey)}
-                            type="button"
-                          >
-                            <span>{attack.mastery.name}</span>
-                            {isMasteryExpanded && masteryDescription ? (
-                              <small>{masteryDescription}</small>
-                            ) : null}
-                          </button>
+                      <div className="character-attack-card__traits">
+                        <div className="character-attack-card__properties">
+                          <small>Properties</small>
+                          <div>
+                            {attack.properties.length > 0 ? (
+                              attack.properties.map((property) => {
+                                const propertySlug =
+                                  getWeaponPropertySlug(property);
+                                const propertyDescription =
+                                  weaponPropertyDescriptions[propertySlug];
+                                const propertyKey = `${attackKey}-${property}`;
+                                const isExpanded =
+                                  expandedProperties.has(propertyKey);
+
+                                if (propertyDescription) {
+                                  return (
+                                    <button
+                                      aria-expanded={isExpanded}
+                                      className={`${getWeaponPropertyClassName(
+                                        property,
+                                      )} character-weapon-property--expandable`}
+                                      key={propertyKey}
+                                      onClick={() =>
+                                        toggleExpandedProperty(propertyKey)
+                                      }
+                                      type="button"
+                                    >
+                                      <span>{property}</span>
+                                      {isExpanded ? (
+                                        <small>{propertyDescription}</small>
+                                      ) : null}
+                                    </button>
+                                  );
+                                }
+
+                                return (
+                                  <span
+                                    className={getWeaponPropertyClassName(
+                                      property,
+                                    )}
+                                    key={propertyKey}
+                                  >
+                                    {property}
+                                  </span>
+                                );
+                              })
+                            ) : (
+                              <span className="character-weapon-property">
+                                None
+                              </span>
+                            )}
+                          </div>
                         </div>
+
+                        {shouldRenderMastery ? (
+                          <div className="character-attack-card__mastery">
+                            <small>Mastery</small>
+                            <div>
+                              <button
+                                aria-expanded={isMasteryExpanded}
+                                className={`${getWeaponMasteryClassName(
+                                  masterySlug,
+                                )} character-weapon-mastery--expandable`}
+                                onClick={() =>
+                                  toggleExpandedProperty(masteryKey)
+                                }
+                                type="button"
+                              >
+                                <span>{attack.mastery.name}</span>
+                                {isMasteryExpanded && masteryDescription ? (
+                                  <small>{masteryDescription}</small>
+                                ) : null}
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
-                    </div>
-                  </article>
-                );
-              })}
+                    </article>
+                  );
+                },
+              )}
             </div>
           ) : (
             <p className="character-preview-empty-line">
