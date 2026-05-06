@@ -3456,6 +3456,7 @@ li {
   display: flex;
   align-items: center;
   min-height: 180px;
+  min-width: 0;
   flex-direction: column;
   gap: 12px;
   justify-content: space-between;
@@ -3470,10 +3471,22 @@ li {
   text-align: center;
 }
 
-.response-field-card span {
+.response-field-card__name {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(116, 71, 42, 0.12);
+  border-radius: 14px;
+  background: rgba(90, 42, 26, 0.08);
   color: #3d190f;
-  font-family: var(--font-heading), sans-serif;
-  font-size: 1.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  text-wrap: pretty;
 }
 
 .response-field-card p {

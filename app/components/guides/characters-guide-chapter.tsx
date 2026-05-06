@@ -2,6 +2,8 @@
 
 import { useState, type MouseEvent } from 'react';
 
+import { ResponseFieldName } from '@/app/components/guides/response-field-name';
+
 type CharactersGuideChapterProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -1250,31 +1252,36 @@ const characterTickets: CharacterTicket[] = [
         label: 'Related routes',
         value: 'Use spell-options, spell-selection and spells for the full spell flow.',
       },
+      {
+        label: 'Spellbook mode',
+        value:
+          'For classes that use spellbook_plus_prepared, leveled spell selection is exposed as known and maxSpells comes from spellbookSpells.',
+      },
     ],
     responseHeading: 'Expected return',
     responseSubheading: 'Response contract',
     responseDescription:
-      'Spell flow is split into multiple routes. First read the available spell choices with GET /api/characters/{id}/spell-options, then read the current selection with GET /api/characters/{id}/spell-selection, and finally update the selection with PUT /api/characters/{id}/spells.',
+      'Spell flow is split into multiple routes. First read the available spell choices with GET /api/characters/{id}/spell-options, then read the current selection with GET /api/characters/{id}/spell-selection, and finally update the selection with PUT /api/characters/{id}/spells. For classes using spellbook_plus_prepared, the selection response exposes leveled spells as known and derives maxSpells from spellbookSpells.',
     responseFields: [
       {
-        name: 'spellOptions',
+        name: 'availableSpells',
         type: 'object[]',
-        description: 'Available spells the character can choose from.',
+        description: 'Available spells the character can currently choose from.',
       },
       {
-        name: 'spellSelection',
+        name: 'selectionRules',
         type: 'object',
-        description: 'Current selected spells for the character.',
+        description: 'Selection mode and current limits for cantrips and leveled spells.',
       },
       {
         name: 'selectedSpells',
         type: 'object[]',
-        description: 'Enriched spell entries returned after selection is updated.',
+        description: 'Current selected spells for the character, including selectionType.',
       },
       {
-        name: 'spellSlots',
-        type: 'object[]',
-        description: 'Spell slot summary returned for supported spellcasters.',
+        name: 'className',
+        type: 'string | null',
+        description: 'Resolved class label returned alongside the spell selection state.',
       },
     ],
     responseExamples: [
@@ -1282,13 +1289,12 @@ const characterTickets: CharacterTicket[] = [
         label: 'Spell options',
         status: 'GET /api/characters/{id}/spell-options',
         payload: {
-          cantrips: [
-            { id: 1, name: 'Acid Splash' },
-            { id: 2, name: 'Fire Bolt' },
-          ],
-          leveledSpells: [
-            { id: 10, name: 'Magic Missile', level: 1 },
-            { id: 11, name: 'Shield', level: 1 },
+          characterId: 101,
+          classId: 12,
+          className: 'Wizard',
+          spells: [
+            { id: 1, name: 'Acid Splash', level: 0, levelLabel: 'Cantrip' },
+            { id: 18, name: 'Alarm', level: 1, levelLabel: 'Level 1' },
           ],
         },
       },
@@ -1296,32 +1302,65 @@ const characterTickets: CharacterTicket[] = [
         label: 'Spell selection',
         status: 'GET /api/characters/{id}/spell-selection',
         payload: {
-          selectedCantrips: [1],
-          selectedSpells: [10],
+          characterId: 101,
+          classId: 12,
+          className: 'Wizard',
+          level: 1,
+          selectionRules: {
+            canSelectSpells: true,
+            selectionType: 'known',
+            maxCantrips: 3,
+            maxSpells: 6,
+          },
+          selectedSpells: [],
+          availableSpells: [
+            { id: 1, name: 'Acid Splash', level: 0, levelLabel: 'Cantrip' },
+            { id: 18, name: 'Alarm', level: 1, levelLabel: 'Level 1' },
+          ],
         },
       },
       {
         label: 'Updated spell selection',
         status: 'PUT /api/characters/{id}/spells',
         payload: {
+          characterId: 101,
+          classId: 12,
+          className: 'Wizard',
+          level: 1,
+          selectionRules: {
+            canSelectSpells: true,
+            selectionType: 'known',
+            maxCantrips: 3,
+            maxSpells: 6,
+          },
           selectedSpells: [
             {
               id: 1,
               name: 'Acid Splash',
               level: 0,
+              levelLabel: 'Cantrip',
+              selectionType: 'cantrip',
             },
             {
-              id: 10,
-              name: 'Magic Missile',
+              id: 18,
+              name: 'Alarm',
               level: 1,
+              levelLabel: 'Level 1',
+              selectionType: 'known',
             },
           ],
-          spellSlots: [
+          availableSpells: [
             {
+              id: 1,
+              name: 'Acid Splash',
+              level: 0,
+              levelLabel: 'Cantrip',
+            },
+            {
+              id: 18,
+              name: 'Alarm',
               level: 1,
-              max: 2,
-              used: 0,
-              available: 2,
+              levelLabel: 'Level 1',
             },
           ],
         },
@@ -1772,7 +1811,7 @@ export function CharactersGuideChapter({
               <div className="response-field-list response-field-list--compact">
                 {selectedTicket.responseFields.map((field) => (
                   <article className="response-field-card" key={field.name}>
-                    <span>{field.name}</span>
+                    <ResponseFieldName name={field.name} />
                     <p>{field.description}</p>
                     <strong>{field.type}</strong>
                   </article>

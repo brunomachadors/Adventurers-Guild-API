@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { getGuideAnchorSlug } from '@/app/components/guides/background-guide-utils';
+import { ResponseFieldName } from '@/app/components/guides/response-field-name';
 import { spellGlossaryEntries } from '@/app/components/guides/spell-glossary';
 import {
   spellDetailResponseFields,
@@ -1002,7 +1003,7 @@ export function SpellsGuideChapter({
               <div className="response-field-list">
                 {spellListResponseFields.map((field) => (
                   <article className="response-field-card" key={field.name}>
-                    <span>{field.name}</span>
+                    <ResponseFieldName name={field.name} />
                     <p>{field.description}</p>
                     <strong>{field.type}</strong>
                   </article>
@@ -1036,7 +1037,7 @@ export function SpellsGuideChapter({
               <div className="response-field-list">
                 {spellDetailResponseFields.map((field) => (
                   <article className="response-field-card" key={field.name}>
-                    <span>{field.name}</span>
+                    <ResponseFieldName name={field.name} />
                     <p>{field.description}</p>
                     <strong>{field.type}</strong>
                   </article>

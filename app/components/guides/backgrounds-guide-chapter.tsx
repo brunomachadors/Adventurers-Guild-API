@@ -5,6 +5,7 @@ import { type MouseEvent } from 'react';
 
 import { backgroundImages } from '@/app/components/guides/background-images';
 import { backgroundDetailResponseFields, backgroundListResponseFields } from '@/app/components/guides/background-response-fields';
+import { ResponseFieldName } from '@/app/components/guides/response-field-name';
 import {
   findAttributeByReference,
   getAttributeAnchor,
@@ -354,7 +355,7 @@ export function BackgroundsGuideChapter({
               <div className="response-field-list response-field-list--compact">
                 {backgroundListResponseFields.map((field) => (
                   <article className="response-field-card" key={field.name}>
-                    <span>{field.name}</span>
+                    <ResponseFieldName name={field.name} />
                     <p>{field.description}</p>
                     <strong>{field.type}</strong>
                   </article>
@@ -389,7 +390,7 @@ export function BackgroundsGuideChapter({
                 <div className="response-field-list">
                   {backgroundDetailResponseFields.map((field) => (
                     <article className="response-field-card" key={field.name}>
-                      <span>{field.name}</span>
+                      <ResponseFieldName name={field.name} />
                       <p>{field.description}</p>
                       <strong>{field.type}</strong>
                     </article>

@@ -7,6 +7,7 @@ import { AuthGuideChapter } from '@/app/components/guides/auth-guide-chapter';
 import { BackgroundsGuideChapter } from '@/app/components/guides/backgrounds-guide-chapter';
 import { CharactersGuideChapter } from '@/app/components/guides/characters-guide-chapter';
 import { EquipmentGuideChapter } from '@/app/components/guides/equipment-guide-chapter';
+import { ResponseFieldName } from '@/app/components/guides/response-field-name';
 import { SpellsGuideChapter } from '@/app/components/guides/spells-guide-chapter';
 import {
   getAttributeAnchor,
@@ -1118,7 +1119,7 @@ export function GuidesAccordion({
               <div className="response-field-list">
                 {attributeResponseFields.map((field) => (
                   <article className="response-field-card" key={field.name}>
-                    <span>{field.name}</span>
+                    <ResponseFieldName name={field.name} />
                     <p>{field.description}</p>
                     <strong>{field.type}</strong>
                   </article>
@@ -1340,7 +1341,7 @@ export function GuidesAccordion({
                 <div className="response-field-list response-field-list--compact">
                   {skillListResponseFields.map((field) => (
                     <article className="response-field-card" key={field.name}>
-                      <span>{field.name}</span>
+                      <ResponseFieldName name={field.name} />
                       <p>{field.description}</p>
                       <strong>{field.type}</strong>
                     </article>
@@ -1375,7 +1376,7 @@ export function GuidesAccordion({
                   <div className="response-field-list">
                     {skillDetailResponseFields.map((field) => (
                       <article className="response-field-card" key={field.name}>
-                        <span>{field.name}</span>
+                        <ResponseFieldName name={field.name} />
                         <p>{field.description}</p>
                         <strong>{field.type}</strong>
                       </article>
@@ -2112,7 +2113,7 @@ export function GuidesAccordion({
                 <div className="response-field-list response-field-list--compact">
                   {speciesListResponseFields.map((field) => (
                     <article className="response-field-card" key={field.name}>
-                      <span>{field.name}</span>
+                      <ResponseFieldName name={field.name} />
                       <p>{field.description}</p>
                       <strong>{field.type}</strong>
                     </article>
@@ -2147,7 +2148,7 @@ export function GuidesAccordion({
                   <div className="response-field-list">
                     {speciesDetailResponseFields.map((field) => (
                       <article className="response-field-card" key={field.name}>
-                        <span>{field.name}</span>
+                        <ResponseFieldName name={field.name} />
                         <p>{field.description}</p>
                         <strong>{field.type}</strong>
                       </article>

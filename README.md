@@ -903,6 +903,8 @@ Returns the current spell selection state for the character.
 
 Requires bearer token.
 
+For classes that use `spellbook_plus_prepared`, the selection flow exposes cantrips plus the spellbook spells available at the current level. In that case, the leveled spell selection uses `selectionType: "known"` and `maxSpells` is derived from `spellbookSpells`.
+
 Response fields:
 
 - `characterId`
@@ -924,6 +926,8 @@ Returns:
 Replaces the character's selected spells.
 
 Requires bearer token.
+
+For classes that use `spellbook_plus_prepared`, leveled spells selected through this endpoint are stored as `known`, while cantrips continue to use `cantrip`.
 
 Request body fields:
 
@@ -1411,9 +1415,9 @@ Character spell selection:
   "level": 1,
   "selectionRules": {
     "canSelectSpells": true,
-    "selectionType": "prepared",
+    "selectionType": "known",
     "maxCantrips": 3,
-    "maxSpells": 0
+    "maxSpells": 6
   },
   "selectedSpells": [],
   "availableSpells": [
@@ -1422,6 +1426,12 @@ Character spell selection:
       "name": "Acid Splash",
       "level": 0,
       "levelLabel": "Cantrip"
+    },
+    {
+      "id": 18,
+      "name": "Alarm",
+      "level": 1,
+      "levelLabel": "Level 1"
     }
   ]
 }
