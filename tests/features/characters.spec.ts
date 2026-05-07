@@ -398,6 +398,53 @@ const wizardSkillProficiencies: SkillName[] = [
   'Religion',
 ];
 
+const monkExtraSkillProficiencies: SkillName[] = ['Acrobatics', 'Stealth'];
+
+const monkSkillProficiencies: SkillName[] = [
+  ...(expectedDetailedBackgrounds.acolyte.skillProficiencies as SkillName[]),
+  ...monkExtraSkillProficiencies,
+];
+
+const paladinExtraSkillProficiencies: SkillName[] = ['Athletics', 'Insight'];
+
+const paladinSkillProficiencies: SkillName[] = [
+  ...(expectedDetailedBackgrounds.noble.skillProficiencies as SkillName[]),
+  ...paladinExtraSkillProficiencies,
+];
+
+const rangerExtraSkillProficiencies: SkillName[] = [
+  'Perception',
+  'Stealth',
+  'Survival',
+];
+
+const rangerSkillProficiencies: SkillName[] = [
+  ...(expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[]),
+  ...rangerExtraSkillProficiencies,
+];
+
+const rogueExtraSkillProficiencies: SkillName[] = [
+  'Acrobatics',
+  'Athletics',
+  'Perception',
+  'Persuasion',
+];
+
+const rogueSkillProficiencies: SkillName[] = [
+  ...(expectedDetailedBackgrounds.criminal.skillProficiencies as SkillName[]),
+  ...rogueExtraSkillProficiencies,
+];
+
+const fighterExtraSkillProficiencies: SkillName[] = [
+  'Perception',
+  'Survival',
+];
+
+const fighterSkillProficiencies: SkillName[] = [
+  ...(expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[]),
+  ...fighterExtraSkillProficiencies,
+];
+
 async function issueDemoToken(request: APIRequestContext) {
   const authCredentials = getTestAuthCredentials();
   const authClient = new AuthClient(request);
@@ -672,7 +719,10 @@ test.describe(
           updatedCharacter.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(updatedCharacter.status, 'draft');
+        await charactersAssert.validateStatus(
+          updatedCharacter.status,
+          'in_progress',
+        );
         await charactersAssert.validateClassId(updatedCharacter.classId, 1);
         await charactersAssert.validateSpeciesId(
           updatedCharacter.speciesId,
@@ -932,7 +982,7 @@ test.describe(
         );
         await charactersAssert.validateStatus(
           updatedCharacter.status,
-          'complete',
+          'in_progress',
         );
         await charactersAssert.validateClassId(updatedCharacter.classId, 1);
         await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 7);
@@ -944,6 +994,10 @@ test.describe(
         await charactersAssert.validateMissingFields(
           updatedCharacter.missingFields,
           [],
+        );
+        await charactersAssert.validateSkillProficiencies(
+          updatedCharacter.skillProficiencies,
+          expectedDetailedBackgrounds.soldier.skillProficiencies,
         );
         await charactersAssert.validatePendingChoices(
           updatedCharacter.pendingChoices,
@@ -1045,6 +1099,10 @@ test.describe(
         await charactersAssert.validateMissingFields(
           character.missingFields,
           [],
+        );
+        await charactersAssert.validateSkillProficiencies(
+          character.skillProficiencies,
+          expectedDetailedBackgrounds.soldier.skillProficiencies,
         );
         await charactersAssert.validateAbilityScores(
           character.abilityScores,
@@ -1983,7 +2041,7 @@ test.describe(
           character.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 6);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 1);
@@ -2126,7 +2184,7 @@ test.describe(
           character.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 6);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 1);
@@ -2278,7 +2336,7 @@ test.describe(
           character.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 7);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 12);
@@ -2370,7 +2428,7 @@ test.describe(
           character.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 7);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 12);
@@ -2776,7 +2834,7 @@ test.describe(
           character.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 7);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 12);
@@ -3129,7 +3187,10 @@ test.describe(
           updatedCharacter.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(updatedCharacter.status, 'draft');
+        await charactersAssert.validateStatus(
+          updatedCharacter.status,
+          'in_progress',
+        );
         await charactersAssert.validateClassId(updatedCharacter.classId, 12);
         await charactersAssert.validateSpeciesId(
           updatedCharacter.speciesId,
@@ -3338,7 +3399,7 @@ test.describe(
         );
         await charactersAssert.validateStatus(
           updatedCharacter.status,
-          'complete',
+          'in_progress',
         );
         await charactersAssert.validateClassId(updatedCharacter.classId, 12);
         await charactersAssert.validateSpeciesId(updatedCharacter.speciesId, 3);
@@ -3350,6 +3411,10 @@ test.describe(
         await charactersAssert.validateMissingFields(
           updatedCharacter.missingFields,
           [],
+        );
+        await charactersAssert.validateSkillProficiencies(
+          updatedCharacter.skillProficiencies,
+          expectedDetailedBackgrounds.sage.skillProficiencies,
         );
         await charactersAssert.validateAbilityScores(
           updatedCharacter.abilityScores,
@@ -3402,6 +3467,10 @@ test.describe(
       await charactersAssert.validateSpeciesId(character.speciesId, 3);
       await charactersAssert.validateBackgroundId(character.backgroundId, 13);
       await charactersAssert.validateMissingFields(character.missingFields, []);
+      await charactersAssert.validateSkillProficiencies(
+        character.skillProficiencies,
+        expectedDetailedBackgrounds.sage.skillProficiencies,
+      );
       await charactersAssert.validateAbilityScores(
         character.abilityScores,
         null,
@@ -3440,7 +3509,7 @@ test.describe(
         await charactersAssert.validateClassId(character.classId, 12);
         await charactersAssert.validateSpeciesId(character.speciesId, 3);
         await charactersAssert.validateBackgroundId(character.backgroundId, 13);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateCurrency(
           character.currency,
           sageCurrency,
@@ -4259,7 +4328,7 @@ test.describe(
           null,
         );
         await charactersAssert.validateCurrency(character.currency, null);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -4290,7 +4359,7 @@ test.describe(
           null,
         );
         await charactersAssert.validateCurrency(character.currency, null);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -4325,7 +4394,7 @@ test.describe(
           drizztAbilityBonuses,
         );
         await charactersAssert.validateCurrency(character.currency, null);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -4357,7 +4426,7 @@ test.describe(
           drizztAbilityBonuses,
         );
         await charactersAssert.validateCurrency(character.currency, null);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -4548,7 +4617,7 @@ test.describe(
           null,
         );
         await charactersAssert.validateCurrency(character.currency, null);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -4579,7 +4648,7 @@ test.describe(
           null,
         );
         await charactersAssert.validateCurrency(character.currency, null);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -4612,7 +4681,7 @@ test.describe(
           character.currency,
           patchedCurrency,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -4642,7 +4711,7 @@ test.describe(
           character.currency,
           patchedCurrency,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -4672,7 +4741,7 @@ test.describe(
         );
         await validateDrizztRangerBuild(character);
         await charactersAssert.validateCurrency(character.currency, null);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -4699,7 +4768,7 @@ test.describe(
         );
         await validateDrizztRangerBuild(character);
         await charactersAssert.validateCurrency(character.currency, null);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
   },
@@ -4750,7 +4819,7 @@ test.describe(
           character.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 10);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 1);
@@ -4793,7 +4862,7 @@ test.describe(
           character.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 10);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 1);
@@ -4894,7 +4963,7 @@ test.describe(
 
         await charactersAssert.validateCharacterResponseSchema(character);
         await charactersAssert.validateName(character.name, characterName);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 2);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 1);
@@ -4967,7 +5036,7 @@ test.describe(
 
         await charactersAssert.validateCharacterResponseSchema(character);
         await charactersAssert.validateName(character.name, characterName);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 3);
         await charactersAssert.validateSpeciesId(character.speciesId, 1);
         await charactersAssert.validateBackgroundId(character.backgroundId, 1);
@@ -5038,7 +5107,7 @@ test.describe(
 
         await charactersAssert.validateCharacterResponseSchema(character);
         await charactersAssert.validateName(character.name, characterName);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 4);
         await charactersAssert.validateSpeciesId(character.speciesId, 3);
         await charactersAssert.validateBackgroundId(character.backgroundId, 1);
@@ -5109,7 +5178,7 @@ test.describe(
 
         await charactersAssert.validateCharacterResponseSchema(character);
         await charactersAssert.validateName(character.name, characterName);
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 11);
         await charactersAssert.validateSpeciesId(character.speciesId, 8);
         await charactersAssert.validateBackgroundId(character.backgroundId, 1);
@@ -5211,7 +5280,7 @@ test.describe(
           character.hitPoints,
           fighterHitPoints,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
       },
     );
 
@@ -5818,7 +5887,7 @@ test.describe(
           character.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 9);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 5);
@@ -6055,7 +6124,7 @@ test.describe(
           character.name,
           createdCharacterName,
         );
-        await charactersAssert.validateStatus(character.status, 'complete');
+        await charactersAssert.validateStatus(character.status, 'in_progress');
         await charactersAssert.validateClassId(character.classId, 9);
         await charactersAssert.validateSpeciesId(character.speciesId, 7);
         await charactersAssert.validateBackgroundId(character.backgroundId, 5);
@@ -6171,6 +6240,239 @@ test.describe(
         });
       },
     );
+  },
+);
+
+test.describe(
+  'Characters API - Background Skill Autofill Coverage',
+  { tag: ['@characters', '@skills', '@backgrounds', '@coverage'] },
+  () => {
+    test('Autofill background skills and merge chosen class skills', async ({
+      request,
+    }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const authToken = await issueDemoToken(request);
+      const coverageCases: {
+        label: string;
+        classId: number;
+        speciesId: number;
+        backgroundId: number;
+        expectedBackgroundSkills: SkillName[];
+        extraSkillChoices: SkillName[];
+        expectedFinalSkills: SkillName[];
+      }[] = [
+        {
+          label: 'Monk Acolyte',
+          classId: 6,
+          speciesId: 7,
+          backgroundId: 1,
+          expectedBackgroundSkills:
+            expectedDetailedBackgrounds.acolyte.skillProficiencies as SkillName[],
+          extraSkillChoices: monkExtraSkillProficiencies,
+          expectedFinalSkills: monkSkillProficiencies,
+        },
+        {
+          label: 'Paladin Noble',
+          classId: 7,
+          speciesId: 7,
+          backgroundId: 12,
+          expectedBackgroundSkills:
+            expectedDetailedBackgrounds.noble.skillProficiencies as SkillName[],
+          extraSkillChoices: paladinExtraSkillProficiencies,
+          expectedFinalSkills: paladinSkillProficiencies,
+        },
+        {
+          label: 'Ranger Soldier',
+          classId: 8,
+          speciesId: 3,
+          backgroundId: 16,
+          expectedBackgroundSkills:
+            expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[],
+          extraSkillChoices: rangerExtraSkillProficiencies,
+          expectedFinalSkills: rangerSkillProficiencies,
+        },
+        {
+          label: 'Rogue Criminal',
+          classId: 9,
+          speciesId: 7,
+          backgroundId: 5,
+          expectedBackgroundSkills:
+            expectedDetailedBackgrounds.criminal.skillProficiencies as SkillName[],
+          extraSkillChoices: rogueExtraSkillProficiencies,
+          expectedFinalSkills: rogueSkillProficiencies,
+        },
+        {
+          label: 'Fighter Soldier',
+          classId: 5,
+          speciesId: 7,
+          backgroundId: 16,
+          expectedBackgroundSkills:
+            expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[],
+          extraSkillChoices: fighterExtraSkillProficiencies,
+          expectedFinalSkills: fighterSkillProficiencies,
+        },
+      ];
+
+      const createdCharacterIds: number[] = [];
+
+      try {
+        for (const coverageCase of coverageCases) {
+          const createResponse = await charactersClient.createCharacter(
+            {
+              name: `${coverageCase.label} ${Date.now()}`,
+              classId: coverageCase.classId,
+              speciesId: coverageCase.speciesId,
+              backgroundId: coverageCase.backgroundId,
+              level: 1,
+            },
+            authToken,
+          );
+
+          await charactersAssert.created(createResponse);
+
+          const createdCharacter: CharacterResponseBody =
+            await createResponse.json();
+          createdCharacterIds.push(createdCharacter.id);
+
+          await test.step(
+            `Validate background skills are auto-applied for ${coverageCase.label}`,
+            async () => {
+              await charactersAssert.validateSkillProficiencies(
+                createdCharacter.skillProficiencies,
+                coverageCase.expectedBackgroundSkills,
+              );
+            },
+          );
+
+          const patchSkillsResponse = await charactersClient.updateCharacter(
+            createdCharacter.id,
+            {
+              skillProficiencies: coverageCase.extraSkillChoices,
+            },
+            authToken,
+          );
+
+          await charactersAssert.success(patchSkillsResponse);
+
+          const updatedCharacter: CharacterResponseBody =
+            await patchSkillsResponse.json();
+
+          await test.step(
+            `Validate chosen skills merge with background skills for ${coverageCase.label}`,
+            async () => {
+              await charactersAssert.validateSkillProficiencies(
+                updatedCharacter.skillProficiencies,
+                coverageCase.expectedFinalSkills,
+              );
+            },
+          );
+
+          const detailResponse = await charactersClient.getCharacterDetail(
+            createdCharacter.id,
+            authToken,
+          );
+
+          await charactersAssert.success(detailResponse);
+
+          const detailedCharacter: CharacterResponseBody =
+            await detailResponse.json();
+
+          await test.step(
+            `Validate final detail keeps merged skills for ${coverageCase.label}`,
+            async () => {
+              await charactersAssert.validateSkillProficiencies(
+                detailedCharacter.skillProficiencies,
+                coverageCase.expectedFinalSkills,
+              );
+            },
+          );
+        }
+      } finally {
+        for (const characterId of createdCharacterIds) {
+          const deleteResponse = await charactersClient.deleteCharacter(
+            characterId,
+            authToken,
+          );
+
+          expect(deleteResponse.ok()).toBe(true);
+        }
+      }
+    });
+
+    test('Reject invalid class skill selections for Barbarian', async ({
+      request,
+    }) => {
+      const charactersClient = new CharactersClient(request);
+      const charactersAssert = new CharactersAssert();
+      const authToken = await issueDemoToken(request);
+
+      const createResponse = await charactersClient.createCharacter(
+        {
+          name: `Invalid Barbarian Skills ${Date.now()}`,
+          classId: 1,
+          speciesId: 7,
+          backgroundId: 16,
+          level: 1,
+        },
+        authToken,
+      );
+
+      await charactersAssert.created(createResponse);
+
+      const createdCharacter: CharacterResponseBody =
+        await createResponse.json();
+
+      try {
+        const wrongCountResponse = await charactersClient.updateCharacter(
+          createdCharacter.id,
+          {
+            skillProficiencies: ['Athletics', 'Intimidation', 'Perception'],
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(wrongCountResponse);
+
+        const wrongCountBody: { error: string } =
+          await wrongCountResponse.json();
+
+        await charactersAssert.validateErrorResponse(
+          wrongCountBody,
+          'Invalid character skill proficiencies payload: expected 2 class skill choices, received 1',
+        );
+
+        const invalidSkillResponse = await charactersClient.updateCharacter(
+          createdCharacter.id,
+          {
+            skillProficiencies: [
+              'Athletics',
+              'Intimidation',
+              'Arcana',
+              'Perception',
+            ],
+          },
+          authToken,
+        );
+
+        await charactersAssert.badRequest(invalidSkillResponse);
+
+        const invalidSkillBody: { error: string } =
+          await invalidSkillResponse.json();
+
+        await charactersAssert.validateErrorResponse(
+          invalidSkillBody,
+          'Invalid character skill proficiencies payload: Arcana is not allowed by this class. Allowed skills: Animal Handling, Athletics, Intimidation, Nature, Perception, Survival',
+        );
+      } finally {
+        const deleteResponse = await charactersClient.deleteCharacter(
+          createdCharacter.id,
+          authToken,
+        );
+
+        expect(deleteResponse.ok()).toBe(true);
+      }
+    });
   },
 );
 

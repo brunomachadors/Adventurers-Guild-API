@@ -351,6 +351,12 @@ Returns the authenticated owner's characters.
 
 Requires bearer token.
 
+`status` currently follows this meaning:
+
+- `draft`: the character has not started yet and still has no class, species, or background
+- `in_progress`: the character has started, but still has unresolved required steps such as missing ability scores, pending equipment package choices, incomplete class skill choices, or incomplete required spell selection
+- `complete`: the current creation flow is fully resolved
+
 List item fields:
 
 - `id`
@@ -381,6 +387,14 @@ Request body fields:
 - `skillProficiencies` optional
 
 If `abilityScores` is provided, it uses the same validation rules as `PUT /api/characters/{id}/ability-scores`: complete `base` and `bonuses` blocks, integer `STR`, `DEX`, `CON`, `INT`, `WIS`, and `CHA` values, level 1 to 3 base scores between `8` and `15`, bonuses between `0` and `2`, and background-compatible bonus choices.
+
+If `backgroundId` is provided, the background's fixed `skillProficiencies` are applied automatically to the created character.
+
+If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
+
+- background skills are auto-applied and do not count against the class choice limit
+- the number of chosen class skills must match `classDetails.skillProficiencyChoices.choose`
+- each chosen class skill must exist in `classDetails.skillProficiencyChoices.options`
 
 Response fields:
 
@@ -488,6 +502,14 @@ Returns:
 
 `pendingChoices` lists unresolved package-selection steps that still need to be completed through the dedicated equipment choice endpoints. It is currently used for `classEquipmentSelection` and `backgroundEquipmentSelection`.
 
+`status` follows the same meaning as the list endpoint:
+
+- `draft`: no class, species, or background has been selected yet
+- `in_progress`: the character has started, but still has unresolved required creation steps
+- `complete`: the current creation flow is resolved, including saved ability scores, no pending equipment package choices, complete class skill choices, and required spell selection for spellcasters
+
+`skillProficiencies` contains the merged character skills currently saved on the sheet. Background skill proficiencies are auto-applied when a background is selected, while manually submitted `skillProficiencies` are validated as the class-choice portion of the selection.
+
 `spellcastingSummary` is derived from the character class spellcasting metadata, character level, resolved spellcasting ability modifier, and selected spells. For non-casters, `canCastSpells` is `false`, spellcasting ability values are `null`, and selected spell counts are `0`.
 
 `spellSlots` is derived from class spellcasting progression and character level. It is returned as an empty array for non-casters or classes without supported slot progression; `used` currently starts at `0`, and `available` is `max - used`.
@@ -512,6 +534,18 @@ Accepted fields:
 - `skillProficiencies`
 
 If `abilityScores` is provided, it uses the same validation rules as `PUT /api/characters/{id}/ability-scores`. Sending `abilityScores: null` clears the saved scores.
+
+If `backgroundId` changes, the API automatically refreshes the background-provided `skillProficiencies`:
+
+- fixed skills from the previous background are removed
+- fixed skills from the new background are applied
+- manual class skill choices are preserved when possible
+
+If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
+
+- background skills do not count against the class choice limit
+- the number of chosen class skills must match the class requirement
+- each chosen class skill must be allowed by the class
 
 Returns:
 

@@ -1073,6 +1073,12 @@ paths:
       summary: List authenticated owner characters
       description: |
         Returns the characters owned by the authenticated owner.
+
+        `status` currently follows this meaning:
+
+        - `draft`: the character has not started yet and still has no class, species, or background
+        - `in_progress`: the character has started, but still has unresolved required steps such as missing ability scores, pending equipment package choices, incomplete class skill choices, or incomplete required spell selection
+        - `complete`: the current creation flow is fully resolved
       security:
         - bearerAuth: []
       responses:
@@ -1091,6 +1097,10 @@ paths:
                   level: 1
                 - id: 102
                   name: Arin
+                  status: in_progress
+                  level: 1
+                - id: 103
+                  name: Selene
                   status: complete
                   level: 3
         '401':
@@ -1116,6 +1126,14 @@ paths:
       summary: Create character
       description: |
         Creates a character for the authenticated owner.
+
+        If `backgroundId` is provided, the background's fixed `skillProficiencies` are applied automatically to the created character.
+
+        If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
+
+        - background skills are auto-applied and do not count against the class choice limit
+        - the number of chosen class skills must match `classDetails.skillProficiencyChoices.choose`
+        - each chosen class skill must exist in `classDetails.skillProficiencyChoices.options`
       security:
         - bearerAuth: []
       requestBody:
@@ -1290,6 +1308,14 @@ paths:
         `inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
 
         `pendingChoices` lists unresolved package-selection steps that still need to be completed through the dedicated equipment choice endpoints. It is currently used for `classEquipmentSelection` and `backgroundEquipmentSelection`.
+
+        `status` uses the following meaning:
+
+        - `draft`: no class, species, or background has been selected yet
+        - `in_progress`: the character has started, but still has unresolved required creation steps
+        - `complete`: the current creation flow is resolved, including saved ability scores, no pending equipment package choices, complete class skill choices, and required spell selection for spellcasters
+
+        `skillProficiencies` contains the merged character skills currently saved on the sheet. Background skill proficiencies are auto-applied when a background is selected, while manually submitted `skillProficiencies` are validated as the class-choice portion of the selection.
 
         `spellcastingSummary` is derived from the character class spellcasting metadata, character level, resolved spellcasting ability modifier, and selected spells. For non-casters, `canCastSpells` is `false`, spellcasting ability values are `null`, and selected spell counts are `0`.
 
@@ -1678,6 +1704,18 @@ paths:
       summary: Update character
       description: |
         Updates a single character owned by the authenticated owner and returns the same enriched detail shape, including `abilityScores`, `abilityModifiers`, `skillProficiencies`, `abilityScoreRules`, `classDetails`, `speciesDetails`, and `backgroundDetails` when those relations exist.
+
+        If `backgroundId` changes, the API automatically refreshes the background-provided `skillProficiencies`:
+
+        - fixed skills from the previous background are removed
+        - fixed skills from the new background are applied
+        - manual class skill choices are preserved when possible
+
+        If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
+
+        - background skills do not count against the class choice limit
+        - the number of chosen class skills must match the class requirement
+        - each chosen class skill must be allowed by the class
       security:
         - bearerAuth: []
       parameters:
@@ -3944,6 +3982,7 @@ components:
       type: string
       enum:
         - draft
+        - in_progress
         - complete
       example: draft
 
@@ -4020,7 +4059,32 @@ components:
         base:
           $ref: '#/components/schemas/CharacterAbilityScores'
         bonuses:
-          $ref: '#/components/schemas/CharacterAbilityScores'
+          description: |
+            Ability score bonuses selected during character creation. These are typically `0`, `1`, or `2` values, depending on the active background rule.
+          allOf:
+            - $ref: '#/components/schemas/CharacterAbilityScores'
+          example:
+            STR: 0
+            DEX: 0
+            CON: 0
+            INT: 2
+            WIS: 1
+            CHA: 0
+      example:
+        base:
+          STR: 8
+          DEX: 14
+          CON: 13
+          INT: 15
+          WIS: 12
+          CHA: 10
+        bonuses:
+          STR: 0
+          DEX: 0
+          CON: 0
+          INT: 2
+          WIS: 1
+          CHA: 0
 
     CharacterResolvedAbilityScores:
       type: object
@@ -4032,9 +4096,50 @@ components:
         base:
           $ref: '#/components/schemas/CharacterAbilityScores'
         bonuses:
-          $ref: '#/components/schemas/CharacterAbilityScores'
+          description: |
+            Applied creation bonuses. These are typically `0`, `1`, or `2` values, depending on the active background rule.
+          allOf:
+            - $ref: '#/components/schemas/CharacterAbilityScores'
+          example:
+            STR: 0
+            DEX: 0
+            CON: 0
+            INT: 2
+            WIS: 1
+            CHA: 0
         final:
-          $ref: '#/components/schemas/CharacterAbilityScores'
+          description: Final resolved scores after adding `base` and `bonuses`.
+          allOf:
+            - $ref: '#/components/schemas/CharacterAbilityScores'
+          example:
+            STR: 8
+            DEX: 14
+            CON: 13
+            INT: 17
+            WIS: 13
+            CHA: 10
+      example:
+        base:
+          STR: 8
+          DEX: 14
+          CON: 13
+          INT: 15
+          WIS: 12
+          CHA: 10
+        bonuses:
+          STR: 0
+          DEX: 0
+          CON: 0
+          INT: 2
+          WIS: 1
+          CHA: 0
+        final:
+          STR: 8
+          DEX: 14
+          CON: 13
+          INT: 17
+          WIS: 13
+          CHA: 10
 
     CharacterAbilityModifiers:
       type: object

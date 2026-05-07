@@ -12,6 +12,7 @@ import {
   CharacterMissingField,
   CharacterPendingChoice,
   CharacterResponseBody,
+  CharacterSelectedSpellDetail,
   CharacterStatus,
 } from '@/app/types/character';
 import { Attributeshortname } from '@/app/types/attribute';
@@ -39,6 +40,7 @@ import {
   getCharacterSpellcastingSummary,
   getCharacterSpellSlots,
 } from './character-spellcasting';
+import { getSpellSelectionRule } from './character-spells';
 import { getCharacterWeaponAttacks } from './character-weapon-attacks';
 import { getSql } from './db';
 import { formatSpeciesDetail } from './species';
@@ -80,9 +82,132 @@ export function getCharacterMissingFields(character: {
 }
 
 export function getCharacterStatus(
-  missingFields: CharacterMissingField[],
+  params: {
+    classId: number | null;
+    speciesId: number | null;
+    backgroundId: number | null;
+    missingFields: CharacterMissingField[];
+    abilityScores: CharacterResolvedAbilityScores | null;
+    pendingChoices: CharacterPendingChoice[];
+    classDetails: CharacterClassDetails | null;
+    backgroundDetails: BackgroundDetail | null;
+    skillProficiencies: SkillName[];
+    level: number;
+    selectedSpells: CharacterSelectedSpellDetail[];
+  },
 ): CharacterStatus {
-  return missingFields.length === 0 ? 'complete' : 'draft';
+  const {
+    classId,
+    speciesId,
+    backgroundId,
+    missingFields,
+    abilityScores,
+    pendingChoices,
+    classDetails,
+    backgroundDetails,
+    skillProficiencies,
+    level,
+    selectedSpells,
+  } = params;
+
+  const hasStarted =
+    classId !== null || speciesId !== null || backgroundId !== null;
+
+  if (!hasStarted) {
+    return 'draft';
+  }
+
+  const hasCompleteSkills = hasCompleteCharacterSkillProficiencies(
+    classDetails,
+    backgroundDetails,
+    skillProficiencies,
+  );
+  const hasCompleteSpells = hasCompleteCharacterSpellSelection(
+    classDetails,
+    level,
+    selectedSpells,
+  );
+
+  if (
+    missingFields.length === 0 &&
+    abilityScores !== null &&
+    pendingChoices.length === 0 &&
+    hasCompleteSkills &&
+    hasCompleteSpells
+  ) {
+    return 'complete';
+  }
+
+  return 'in_progress';
+}
+
+export async function getCharacterComputedStatus(character: {
+  id: number | string;
+  classId: number | string | null;
+  speciesId: number | string | null;
+  backgroundId: number | string | null;
+  level: number | string;
+  abilityScores?:
+    | CharacterAbilityScores
+    | CharacterAbilityScoresInput
+    | CharacterResolvedAbilityScores
+    | string
+    | null;
+  skillProficiencies?: SkillName[] | string | null;
+}): Promise<CharacterStatus> {
+  const formattedCharacter = {
+    id: toNumber(character.id),
+    classId:
+      character.classId === null ? null : toNumber(character.classId),
+    speciesId:
+      character.speciesId === null ? null : toNumber(character.speciesId),
+    backgroundId:
+      character.backgroundId === null ? null : toNumber(character.backgroundId),
+    level: toNumber(character.level),
+    abilityScores: parseCharacterAbilityScores(
+      character.abilityScores ?? null,
+    ),
+    skillProficiencies: parseSkillProficiencies(
+      character.skillProficiencies ?? [],
+    ),
+  };
+
+  const missingFields = getCharacterMissingFields(formattedCharacter);
+  const classDetails = await getCharacterClassDetails(
+    formattedCharacter.classId,
+    formattedCharacter.level,
+  );
+  const backgroundDetails = await getCharacterBackgroundDetails(
+    formattedCharacter.backgroundId,
+  );
+  const resolvedEquipmentChoiceSources = new Set(
+    (await getCharacterEquipmentChoiceRecords(formattedCharacter.id)).map(
+      (choice) => choice.source,
+    ),
+  );
+  const pendingChoices = getCharacterPendingChoices(
+    classDetails,
+    backgroundDetails,
+    await hasCharacterEquipment(formattedCharacter.id),
+    resolvedEquipmentChoiceSources,
+  );
+  const selectedSpells = await getCharacterSelectedSpellDetails(
+    formattedCharacter.id,
+  );
+
+  return getCharacterStatus({
+    classId: formattedCharacter.classId,
+    speciesId: formattedCharacter.speciesId,
+    backgroundId: formattedCharacter.backgroundId,
+    missingFields,
+    abilityScores: formattedCharacter.abilityScores,
+    pendingChoices,
+    classDetails,
+    backgroundDetails,
+    skillProficiencies: formattedCharacter.skillProficiencies,
+    level: formattedCharacter.level,
+    selectedSpells,
+  });
 }
 
 export async function getCharacterClassDetails(
@@ -553,6 +678,192 @@ export async function getCharacterBackgroundDetails(
   };
 }
 
+async function getCharacterClassSkillProficiencyChoices(
+  classId: number | null,
+): Promise<CharacterClassDetails['skillProficiencyChoices']> {
+  if (classId === null) {
+    return {
+      choose: 0,
+      options: [],
+    };
+  }
+
+  const sql = getSql();
+  const classRows = await sql`
+    SELECT skillproficiencychoicescount, skillproficiencyoptions
+    FROM classes
+    WHERE id = ${classId}
+    LIMIT 1
+  `;
+
+  if (!classRows || classRows.length === 0) {
+    return {
+      choose: 0,
+      options: [],
+    };
+  }
+
+  const classItem = classRows[0];
+
+  return parseClassSkillProficiencyChoices(
+    classItem.skillproficiencychoicescount,
+    classItem.skillproficiencyoptions,
+  );
+}
+
+async function getBackgroundSkillProficiencies(
+  backgroundId: number | null,
+): Promise<SkillName[]> {
+  const backgroundDetails = await getCharacterBackgroundDetails(backgroundId);
+
+  return parseSkillProficiencies(backgroundDetails?.skillProficiencies ?? []);
+}
+
+export async function getCharacterSkillProficienciesWithBackground(params: {
+  existingSkillProficiencies: SkillName[] | string | null | undefined;
+  providedSkillProficiencies?: SkillName[];
+  previousBackgroundId: number | null;
+  nextBackgroundId: number | null;
+}): Promise<SkillName[]> {
+  const {
+    existingSkillProficiencies,
+    providedSkillProficiencies,
+    previousBackgroundId,
+    nextBackgroundId,
+  } = params;
+  const existingSkills = parseSkillProficiencies(existingSkillProficiencies ?? []);
+  const previousBackgroundSkills =
+    await getBackgroundSkillProficiencies(previousBackgroundId);
+  const nextBackgroundSkills =
+    previousBackgroundId === nextBackgroundId
+      ? previousBackgroundSkills
+      : await getBackgroundSkillProficiencies(nextBackgroundId);
+  const previousBackgroundSkillSet = new Set(previousBackgroundSkills);
+  const preservedManualSkills = existingSkills.filter(
+    (skill) => !previousBackgroundSkillSet.has(skill),
+  );
+  const nextManualSkills = providedSkillProficiencies ?? preservedManualSkills;
+
+  return [...new Set([...nextBackgroundSkills, ...nextManualSkills])];
+}
+
+export async function validateCharacterSkillProficienciesInput(params: {
+  classId: number | null;
+  backgroundId: number | null;
+  skillProficiencies: SkillName[];
+}): Promise<
+  | {
+      valid: true;
+      skillProficiencies: SkillName[];
+    }
+  | {
+      valid: false;
+      error: string;
+    }
+> {
+  const { classId, backgroundId, skillProficiencies } = params;
+  const normalizedSkillProficiencies = [...new Set(skillProficiencies)];
+  const backgroundSkills = await getBackgroundSkillProficiencies(backgroundId);
+  const backgroundSkillSet = new Set(backgroundSkills);
+  const classSkillChoices =
+    await getCharacterClassSkillProficiencyChoices(classId);
+  const manualSkillChoices = normalizedSkillProficiencies.filter(
+    (skill) => !backgroundSkillSet.has(skill),
+  );
+
+  if (classSkillChoices.choose === 0) {
+    if (manualSkillChoices.length > 0) {
+      return {
+        valid: false,
+        error:
+          'Invalid character skill proficiencies payload: this class does not allow extra skill proficiency choices',
+      };
+    }
+
+    return {
+      valid: true,
+      skillProficiencies: normalizedSkillProficiencies,
+    };
+  }
+
+  if (manualSkillChoices.length !== classSkillChoices.choose) {
+    return {
+      valid: false,
+      error: `Invalid character skill proficiencies payload: expected ${classSkillChoices.choose} class skill choice${classSkillChoices.choose === 1 ? '' : 's'}, received ${manualSkillChoices.length}`,
+    };
+  }
+
+  const allowedSkillSet = new Set(classSkillChoices.options);
+  const invalidSkill = manualSkillChoices.find(
+    (skill) => !allowedSkillSet.has(skill),
+  );
+
+  if (invalidSkill) {
+    return {
+      valid: false,
+      error: `Invalid character skill proficiencies payload: ${invalidSkill} is not allowed by this class. Allowed skills: ${classSkillChoices.options.join(', ')}`,
+    };
+  }
+
+  return {
+    valid: true,
+    skillProficiencies: normalizedSkillProficiencies,
+  };
+}
+
+function hasCompleteCharacterSkillProficiencies(
+  classDetails: CharacterClassDetails | null,
+  backgroundDetails: BackgroundDetail | null,
+  skillProficiencies: SkillName[],
+): boolean {
+  if (!classDetails) {
+    return false;
+  }
+
+  const backgroundSkillSet = new Set(
+    parseSkillProficiencies(backgroundDetails?.skillProficiencies ?? []),
+  );
+  const manualSkillChoices = skillProficiencies.filter(
+    (skill) => !backgroundSkillSet.has(skill),
+  );
+  const { choose, options } = classDetails.skillProficiencyChoices;
+
+  if (choose === 0) {
+    return manualSkillChoices.length === 0;
+  }
+
+  if (manualSkillChoices.length !== choose) {
+    return false;
+  }
+
+  const allowedSkillSet = new Set(options);
+
+  return manualSkillChoices.every((skill) => allowedSkillSet.has(skill));
+}
+
+function hasCompleteCharacterSpellSelection(
+  classDetails: CharacterClassDetails | null,
+  level: number,
+  selectedSpells: CharacterSelectedSpellDetail[],
+): boolean {
+  const selectionRule = getSpellSelectionRule(classDetails?.spellcasting, level);
+
+  if (!selectionRule.canSelectSpells) {
+    return true;
+  }
+
+  const selectedCantripsCount = selectedSpells.filter((spell) => spell.level === 0)
+    .length;
+  const selectedLeveledSpellsCount = selectedSpells.filter(
+    (spell) => spell.level > 0,
+  ).length;
+
+  return (
+    selectedCantripsCount === selectionRule.maxCantrips &&
+    selectedLeveledSpellsCount === selectionRule.maxSpells
+  );
+}
+
 async function hasCharacterEquipment(characterId: number): Promise<boolean> {
   const sql = getSql();
   const equipmentRows = await sql`
@@ -735,7 +1046,19 @@ export async function formatCharacterResponse(character: {
 
   return {
     ...formattedCharacter,
-    status: getCharacterStatus(missingFields),
+    status: getCharacterStatus({
+      classId: formattedCharacter.classId,
+      speciesId: formattedCharacter.speciesId,
+      backgroundId: formattedCharacter.backgroundId,
+      missingFields,
+      abilityScores: formattedCharacter.abilityScores,
+      pendingChoices,
+      classDetails,
+      backgroundDetails,
+      skillProficiencies: formattedCharacter.skillProficiencies,
+      level: formattedCharacter.level,
+      selectedSpells,
+    }),
     missingFields,
     pendingChoices,
     abilityScores: formattedCharacter.abilityScores,

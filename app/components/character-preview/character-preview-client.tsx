@@ -8,6 +8,7 @@ import type {
   CharacterAbilityScores,
   CharacterEquipmentItem,
   CharacterResponseBody,
+  CharacterSelectedSpellDetail,
   CharacterWeaponAttack,
   CharacterWeaponAttackMode,
 } from '@/app/types/character';
@@ -33,7 +34,15 @@ const abilityOrder: Array<keyof CharacterAbilityScores> = [
 ];
 
 const currencyOrder = ['cp', 'sp', 'ep', 'gp', 'pp'] as const;
-const exampleCharacterId = '1871';
+const exampleCharacterId = '2733';
+const abilityNames: Record<string, string> = {
+  STR: 'Strength',
+  DEX: 'Dexterity',
+  CON: 'Constitution',
+  INT: 'Intelligence',
+  WIS: 'Wisdom',
+  CHA: 'Charisma',
+};
 const weaponProficiencyOptions = [
   {
     label: 'Simple Melee Weapons',
@@ -134,6 +143,79 @@ function formatWeaponAttackModeLabel(mode: CharacterWeaponAttackMode) {
   }
 
   return `${modeLabel} / ${attackTypeLabel}`;
+}
+
+function formatCastingAbility(
+  ability: CharacterPreviewResponse['spellcastingSummary']['ability'],
+) {
+  if (!ability) {
+    return 'No casting ability';
+  }
+
+  return abilityNames[ability]
+    ? `${abilityNames[ability]} (${ability})`
+    : ability;
+}
+
+function getCastingAbilityName(
+  ability: CharacterPreviewResponse['spellcastingSummary']['ability'],
+) {
+  if (!ability) {
+    return 'No casting ability';
+  }
+
+  return abilityNames[ability] ?? ability;
+}
+
+function formatSpellGroupLabel(spell: CharacterSelectedSpellDetail) {
+  if (spell.level === 0) {
+    return 'Cantrips';
+  }
+
+  return spell.levelLabel || `Level ${spell.level}`;
+}
+
+function getGroupedSelectedSpells(spells: CharacterSelectedSpellDetail[]) {
+  const groups = new Map<
+    number,
+    { level: number; label: string; spells: CharacterSelectedSpellDetail[] }
+  >();
+
+  for (const spell of [...spells].sort(
+    (firstSpell, secondSpell) =>
+      firstSpell.level - secondSpell.level ||
+      firstSpell.name.localeCompare(secondSpell.name) ||
+      firstSpell.id - secondSpell.id,
+  )) {
+    const group = groups.get(spell.level) ?? {
+      level: spell.level,
+      label: formatSpellGroupLabel(spell),
+      spells: [],
+    };
+
+    group.spells.push(spell);
+    groups.set(spell.level, group);
+  }
+
+  return [...groups.values()];
+}
+
+function getSpellSchoolSlug(school: string) {
+  return school
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function getSpellEntryClassName(spell: CharacterSelectedSpellDetail) {
+  const levelClass =
+    spell.level === 0
+      ? 'character-spell-entry--cantrip'
+      : 'character-spell-entry--leveled';
+
+  return `character-spell-entry character-spell-entry--${getSpellSchoolSlug(
+    spell.school,
+  )} ${levelClass}`;
 }
 
 function getRenderedWeaponAttackModes(
@@ -282,6 +364,7 @@ function SheetBlock({
 
 function StatTile({
   className,
+  detail,
   label,
   value,
 }: {
@@ -296,6 +379,7 @@ function StatTile({
     >
       <span>{label}</span>
       <strong>{value}</strong>
+      {detail ? <p>{detail}</p> : null}
     </article>
   );
 }
@@ -461,10 +545,25 @@ function CharacterSheet({
   const [expandedProperties, setExpandedProperties] = useState<Set<string>>(
     () => new Set(),
   );
+  const [expandedSpells, setExpandedSpells] = useState<Set<number>>(
+    () => new Set(),
+  );
   const equipment = character.equipment ?? [];
   const featureGroups = getCharacterFeatures(character);
   const proficiencyBonus = getReturnedProficiencyBonus(character);
   const spellcasting = character.spellcastingSummary;
+  const castingAbility = formatCastingAbility(spellcasting.ability);
+  const castingAbilityShort = spellcasting.ability ?? '-';
+  const castingAbilityName = getCastingAbilityName(spellcasting.ability);
+  const selectedSpellGroups = getGroupedSelectedSpells(
+    character.selectedSpells,
+  );
+  const selectedSpellsCount = character.selectedSpells.length;
+  const selectedCantripsCount = character.selectedSpells.filter(
+    (spell) => spell.level === 0,
+  ).length;
+  const selectedLeveledSpellsCount =
+    selectedSpellsCount - selectedCantripsCount;
   const renderedWeaponAttacks = character.weaponAttacks.map((attack, index) => ({
     attack,
     attackKey: `${attack.equipmentId}-${attack.name}-${index}`,
@@ -482,6 +581,20 @@ function CharacterSheet({
       }
 
       return nextProperties;
+    });
+  }
+
+  function toggleExpandedSpell(spellId: number) {
+    setExpandedSpells((currentSpells) => {
+      const nextSpells = new Set(currentSpells);
+
+      if (nextSpells.has(spellId)) {
+        nextSpells.delete(spellId);
+      } else {
+        nextSpells.add(spellId);
+      }
+
+      return nextSpells;
     });
   }
 
@@ -1035,30 +1148,29 @@ function CharacterSheet({
         eyebrow="Magic"
         title="Spellcasting"
       >
-        <div className="character-spell-summary">
-          <StatTile
-            label="Can Cast"
-            value={formatFallback(spellcasting.canCastSpells)}
-            detail={spellcasting.ability ?? 'No casting ability'}
-          />
-          <StatTile
-            label="Save DC"
-            value={spellcasting.spellSaveDc ?? '-'}
-            detail="Returned by API"
-          />
-          <StatTile
-            label="Attack Bonus"
-            value={formatSigned(spellcasting.spellAttackBonus)}
-            detail="Returned by API"
-          />
-          <StatTile
-            label="Selected"
-            value={spellcasting.selectedSpellsCount}
-            detail={`${spellcasting.selectedCantripsCount} cantrips`}
-          />
-        </div>
+        {spellcasting.canCastSpells ? (
+          <div className="character-spell-summary">
+            <StatTile
+              label="Casting Attribute"
+              value={castingAbilityShort}
+              detail={castingAbilityName}
+            />
+            <StatTile label="Save DC" value={spellcasting.spellSaveDc ?? '-'} />
+            <StatTile
+              label="Attack Bonus"
+              value={formatSigned(spellcasting.spellAttackBonus)}
+            />
+            <StatTile
+              label="Selected"
+              value={selectedSpellsCount}
+              detail={`${selectedCantripsCount} cantrips / ${selectedLeveledSpellsCount} leveled`}
+            />
+          </div>
+        ) : (
+          <p className="character-preview-empty-line">No caster.</p>
+        )}
 
-        {character.spellSlots.length > 0 ? (
+        {spellcasting.canCastSpells && character.spellSlots.length > 0 ? (
           <div className="character-pill-list character-pill-list--slots">
             {character.spellSlots.map((slot) => (
               <span key={slot.level}>
@@ -1068,25 +1180,89 @@ function CharacterSheet({
           </div>
         ) : null}
 
-        {character.selectedSpells.length > 0 ? (
-          <div className="character-spell-list">
-            {character.selectedSpells.map((spell) => (
-              <article key={spell.id}>
-                <strong>{spell.name}</strong>
-                <span>
-                  {spell.levelLabel} / {spell.school}
-                </span>
-                <p>
-                  {spell.castingTime} / {spell.range} / {spell.duration}
-                </p>
-              </article>
+        {spellcasting.canCastSpells && selectedSpellGroups.length > 0 ? (
+          <div className="character-spell-groups">
+            {selectedSpellGroups.map((group) => (
+              <section className="character-spell-group" key={group.level}>
+                <header>
+                  <h3>{group.label}</h3>
+                  <span>{group.spells.length} selected</span>
+                </header>
+
+                <div className="character-spell-list">
+                  {group.spells.map((spell) => {
+                    const isExpanded = expandedSpells.has(spell.id);
+                    const detailsId = `character-spell-${spell.id}-details`;
+
+                    return (
+                      <article
+                        className={getSpellEntryClassName(spell)}
+                        key={spell.id}
+                      >
+                        <button
+                          aria-controls={detailsId}
+                          aria-expanded={isExpanded}
+                          className="character-spell-entry__summary"
+                          onClick={() => toggleExpandedSpell(spell.id)}
+                          type="button"
+                        >
+                          <span className="character-spell-entry__name">
+                            <strong>{spell.name}</strong>
+                            <small>{spell.school}</small>
+                          </span>
+                          <i aria-hidden="true" />
+                        </button>
+
+                        {isExpanded ? (
+                          <div
+                            className="character-spell-entry__details"
+                            id={detailsId}
+                          >
+                            <dl className="character-spell-entry__meta">
+                              <div>
+                                <dt>Ability</dt>
+                                <dd>{castingAbility}</dd>
+                              </div>
+                              <div>
+                                <dt>Casting Time</dt>
+                                <dd>{spell.castingTime}</dd>
+                              </div>
+                              <div>
+                                <dt>Range</dt>
+                                <dd>{spell.range}</dd>
+                              </div>
+                              <div>
+                                <dt>Components</dt>
+                                <dd>
+                                  {spell.components.length > 0
+                                    ? spell.components.join(', ')
+                                    : '-'}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Duration</dt>
+                                <dd>{spell.duration}</dd>
+                              </div>
+                              <div>
+                                <dt>Selection</dt>
+                                <dd>{spell.selectionType}</dd>
+                              </div>
+                            </dl>
+                            <p>{spell.description}</p>
+                          </div>
+                        ) : null}
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
             ))}
           </div>
-        ) : (
+        ) : spellcasting.canCastSpells ? (
           <p className="character-preview-empty-line">
             No selected spells returned.
           </p>
-        )}
+        ) : null}
       </SheetBlock>
     </article>
   );

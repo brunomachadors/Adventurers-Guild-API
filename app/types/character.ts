@@ -6,7 +6,7 @@ import type {
 } from './class';
 import { SkillName } from './skill';
 
-export type CharacterStatus = 'draft' | 'complete';
+export type CharacterStatus = 'draft' | 'in_progress' | 'complete';
 
 export type CharacterMissingField =
   | 'classId'
@@ -356,6 +356,7 @@ export interface CharacterSelectedSpellDetail extends CharacterSelectedSpellItem
   range: string;
   components: string[];
   duration: string;
+  description: string;
 }
 
 export interface CharacterSpellSelectionResponseBody {
