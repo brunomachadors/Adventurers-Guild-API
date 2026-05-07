@@ -1606,6 +1606,7 @@ export class CharactersAssert {
         expect(spell).toHaveProperty('range');
         expect(spell).toHaveProperty('components');
         expect(spell).toHaveProperty('duration');
+        expect(spell).toHaveProperty('description');
         expect(spell).toHaveProperty('selectionType');
 
         expect(typeof spell.id).toBe('number');
@@ -1618,6 +1619,7 @@ export class CharactersAssert {
         expect(typeof spell.range).toBe('string');
         expect(Array.isArray(spell.components)).toBe(true);
         expect(typeof spell.duration).toBe('string');
+        expect(typeof spell.description).toBe('string');
         expect(typeof spell.selectionType).toBe('string');
       });
     }

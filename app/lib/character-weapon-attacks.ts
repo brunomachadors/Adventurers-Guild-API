@@ -20,6 +20,11 @@ type EquippedWeaponItem = {
   details: EquipmentWeaponDetails;
 };
 
+const UNARMED_MASTERY: EquipmentMastery = {
+  name: 'None',
+  slug: 'none',
+};
+
 function toNumber(value: number | string): number {
   return typeof value === 'number' ? value : Number(value);
 }
@@ -258,16 +263,27 @@ function getClassWeaponProficiencies(classSlug: string | null): Set<string> {
   return new Set();
 }
 
-function getAttackAbility(attackType: string): Attributeshortname {
-  return attackType.toLowerCase() === 'ranged' ? 'DEX' : 'STR';
+function hasFinesseProperty(weapon: EquippedWeaponItem): boolean {
+  return weapon.details.properties.some((property) => property.slug === 'finesse');
 }
 
-function getAttackModeAbility(
-  weaponAttackType: string,
-  modeAttackType: string,
+function getAttackAbility(
+  weapon: EquippedWeaponItem,
+  attackType: string,
+  abilityModifiers: CharacterAbilityModifiers | null,
 ): Attributeshortname {
-  if (modeAttackType === 'ranged' && weaponAttackType.toLowerCase() !== 'melee') {
+  if (
+    attackType.toLowerCase() === 'ranged' &&
+    weapon.details.attackType.toLowerCase() !== 'melee'
+  ) {
     return 'DEX';
+  }
+
+  if (hasFinesseProperty(weapon)) {
+    const strengthModifier = abilityModifiers?.STR ?? 0;
+    const dexterityModifier = abilityModifiers?.DEX ?? 0;
+
+    return dexterityModifier >= strengthModifier ? 'DEX' : 'STR';
   }
 
   return 'STR';
@@ -296,25 +312,25 @@ function formatWeaponAttackDamage(
 }
 
 function formatWeaponAttackMode({
+  weapon,
   mode,
   attackType,
   damage,
   range,
-  weaponAttackType,
   abilityModifiers,
   isProficient,
   proficiencyBonus,
 }: {
+  weapon: EquippedWeaponItem;
   mode: string;
   attackType: string;
   damage: EquipmentDamage;
   range: EquipmentRange | null;
-  weaponAttackType: string;
   abilityModifiers: CharacterAbilityModifiers | null;
   isProficient: boolean;
   proficiencyBonus: number;
 }): CharacterWeaponAttackMode {
-  const ability = getAttackModeAbility(weaponAttackType, attackType);
+  const ability = getAttackAbility(weapon, attackType, abilityModifiers);
   const abilityModifier = abilityModifiers?.[ability] ?? 0;
   const appliedProficiencyBonus = isProficient ? proficiencyBonus : 0;
 
@@ -340,11 +356,11 @@ function getWeaponAttackModes(
   const primaryAttackType = weapon.details.attackType.toLowerCase();
   const attackModes = [
     formatWeaponAttackMode({
+      weapon,
       mode: primaryAttackType,
       attackType: primaryAttackType,
       damage: weapon.details.damage,
       range: weapon.details.range,
-      weaponAttackType: weapon.details.attackType,
       abilityModifiers,
       isProficient,
       proficiencyBonus,
@@ -355,11 +371,11 @@ function getWeaponAttackModes(
     if (property.slug === 'thrown' && property.range) {
       attackModes.push(
         formatWeaponAttackMode({
+          weapon,
           mode: 'thrown',
           attackType: 'ranged',
           damage: weapon.details.damage,
           range: property.range,
-          weaponAttackType: weapon.details.attackType,
           abilityModifiers,
           isProficient,
           proficiencyBonus,
@@ -370,11 +386,11 @@ function getWeaponAttackModes(
     if (property.slug === 'versatile' && property.damage) {
       attackModes.push(
         formatWeaponAttackMode({
+          weapon,
           mode: 'versatile',
           attackType: primaryAttackType,
           damage: property.damage,
           range: weapon.details.range,
-          weaponAttackType: weapon.details.attackType,
           abilityModifiers,
           isProficient,
           proficiencyBonus,
@@ -392,7 +408,11 @@ function formatWeaponAttack(
   abilityModifiers: CharacterAbilityModifiers | null,
   proficiencyBonus: number,
 ): CharacterWeaponAttack {
-  const ability = getAttackAbility(weapon.details.attackType);
+  const ability = getAttackAbility(
+    weapon,
+    weapon.details.attackType,
+    abilityModifiers,
+  );
   const abilityModifier = abilityModifiers?.[ability] ?? 0;
   const weaponProficiencies = getClassWeaponProficiencies(classSlug);
   const isProficient = weaponProficiencies.has(weapon.details.proficiencyType);
@@ -421,6 +441,82 @@ function formatWeaponAttack(
   };
 }
 
+function getMonkMartialArtsDie(level: number): EquipmentDamage {
+  if (level >= 17) {
+    return {
+      formula: '1d12',
+      dice: [{ count: 1, value: 12 }],
+      bonus: 0,
+      damageType: 'Bludgeoning',
+    };
+  }
+
+  if (level >= 11) {
+    return {
+      formula: '1d10',
+      dice: [{ count: 1, value: 10 }],
+      bonus: 0,
+      damageType: 'Bludgeoning',
+    };
+  }
+
+  if (level >= 5) {
+    return {
+      formula: '1d8',
+      dice: [{ count: 1, value: 8 }],
+      bonus: 0,
+      damageType: 'Bludgeoning',
+    };
+  }
+
+  return {
+    formula: '1d6',
+    dice: [{ count: 1, value: 6 }],
+    bonus: 0,
+    damageType: 'Bludgeoning',
+  };
+}
+
+function getMonkUnarmedAttack(
+  characterLevel: number,
+  abilityModifiers: CharacterAbilityModifiers | null,
+  proficiencyBonus: number,
+): CharacterWeaponAttack {
+  const strengthModifier = abilityModifiers?.STR ?? 0;
+  const dexterityModifier = abilityModifiers?.DEX ?? 0;
+  const ability: Attributeshortname =
+    dexterityModifier >= strengthModifier ? 'DEX' : 'STR';
+  const abilityModifier = abilityModifiers?.[ability] ?? 0;
+  const damage = getMonkMartialArtsDie(characterLevel);
+  const attackMode: CharacterWeaponAttackMode = {
+    mode: 'melee',
+    attackType: 'melee',
+    ability,
+    isProficient: true,
+    abilityModifier,
+    proficiencyBonus,
+    attackBonus: abilityModifier + proficiencyBonus,
+    damage: formatWeaponAttackDamage(damage, abilityModifier),
+    range: null,
+  };
+
+  return {
+    equipmentId: 0,
+    name: 'Unarmed Strike',
+    attackType: 'melee',
+    ability,
+    isProficient: true,
+    abilityModifier,
+    proficiencyBonus,
+    attackBonus: abilityModifier + proficiencyBonus,
+    damage: formatWeaponAttackDamage(damage, abilityModifier),
+    properties: [],
+    mastery: UNARMED_MASTERY,
+    range: null,
+    attackModes: [attackMode],
+  };
+}
+
 export async function getCharacterWeaponAttacks(
   characterId: number,
   characterLevel: number,
@@ -438,8 +534,7 @@ export async function getCharacterWeaponAttacks(
   `;
 
   const proficiencyBonus = getProficiencyBonus(characterLevel);
-
-  return equipmentRows
+  const equippedWeaponAttacks = equipmentRows
     .map((item) => {
       const details = parseWeaponDetails(item.details);
 
@@ -460,4 +555,16 @@ export async function getCharacterWeaponAttacks(
         proficiencyBonus,
       ),
     );
+
+  if (classSlug === 'monk') {
+    equippedWeaponAttacks.unshift(
+      getMonkUnarmedAttack(
+        characterLevel,
+        abilityModifiers,
+        proficiencyBonus,
+      ),
+    );
+  }
+
+  return equippedWeaponAttacks;
 }

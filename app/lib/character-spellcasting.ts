@@ -110,6 +110,7 @@ export async function getCharacterSelectedSpellDetails(
       spells.somatic,
       spells.material,
       spells.duration,
+      spells.description,
       characterspells.selectiontype
     FROM characterspells
     INNER JOIN spells ON spells.id = characterspells.spellid
@@ -134,6 +135,7 @@ export async function getCharacterSelectedSpellDetails(
         material: Boolean(spell.material),
       }),
       duration: spell.duration,
+      description: spell.description,
       selectionType: spell.selectiontype,
     }));
 }

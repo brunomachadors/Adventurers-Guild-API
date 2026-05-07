@@ -7,6 +7,7 @@ import { clearCharacterEquipmentChoiceRecords } from '@/app/lib/character-equipm
 import {
   formatCharacterResponse,
   getCharacterResponse,
+  getCharacterSkillProficienciesWithBackground,
   isCharacterAbilityScoresOrNull,
   isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
@@ -14,6 +15,7 @@ import {
   serializeCharacterAbilityScoresInput,
   serializeCharacterCurrency,
   serializeSkillProficiencies,
+  validateCharacterSkillProficienciesInput,
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
 import { CharacterUpdateRequestBody } from '@/app/types/character';
@@ -168,10 +170,33 @@ export async function PATCH(request: Request, { params }: RouteContext) {
           ? null
           : serializeCharacterCurrency(body.currency)
         : existingCharacter.currency;
-    const nextSkillProficiencies =
-      body.skillProficiencies !== undefined
-        ? serializeSkillProficiencies(body.skillProficiencies)
-        : serializeSkillProficiencies(existingCharacter.skillproficiencies ?? []);
+    let providedSkillProficiencies = body.skillProficiencies;
+
+    if (body.skillProficiencies !== undefined) {
+      const validationResult = await validateCharacterSkillProficienciesInput({
+        classId: nextClassId,
+        backgroundId: nextBackgroundId,
+        skillProficiencies: body.skillProficiencies,
+      });
+
+      if (!validationResult.valid) {
+        return NextResponse.json(
+          { error: validationResult.error },
+          { status: 400 },
+        );
+      }
+
+      providedSkillProficiencies = validationResult.skillProficiencies;
+    }
+
+    const nextSkillProficiencies = serializeSkillProficiencies(
+      await getCharacterSkillProficienciesWithBackground({
+        existingSkillProficiencies: existingCharacter.skillproficiencies,
+        providedSkillProficiencies,
+        previousBackgroundId: existingCharacter.backgroundid,
+        nextBackgroundId: nextBackgroundId,
+      }),
+    );
     const nextStatus =
       nextClassId !== null &&
       nextSpeciesId !== null &&

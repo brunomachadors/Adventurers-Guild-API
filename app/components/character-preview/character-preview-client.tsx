@@ -8,6 +8,7 @@ import type {
   CharacterAbilityScores,
   CharacterEquipmentItem,
   CharacterResponseBody,
+  CharacterSelectedSpellDetail,
   CharacterWeaponAttack,
   CharacterWeaponAttackMode,
 } from '@/app/types/character';
@@ -33,7 +34,15 @@ const abilityOrder: Array<keyof CharacterAbilityScores> = [
 ];
 
 const currencyOrder = ['cp', 'sp', 'ep', 'gp', 'pp'] as const;
-const exampleCharacterId = '1871';
+const exampleCharacterId = '2733';
+const abilityNames: Record<string, string> = {
+  STR: 'Strength',
+  DEX: 'Dexterity',
+  CON: 'Constitution',
+  INT: 'Intelligence',
+  WIS: 'Wisdom',
+  CHA: 'Charisma',
+};
 const weaponProficiencyOptions = [
   {
     label: 'Simple Melee Weapons',
@@ -136,10 +145,83 @@ function formatWeaponAttackModeLabel(mode: CharacterWeaponAttackMode) {
   return `${modeLabel} / ${attackTypeLabel}`;
 }
 
+function formatCastingAbility(
+  ability: CharacterPreviewResponse['spellcastingSummary']['ability'],
+) {
+  if (!ability) {
+    return 'No casting ability';
+  }
+
+  return abilityNames[ability]
+    ? `${abilityNames[ability]} (${ability})`
+    : ability;
+}
+
+function getCastingAbilityName(
+  ability: CharacterPreviewResponse['spellcastingSummary']['ability'],
+) {
+  if (!ability) {
+    return 'No casting ability';
+  }
+
+  return abilityNames[ability] ?? ability;
+}
+
+function formatSpellGroupLabel(spell: CharacterSelectedSpellDetail) {
+  if (spell.level === 0) {
+    return 'Cantrips';
+  }
+
+  return spell.levelLabel || `Level ${spell.level}`;
+}
+
+function getGroupedSelectedSpells(spells: CharacterSelectedSpellDetail[]) {
+  const groups = new Map<
+    number,
+    { level: number; label: string; spells: CharacterSelectedSpellDetail[] }
+  >();
+
+  for (const spell of [...spells].sort(
+    (firstSpell, secondSpell) =>
+      firstSpell.level - secondSpell.level ||
+      firstSpell.name.localeCompare(secondSpell.name) ||
+      firstSpell.id - secondSpell.id,
+  )) {
+    const group = groups.get(spell.level) ?? {
+      level: spell.level,
+      label: formatSpellGroupLabel(spell),
+      spells: [],
+    };
+
+    group.spells.push(spell);
+    groups.set(spell.level, group);
+  }
+
+  return [...groups.values()];
+}
+
+function getSpellSchoolSlug(school: string) {
+  return school
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function getSpellEntryClassName(spell: CharacterSelectedSpellDetail) {
+  const levelClass =
+    spell.level === 0
+      ? 'character-spell-entry--cantrip'
+      : 'character-spell-entry--leveled';
+
+  return `character-spell-entry character-spell-entry--${getSpellSchoolSlug(
+    spell.school,
+  )} ${levelClass}`;
+}
+
 function getRenderedWeaponAttackModes(
   attack: CharacterWeaponAttack,
 ): CharacterWeaponAttackMode[] {
-  if (attack.attackModes.length > 0) {
+  if (attack.attackModes?.length > 0) {
     return attack.attackModes;
   }
 
@@ -237,6 +319,13 @@ function getWeaponMasteryClassName(mastery: string) {
   return `character-weapon-mastery character-weapon-mastery--${masterySlug}`;
 }
 
+function hasRenderedWeaponMastery(attack: CharacterWeaponAttack) {
+  return (
+    attack.mastery.slug !== 'none' &&
+    attack.mastery.name.trim().toLowerCase() !== 'none'
+  );
+}
+
 function getErrorMessage(status: number) {
   if (status === 401) {
     return 'This character could not be previewed by the public endpoint.';
@@ -275,6 +364,7 @@ function SheetBlock({
 
 function StatTile({
   className,
+  detail,
   label,
   value,
 }: {
@@ -289,6 +379,7 @@ function StatTile({
     >
       <span>{label}</span>
       <strong>{value}</strong>
+      {detail ? <p>{detail}</p> : null}
     </article>
   );
 }
@@ -454,12 +545,28 @@ function CharacterSheet({
   const [expandedProperties, setExpandedProperties] = useState<Set<string>>(
     () => new Set(),
   );
+  const [expandedSpells, setExpandedSpells] = useState<Set<number>>(
+    () => new Set(),
+  );
   const equipment = character.equipment ?? [];
   const featureGroups = getCharacterFeatures(character);
   const proficiencyBonus = getReturnedProficiencyBonus(character);
   const spellcasting = character.spellcastingSummary;
-  const renderedWeaponAttacks = character.weaponAttacks.map((attack) => ({
+  const castingAbility = formatCastingAbility(spellcasting.ability);
+  const castingAbilityShort = spellcasting.ability ?? '-';
+  const castingAbilityName = getCastingAbilityName(spellcasting.ability);
+  const selectedSpellGroups = getGroupedSelectedSpells(
+    character.selectedSpells,
+  );
+  const selectedSpellsCount = character.selectedSpells.length;
+  const selectedCantripsCount = character.selectedSpells.filter(
+    (spell) => spell.level === 0,
+  ).length;
+  const selectedLeveledSpellsCount =
+    selectedSpellsCount - selectedCantripsCount;
+  const renderedWeaponAttacks = character.weaponAttacks.map((attack, index) => ({
     attack,
+    attackKey: `${attack.equipmentId}-${attack.name}-${index}`,
     attackModes: getRenderedWeaponAttackModes(attack),
   }));
 
@@ -474,6 +581,20 @@ function CharacterSheet({
       }
 
       return nextProperties;
+    });
+  }
+
+  function toggleExpandedSpell(spellId: number) {
+    setExpandedSpells((currentSpells) => {
+      const nextSpells = new Set(currentSpells);
+
+      if (nextSpells.has(spellId)) {
+        nextSpells.delete(spellId);
+      } else {
+        nextSpells.add(spellId);
+      }
+
+      return nextSpells;
     });
   }
 
@@ -787,134 +908,140 @@ function CharacterSheet({
         >
           {renderedWeaponAttacks.length > 0 ? (
             <div className="character-attack-list">
-              {renderedWeaponAttacks.map(({ attack, attackModes }) => {
-                const masterySlug = attack.mastery.slug;
-                const masteryDescription =
-                  weaponMasteryDescriptions[masterySlug];
-                const masteryKey = `${attack.equipmentId}-mastery-${masterySlug}`;
-                const isMasteryExpanded = expandedProperties.has(masteryKey);
+              {renderedWeaponAttacks.map(
+                ({ attack, attackKey, attackModes }) => {
+                  const masterySlug = attack.mastery.slug;
+                  const masteryDescription =
+                    weaponMasteryDescriptions[masterySlug];
+                  const masteryKey = `${attackKey}-mastery-${masterySlug}`;
+                  const isMasteryExpanded = expandedProperties.has(masteryKey);
+                  const shouldRenderMastery = hasRenderedWeaponMastery(attack);
 
-                return (
-                  <article
-                    className="character-attack-card"
-                    key={attack.equipmentId}
-                  >
-                    <header>
-                      <strong>{attack.name}</strong>
-                    </header>
+                  return (
+                    <article className="character-attack-card" key={attackKey}>
+                      <header>
+                        <strong>{attack.name}</strong>
+                      </header>
 
-                    <table className="character-attack-mode-table">
-                      <thead>
-                        <tr>
-                          <th scope="col">Attack</th>
-                          <th scope="col">Damage</th>
-                          <th scope="col">Range</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {attackModes.map((attackMode) => (
-                          <tr key={`${attack.equipmentId}-${attackMode.mode}`}>
-                            <td data-label="Attack">
-                              <span>
-                                {formatWeaponAttackModeLabel(attackMode)}
-                              </span>
-                              <strong>
-                                {formatSigned(attackMode.attackBonus)}
-                              </strong>
-                            </td>
-                            <td data-label="Damage">
-                              <strong>{attackMode.damage.formula}</strong>
-                              <span>{attackMode.damage.damageType}</span>
-                            </td>
-                            <td data-label="Range">
-                              <strong>
-                                {formatWeaponAttackRange(
-                                  attackMode.attackType,
-                                  attackMode.range,
-                                )}
-                              </strong>
-                            </td>
+                      <table className="character-attack-mode-table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Attack</th>
+                            <th scope="col">Damage</th>
+                            <th scope="col">Range</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    <div className="character-attack-card__traits">
-                      <div className="character-attack-card__properties">
-                        <small>Properties</small>
-                        <div>
-                          {attack.properties.length > 0 ? (
-                            attack.properties.map((property) => {
-                              const propertySlug =
-                                getWeaponPropertySlug(property);
-                              const propertyDescription =
-                                weaponPropertyDescriptions[propertySlug];
-                              const propertyKey = `${attack.equipmentId}-${property}`;
-                              const isExpanded =
-                                expandedProperties.has(propertyKey);
-
-                              if (propertyDescription) {
-                                return (
-                                  <button
-                                    aria-expanded={isExpanded}
-                                    className={`${getWeaponPropertyClassName(
-                                      property,
-                                    )} character-weapon-property--expandable`}
-                                    key={propertyKey}
-                                    onClick={() =>
-                                      toggleExpandedProperty(propertyKey)
-                                    }
-                                    type="button"
-                                  >
-                                    <span>{property}</span>
-                                    {isExpanded ? (
-                                      <small>{propertyDescription}</small>
-                                    ) : null}
-                                  </button>
-                                );
-                              }
-
-                              return (
-                                <span
-                                  className={getWeaponPropertyClassName(
-                                    property,
-                                  )}
-                                  key={propertyKey}
-                                >
-                                  {property}
+                        </thead>
+                        <tbody>
+                          {attackModes.map((attackMode, attackModeIndex) => (
+                            <tr
+                              key={`${attackKey}-${attackMode.mode}-${attackModeIndex}`}
+                            >
+                              <td data-label="Attack">
+                                <span>
+                                  {formatWeaponAttackModeLabel(attackMode)}
                                 </span>
-                              );
-                            })
-                          ) : (
-                            <span className="character-weapon-property">
-                              None returned
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                                <strong>
+                                  {formatSigned(attackMode.attackBonus)}
+                                </strong>
+                              </td>
+                              <td data-label="Damage">
+                                <strong>{attackMode.damage.formula}</strong>
+                                <span>{attackMode.damage.damageType}</span>
+                              </td>
+                              <td data-label="Range">
+                                <strong>
+                                  {formatWeaponAttackRange(
+                                    attackMode.attackType,
+                                    attackMode.range,
+                                  )}
+                                </strong>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
 
-                      <div className="character-attack-card__mastery">
-                        <small>Mastery</small>
-                        <div>
-                          <button
-                            aria-expanded={isMasteryExpanded}
-                            className={`${getWeaponMasteryClassName(
-                              masterySlug,
-                            )} character-weapon-mastery--expandable`}
-                            onClick={() => toggleExpandedProperty(masteryKey)}
-                            type="button"
-                          >
-                            <span>{attack.mastery.name}</span>
-                            {isMasteryExpanded && masteryDescription ? (
-                              <small>{masteryDescription}</small>
-                            ) : null}
-                          </button>
+                      <div className="character-attack-card__traits">
+                        <div className="character-attack-card__properties">
+                          <small>Properties</small>
+                          <div>
+                            {attack.properties.length > 0 ? (
+                              attack.properties.map((property) => {
+                                const propertySlug =
+                                  getWeaponPropertySlug(property);
+                                const propertyDescription =
+                                  weaponPropertyDescriptions[propertySlug];
+                                const propertyKey = `${attackKey}-${property}`;
+                                const isExpanded =
+                                  expandedProperties.has(propertyKey);
+
+                                if (propertyDescription) {
+                                  return (
+                                    <button
+                                      aria-expanded={isExpanded}
+                                      className={`${getWeaponPropertyClassName(
+                                        property,
+                                      )} character-weapon-property--expandable`}
+                                      key={propertyKey}
+                                      onClick={() =>
+                                        toggleExpandedProperty(propertyKey)
+                                      }
+                                      type="button"
+                                    >
+                                      <span>{property}</span>
+                                      {isExpanded ? (
+                                        <small>{propertyDescription}</small>
+                                      ) : null}
+                                    </button>
+                                  );
+                                }
+
+                                return (
+                                  <span
+                                    className={getWeaponPropertyClassName(
+                                      property,
+                                    )}
+                                    key={propertyKey}
+                                  >
+                                    {property}
+                                  </span>
+                                );
+                              })
+                            ) : (
+                              <span className="character-weapon-property">
+                                None
+                              </span>
+                            )}
+                          </div>
                         </div>
+
+                        {shouldRenderMastery ? (
+                          <div className="character-attack-card__mastery">
+                            <small>Mastery</small>
+                            <div>
+                              <button
+                                aria-expanded={isMasteryExpanded}
+                                className={`${getWeaponMasteryClassName(
+                                  masterySlug,
+                                )} character-weapon-mastery--expandable`}
+                                onClick={() =>
+                                  toggleExpandedProperty(masteryKey)
+                                }
+                                type="button"
+                              >
+                                <span>{attack.mastery.name}</span>
+                                {isMasteryExpanded && masteryDescription ? (
+                                  <small>{masteryDescription}</small>
+                                ) : null}
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
-                    </div>
-                  </article>
-                );
-              })}
+                    </article>
+                  );
+                },
+              )}
             </div>
           ) : (
             <p className="character-preview-empty-line">
@@ -1021,30 +1148,29 @@ function CharacterSheet({
         eyebrow="Magic"
         title="Spellcasting"
       >
-        <div className="character-spell-summary">
-          <StatTile
-            label="Can Cast"
-            value={formatFallback(spellcasting.canCastSpells)}
-            detail={spellcasting.ability ?? 'No casting ability'}
-          />
-          <StatTile
-            label="Save DC"
-            value={spellcasting.spellSaveDc ?? '-'}
-            detail="Returned by API"
-          />
-          <StatTile
-            label="Attack Bonus"
-            value={formatSigned(spellcasting.spellAttackBonus)}
-            detail="Returned by API"
-          />
-          <StatTile
-            label="Selected"
-            value={spellcasting.selectedSpellsCount}
-            detail={`${spellcasting.selectedCantripsCount} cantrips`}
-          />
-        </div>
+        {spellcasting.canCastSpells ? (
+          <div className="character-spell-summary">
+            <StatTile
+              label="Casting Attribute"
+              value={castingAbilityShort}
+              detail={castingAbilityName}
+            />
+            <StatTile label="Save DC" value={spellcasting.spellSaveDc ?? '-'} />
+            <StatTile
+              label="Attack Bonus"
+              value={formatSigned(spellcasting.spellAttackBonus)}
+            />
+            <StatTile
+              label="Selected"
+              value={selectedSpellsCount}
+              detail={`${selectedCantripsCount} cantrips / ${selectedLeveledSpellsCount} leveled`}
+            />
+          </div>
+        ) : (
+          <p className="character-preview-empty-line">No caster.</p>
+        )}
 
-        {character.spellSlots.length > 0 ? (
+        {spellcasting.canCastSpells && character.spellSlots.length > 0 ? (
           <div className="character-pill-list character-pill-list--slots">
             {character.spellSlots.map((slot) => (
               <span key={slot.level}>
@@ -1054,25 +1180,89 @@ function CharacterSheet({
           </div>
         ) : null}
 
-        {character.selectedSpells.length > 0 ? (
-          <div className="character-spell-list">
-            {character.selectedSpells.map((spell) => (
-              <article key={spell.id}>
-                <strong>{spell.name}</strong>
-                <span>
-                  {spell.levelLabel} / {spell.school}
-                </span>
-                <p>
-                  {spell.castingTime} / {spell.range} / {spell.duration}
-                </p>
-              </article>
+        {spellcasting.canCastSpells && selectedSpellGroups.length > 0 ? (
+          <div className="character-spell-groups">
+            {selectedSpellGroups.map((group) => (
+              <section className="character-spell-group" key={group.level}>
+                <header>
+                  <h3>{group.label}</h3>
+                  <span>{group.spells.length} selected</span>
+                </header>
+
+                <div className="character-spell-list">
+                  {group.spells.map((spell) => {
+                    const isExpanded = expandedSpells.has(spell.id);
+                    const detailsId = `character-spell-${spell.id}-details`;
+
+                    return (
+                      <article
+                        className={getSpellEntryClassName(spell)}
+                        key={spell.id}
+                      >
+                        <button
+                          aria-controls={detailsId}
+                          aria-expanded={isExpanded}
+                          className="character-spell-entry__summary"
+                          onClick={() => toggleExpandedSpell(spell.id)}
+                          type="button"
+                        >
+                          <span className="character-spell-entry__name">
+                            <strong>{spell.name}</strong>
+                            <small>{spell.school}</small>
+                          </span>
+                          <i aria-hidden="true" />
+                        </button>
+
+                        {isExpanded ? (
+                          <div
+                            className="character-spell-entry__details"
+                            id={detailsId}
+                          >
+                            <dl className="character-spell-entry__meta">
+                              <div>
+                                <dt>Ability</dt>
+                                <dd>{castingAbility}</dd>
+                              </div>
+                              <div>
+                                <dt>Casting Time</dt>
+                                <dd>{spell.castingTime}</dd>
+                              </div>
+                              <div>
+                                <dt>Range</dt>
+                                <dd>{spell.range}</dd>
+                              </div>
+                              <div>
+                                <dt>Components</dt>
+                                <dd>
+                                  {spell.components.length > 0
+                                    ? spell.components.join(', ')
+                                    : '-'}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Duration</dt>
+                                <dd>{spell.duration}</dd>
+                              </div>
+                              <div>
+                                <dt>Selection</dt>
+                                <dd>{spell.selectionType}</dd>
+                              </div>
+                            </dl>
+                            <p>{spell.description}</p>
+                          </div>
+                        ) : null}
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
             ))}
           </div>
-        ) : (
+        ) : spellcasting.canCastSpells ? (
           <p className="character-preview-empty-line">
             No selected spells returned.
           </p>
-        )}
+        ) : null}
       </SheetBlock>
     </article>
   );

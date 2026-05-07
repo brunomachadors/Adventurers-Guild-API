@@ -5,8 +5,7 @@ import {
 } from '@/app/lib/character-ability-scores';
 import {
   formatCharacterResponse,
-  getCharacterMissingFields,
-  getCharacterStatus,
+  getCharacterSkillProficienciesWithBackground,
   isCharacterAbilityScoresOrNull,
   isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
@@ -14,6 +13,7 @@ import {
   serializeCharacterAbilityScoresInput,
   serializeCharacterCurrency,
   serializeSkillProficiencies,
+  validateCharacterSkillProficienciesInput,
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
 import {
@@ -22,10 +22,6 @@ import {
   CharacterListItem,
 } from '@/app/types/character';
 import { NextResponse } from 'next/server';
-
-function toNumber(value: number | string): number {
-  return typeof value === 'number' ? value : Number(value);
-}
 
 function isCharacterCreateRequestBody(
   value: unknown,
@@ -48,33 +44,23 @@ function isCharacterCreateRequestBody(
   );
 }
 
-function formatCharacterListItem(character: {
-  id: number | string;
-  name: string;
-  classId: number | string | null;
-  speciesId: number | string | null;
-  backgroundId: number | string | null;
-  level: number | string;
-}): CharacterListItem {
-  const formattedCharacter = {
-    id: toNumber(character.id),
-    name: character.name,
-    level: toNumber(character.level),
-  };
+function getCharacterListStatus(
+  character: Record<string, unknown>,
+): CharacterListItem['status'] {
+  const hasStarted =
+    character.classid !== null ||
+    character.speciesid !== null ||
+    character.backgroundid !== null;
 
-  const missingFields = getCharacterMissingFields({
-    classId:
-      character.classId === null ? null : toNumber(character.classId),
-    speciesId:
-      character.speciesId === null ? null : toNumber(character.speciesId),
-    backgroundId:
-      character.backgroundId === null ? null : toNumber(character.backgroundId),
-  });
+  if (!hasStarted) {
+    return 'draft';
+  }
 
-  return {
-    ...formattedCharacter,
-    status: getCharacterStatus(missingFields),
-  };
+  if (character.abilityscores === null) {
+    return 'in_progress';
+  }
+
+  return character.status === 'complete' ? 'complete' : 'in_progress';
 }
 
 export async function GET(request: Request) {
@@ -87,22 +73,28 @@ export async function GET(request: Request) {
   try {
     const sql = getSql();
     const characterRows = await sql`
-      SELECT id, name, classid, speciesid, backgroundid, level
+      SELECT
+        id,
+        name,
+        status,
+        classid,
+        speciesid,
+        backgroundid,
+        level,
+        abilityscores,
+        currency,
+        skillproficiencies
       FROM characters
       WHERE ownerid = ${authenticatedOwner.id}
       ORDER BY id
     `;
 
-    const responseBody = characterRows.map((character) =>
-      formatCharacterListItem({
-        id: character.id,
-        name: character.name,
-        classId: character.classid,
-        speciesId: character.speciesid,
-        backgroundId: character.backgroundid,
-        level: character.level,
-      }),
-    );
+    const responseBody: CharacterListItem[] = characterRows.map((character) => ({
+      id: Number(character.id),
+      name: character.name,
+      level: Number(character.level),
+      status: getCharacterListStatus(character),
+    }));
 
     return NextResponse.json(responseBody, { status: 200 });
   } catch (error) {
@@ -171,8 +163,32 @@ export async function POST(request: Request) {
       body.currency === undefined || body.currency === null
         ? null
         : serializeCharacterCurrency(body.currency);
+    let providedSkillProficiencies = body.skillProficiencies;
+
+    if (body.skillProficiencies !== undefined) {
+      const validationResult = await validateCharacterSkillProficienciesInput({
+        classId,
+        backgroundId,
+        skillProficiencies: body.skillProficiencies,
+      });
+
+      if (!validationResult.valid) {
+        return NextResponse.json(
+          { error: validationResult.error },
+          { status: 400 },
+        );
+      }
+
+      providedSkillProficiencies = validationResult.skillProficiencies;
+    }
+
     const skillProficiencies = serializeSkillProficiencies(
-      body.skillProficiencies ?? [],
+      await getCharacterSkillProficienciesWithBackground({
+        existingSkillProficiencies: [],
+        providedSkillProficiencies,
+        previousBackgroundId: null,
+        nextBackgroundId: backgroundId,
+      }),
     );
     const status =
       classId !== null && speciesId !== null && backgroundId !== null

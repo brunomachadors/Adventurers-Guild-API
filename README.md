@@ -351,6 +351,12 @@ Returns the authenticated owner's characters.
 
 Requires bearer token.
 
+`status` currently follows this meaning:
+
+- `draft`: the character has not started yet and still has no class, species, or background
+- `in_progress`: the character has started, but still has unresolved required steps such as missing ability scores, pending equipment package choices, incomplete class skill choices, or incomplete required spell selection
+- `complete`: the current creation flow is fully resolved
+
 List item fields:
 
 - `id`
@@ -381,6 +387,14 @@ Request body fields:
 - `skillProficiencies` optional
 
 If `abilityScores` is provided, it uses the same validation rules as `PUT /api/characters/{id}/ability-scores`: complete `base` and `bonuses` blocks, integer `STR`, `DEX`, `CON`, `INT`, `WIS`, and `CHA` values, level 1 to 3 base scores between `8` and `15`, bonuses between `0` and `2`, and background-compatible bonus choices.
+
+If `backgroundId` is provided, the background's fixed `skillProficiencies` are applied automatically to the created character.
+
+If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
+
+- background skills are auto-applied and do not count against the class choice limit
+- the number of chosen class skills must match `classDetails.skillProficiencyChoices.choose`
+- each chosen class skill must exist in `classDetails.skillProficiencyChoices.options`
 
 Response fields:
 
@@ -472,7 +486,7 @@ Returns:
 
 `armorClass` is calculated from the character's resolved DEX modifier and currently equipped armor or shield. If no armor is equipped, the base AC is `10`; Barbarian and Monk unarmored defense can contribute a `class` source when their rules apply.
 
-`weaponAttacks` is derived from currently equipped weapons, class weapon proficiencies, character level, and resolved ability modifiers. If no weapon is equipped, it is returned as an empty array.
+`weaponAttacks` is derived from currently equipped weapons, class weapon proficiencies, character level, and resolved ability modifiers. It can also include synthetic class-derived attacks that are not backed by a character equipment row, such as `Unarmed Strike` for Monks. Synthetic attacks should be shown in combat UI, but they do not belong to the character inventory. If the character has no available weapon attacks, it is returned as an empty array.
 
 `hitPoints` is derived from the character's class hit die, level, and resolved CON modifier. It is returned as `null` until class details and ability modifiers are available; when calculated, `current` starts equal to `max` and `temporary` starts at `0`.
 
@@ -487,6 +501,14 @@ Returns:
 `inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
 
 `pendingChoices` lists unresolved package-selection steps that still need to be completed through the dedicated equipment choice endpoints. It is currently used for `classEquipmentSelection` and `backgroundEquipmentSelection`.
+
+`status` follows the same meaning as the list endpoint:
+
+- `draft`: no class, species, or background has been selected yet
+- `in_progress`: the character has started, but still has unresolved required creation steps
+- `complete`: the current creation flow is resolved, including saved ability scores, no pending equipment package choices, complete class skill choices, and required spell selection for spellcasters
+
+`skillProficiencies` contains the merged character skills currently saved on the sheet. Background skill proficiencies are auto-applied when a background is selected, while manually submitted `skillProficiencies` are validated as the class-choice portion of the selection.
 
 `spellcastingSummary` is derived from the character class spellcasting metadata, character level, resolved spellcasting ability modifier, and selected spells. For non-casters, `canCastSpells` is `false`, spellcasting ability values are `null`, and selected spell counts are `0`.
 
@@ -512,6 +534,18 @@ Accepted fields:
 - `skillProficiencies`
 
 If `abilityScores` is provided, it uses the same validation rules as `PUT /api/characters/{id}/ability-scores`. Sending `abilityScores: null` clears the saved scores.
+
+If `backgroundId` changes, the API automatically refreshes the background-provided `skillProficiencies`:
+
+- fixed skills from the previous background are removed
+- fixed skills from the new background are applied
+- manual class skill choices are preserved when possible
+
+If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
+
+- background skills do not count against the class choice limit
+- the number of chosen class skills must match the class requirement
+- each chosen class skill must be allowed by the class
 
 Returns:
 
@@ -1042,11 +1076,37 @@ Character detail:
         "damageType": "Piercing"
       },
       "properties": ["Ammunition", "Two-Handed"],
+      "mastery": {
+        "name": "Vex",
+        "slug": "vex"
+      },
       "range": {
         "normal": 80,
         "long": 320,
         "unit": "ft"
-      }
+      },
+      "attackModes": [
+        {
+          "mode": "ranged",
+          "attackType": "ranged",
+          "ability": "DEX",
+          "isProficient": true,
+          "abilityModifier": 2,
+          "proficiencyBonus": 2,
+          "attackBonus": 4,
+          "damage": {
+            "formula": "1d6 + 2",
+            "base": "1d6",
+            "modifier": 2,
+            "damageType": "Piercing"
+          },
+          "range": {
+            "normal": 80,
+            "long": 320,
+            "unit": "ft"
+          }
+        }
+      ]
     }
   ],
   "hitPoints": {
