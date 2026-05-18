@@ -8,6 +8,26 @@ This project follows Semantic Versioning while the API is pre-1.0:
 - `MINOR` versions document meaningful API behavior changes, new endpoints, or stricter validation.
 - `PATCH` versions document fixes that do not intentionally change public behavior.
 
+## [0.3.0] - 2026-05-07
+
+### Changed
+
+- Refined character progression status across the Characters API with `draft`, `in_progress`, and `complete`.
+- Updated character completion logic so `complete` now reflects a resolved creation flow instead of only class/species/background presence.
+- Added automatic background skill autofill when `backgroundId` is assigned on character creation or update.
+- Validated class skill choices against class-specific choice counts and allowed class skill options while excluding background-granted skills from that limit.
+- Improved weapon attack derivation for `Finesse`, alternate `attackModes`, and Monk `Unarmed Strike`.
+- Enriched selected spell details returned by character endpoints with spell descriptions.
+
+### Documentation
+
+- Updated README notes for character status semantics, background skill autofill, and class skill proficiency validation.
+- Updated OpenAPI examples and schemas for `abilityScores.bonuses` so they reflect real creation bonus values like `0`, `1`, and `2`.
+
+### Tests
+
+- Expanded character progression coverage for background skill autofill, class skill validation, attack calculations, and completion state expectations.
+
 ## [0.2.0] - 2026-04-21
 
 ### Changed

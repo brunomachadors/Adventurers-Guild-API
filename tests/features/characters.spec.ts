@@ -6247,158 +6247,159 @@ test.describe(
   'Characters API - Background Skill Autofill Coverage',
   { tag: ['@characters', '@skills', '@backgrounds', '@coverage'] },
   () => {
-    test('Autofill background skills and merge chosen class skills', async ({
-      request,
-    }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-      const authToken = await issueDemoToken(request);
-      const coverageCases: {
-        label: string;
-        classId: number;
-        speciesId: number;
-        backgroundId: number;
-        expectedBackgroundSkills: SkillName[];
-        extraSkillChoices: SkillName[];
-        expectedFinalSkills: SkillName[];
-      }[] = [
-        {
-          label: 'Monk Acolyte',
-          classId: 6,
-          speciesId: 7,
-          backgroundId: 1,
-          expectedBackgroundSkills:
-            expectedDetailedBackgrounds.acolyte.skillProficiencies as SkillName[],
-          extraSkillChoices: monkExtraSkillProficiencies,
-          expectedFinalSkills: monkSkillProficiencies,
-        },
-        {
-          label: 'Paladin Noble',
-          classId: 7,
-          speciesId: 7,
-          backgroundId: 12,
-          expectedBackgroundSkills:
-            expectedDetailedBackgrounds.noble.skillProficiencies as SkillName[],
-          extraSkillChoices: paladinExtraSkillProficiencies,
-          expectedFinalSkills: paladinSkillProficiencies,
-        },
-        {
-          label: 'Ranger Soldier',
-          classId: 8,
-          speciesId: 3,
-          backgroundId: 16,
-          expectedBackgroundSkills:
-            expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[],
-          extraSkillChoices: rangerExtraSkillProficiencies,
-          expectedFinalSkills: rangerSkillProficiencies,
-        },
-        {
-          label: 'Rogue Criminal',
-          classId: 9,
-          speciesId: 7,
-          backgroundId: 5,
-          expectedBackgroundSkills:
-            expectedDetailedBackgrounds.criminal.skillProficiencies as SkillName[],
-          extraSkillChoices: rogueExtraSkillProficiencies,
-          expectedFinalSkills: rogueSkillProficiencies,
-        },
-        {
-          label: 'Fighter Soldier',
-          classId: 5,
-          speciesId: 7,
-          backgroundId: 16,
-          expectedBackgroundSkills:
-            expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[],
-          extraSkillChoices: fighterExtraSkillProficiencies,
-          expectedFinalSkills: fighterSkillProficiencies,
-        },
-      ];
+    const coverageCases: {
+      label: string;
+      classId: number;
+      speciesId: number;
+      backgroundId: number;
+      expectedBackgroundSkills: SkillName[];
+      extraSkillChoices: SkillName[];
+      expectedFinalSkills: SkillName[];
+    }[] = [
+      {
+        label: 'Monk Acolyte',
+        classId: 6,
+        speciesId: 7,
+        backgroundId: 1,
+        expectedBackgroundSkills:
+          expectedDetailedBackgrounds.acolyte.skillProficiencies as SkillName[],
+        extraSkillChoices: monkExtraSkillProficiencies,
+        expectedFinalSkills: monkSkillProficiencies,
+      },
+      {
+        label: 'Paladin Noble',
+        classId: 7,
+        speciesId: 7,
+        backgroundId: 12,
+        expectedBackgroundSkills:
+          expectedDetailedBackgrounds.noble.skillProficiencies as SkillName[],
+        extraSkillChoices: paladinExtraSkillProficiencies,
+        expectedFinalSkills: paladinSkillProficiencies,
+      },
+      {
+        label: 'Ranger Soldier',
+        classId: 8,
+        speciesId: 3,
+        backgroundId: 16,
+        expectedBackgroundSkills:
+          expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[],
+        extraSkillChoices: rangerExtraSkillProficiencies,
+        expectedFinalSkills: rangerSkillProficiencies,
+      },
+      {
+        label: 'Rogue Criminal',
+        classId: 9,
+        speciesId: 7,
+        backgroundId: 5,
+        expectedBackgroundSkills:
+          expectedDetailedBackgrounds.criminal.skillProficiencies as SkillName[],
+        extraSkillChoices: rogueExtraSkillProficiencies,
+        expectedFinalSkills: rogueSkillProficiencies,
+      },
+      {
+        label: 'Fighter Soldier',
+        classId: 5,
+        speciesId: 7,
+        backgroundId: 16,
+        expectedBackgroundSkills:
+          expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[],
+        extraSkillChoices: fighterExtraSkillProficiencies,
+        expectedFinalSkills: fighterSkillProficiencies,
+      },
+    ];
 
-      const createdCharacterIds: number[] = [];
+    for (const coverageCase of coverageCases) {
+      test(
+        `Autofill background skills and merge chosen class skills - ${coverageCase.label}`,
+        async ({ request }) => {
+          const charactersClient = new CharactersClient(request);
+          const charactersAssert = new CharactersAssert();
+          const authToken = await issueDemoToken(request);
+          let createdCharacterId: number | null = null;
 
-      try {
-        for (const coverageCase of coverageCases) {
-          const createResponse = await charactersClient.createCharacter(
-            {
-              name: `${coverageCase.label} ${Date.now()}`,
-              classId: coverageCase.classId,
-              speciesId: coverageCase.speciesId,
-              backgroundId: coverageCase.backgroundId,
-              level: 1,
-            },
-            authToken,
-          );
+          try {
+            const createResponse = await charactersClient.createCharacter(
+              {
+                name: `${coverageCase.label} ${Date.now()}`,
+                classId: coverageCase.classId,
+                speciesId: coverageCase.speciesId,
+                backgroundId: coverageCase.backgroundId,
+                level: 1,
+              },
+              authToken,
+            );
 
-          await charactersAssert.created(createResponse);
+            await charactersAssert.created(createResponse);
 
-          const createdCharacter: CharacterResponseBody =
-            await createResponse.json();
-          createdCharacterIds.push(createdCharacter.id);
+            const createdCharacter: CharacterResponseBody =
+              await createResponse.json();
+            createdCharacterId = createdCharacter.id;
 
-          await test.step(
-            `Validate background skills are auto-applied for ${coverageCase.label}`,
-            async () => {
-              await charactersAssert.validateSkillProficiencies(
-                createdCharacter.skillProficiencies,
-                coverageCase.expectedBackgroundSkills,
+            await test.step(
+              `Validate background skills are auto-applied for ${coverageCase.label}`,
+              async () => {
+                await charactersAssert.validateSkillProficiencies(
+                  createdCharacter.skillProficiencies,
+                  coverageCase.expectedBackgroundSkills,
+                );
+              },
+            );
+
+            const patchSkillsResponse = await charactersClient.updateCharacter(
+              createdCharacter.id,
+              {
+                skillProficiencies: coverageCase.extraSkillChoices,
+              },
+              authToken,
+            );
+
+            await charactersAssert.success(patchSkillsResponse);
+
+            const updatedCharacter: CharacterResponseBody =
+              await patchSkillsResponse.json();
+
+            await test.step(
+              `Validate chosen skills merge with background skills for ${coverageCase.label}`,
+              async () => {
+                await charactersAssert.validateSkillProficiencies(
+                  updatedCharacter.skillProficiencies,
+                  coverageCase.expectedFinalSkills,
+                );
+              },
+            );
+
+            const detailResponse = await charactersClient.getCharacterDetail(
+              createdCharacter.id,
+              authToken,
+            );
+
+            await charactersAssert.success(detailResponse);
+
+            const detailedCharacter: CharacterResponseBody =
+              await detailResponse.json();
+
+            await test.step(
+              `Validate final detail keeps merged skills for ${coverageCase.label}`,
+              async () => {
+                await charactersAssert.validateSkillProficiencies(
+                  detailedCharacter.skillProficiencies,
+                  coverageCase.expectedFinalSkills,
+                );
+              },
+            );
+          } finally {
+            if (createdCharacterId !== null) {
+              const deleteResponse = await charactersClient.deleteCharacter(
+                createdCharacterId,
+                authToken,
               );
-            },
-          );
 
-          const patchSkillsResponse = await charactersClient.updateCharacter(
-            createdCharacter.id,
-            {
-              skillProficiencies: coverageCase.extraSkillChoices,
-            },
-            authToken,
-          );
-
-          await charactersAssert.success(patchSkillsResponse);
-
-          const updatedCharacter: CharacterResponseBody =
-            await patchSkillsResponse.json();
-
-          await test.step(
-            `Validate chosen skills merge with background skills for ${coverageCase.label}`,
-            async () => {
-              await charactersAssert.validateSkillProficiencies(
-                updatedCharacter.skillProficiencies,
-                coverageCase.expectedFinalSkills,
-              );
-            },
-          );
-
-          const detailResponse = await charactersClient.getCharacterDetail(
-            createdCharacter.id,
-            authToken,
-          );
-
-          await charactersAssert.success(detailResponse);
-
-          const detailedCharacter: CharacterResponseBody =
-            await detailResponse.json();
-
-          await test.step(
-            `Validate final detail keeps merged skills for ${coverageCase.label}`,
-            async () => {
-              await charactersAssert.validateSkillProficiencies(
-                detailedCharacter.skillProficiencies,
-                coverageCase.expectedFinalSkills,
-              );
-            },
-          );
-        }
-      } finally {
-        for (const characterId of createdCharacterIds) {
-          const deleteResponse = await charactersClient.deleteCharacter(
-            characterId,
-            authToken,
-          );
-
-          expect(deleteResponse.ok()).toBe(true);
-        }
-      }
-    });
+              expect(deleteResponse.ok()).toBe(true);
+            }
+          }
+        },
+      );
+    }
 
     test('Reject invalid class skill selections for Barbarian', async ({
       request,

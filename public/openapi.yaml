@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 1.20.0
+  version: 0.3.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 

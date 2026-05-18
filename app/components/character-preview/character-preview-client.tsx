@@ -338,6 +338,17 @@ function getErrorMessage(status: number) {
   return 'The character could not be loaded right now.';
 }
 
+function formatCharacterStatusLabel(status: CharacterPreviewResponse['status']) {
+  return status
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function getCharacterStatusClassName(status: CharacterPreviewResponse['status']) {
+  return `character-sheet__masthead-status character-sheet__masthead-status--${status}`;
+}
+
 function SheetBlock({
   children,
   className,
@@ -606,8 +617,8 @@ function CharacterSheet({
             <p className="kicker">Character ID</p>
             <h2>#{character.id}</h2>
           </div>
-          <strong className="character-sheet__masthead-status">
-            {character.status}
+          <strong className={getCharacterStatusClassName(character.status)}>
+            {formatCharacterStatusLabel(character.status)}
           </strong>
           <div className="character-sheet__masthead-details">
             <dl>
