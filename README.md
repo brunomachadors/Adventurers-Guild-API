@@ -4,7 +4,9 @@ Fantasy-themed REST API built with Next.js to support learning and practice arou
 
 ## Public API Version
 
-Current public API version: `0.2.0`
+Current public API version: `0.3.0`
+
+Current site/package version: `0.3.1`
 
 Public API behavior changes are documented in [CHANGELOG.md](CHANGELOG.md).
 

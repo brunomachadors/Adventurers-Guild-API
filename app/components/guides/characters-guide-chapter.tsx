@@ -74,6 +74,7 @@ const characterCreationSteps = [
     method: 'POST',
     endpoint: '/api/characters',
     note: 'Start the character with the name.',
+    expectedStatus: 'draft',
   },
   {
     step: '2',
@@ -81,6 +82,7 @@ const characterCreationSteps = [
     method: 'PATCH',
     endpoint: '/api/characters/{id}',
     note: 'Choose the class with classId.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '3',
@@ -88,6 +90,7 @@ const characterCreationSteps = [
     method: 'PATCH',
     endpoint: '/api/characters/{id}',
     note: 'Choose the species with speciesId.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '4',
@@ -95,6 +98,7 @@ const characterCreationSteps = [
     method: 'PATCH',
     endpoint: '/api/characters/{id}',
     note: 'Choose the background with backgroundId.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '5',
@@ -102,6 +106,7 @@ const characterCreationSteps = [
     method: 'GET',
     endpoint: '/api/characters/{id}/ability-score-options',
     note: 'Read the rules before choosing the ability scores.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '6',
@@ -109,6 +114,7 @@ const characterCreationSteps = [
     method: 'PUT',
     endpoint: '/api/characters/{id}/ability-scores',
     note: 'Save the chosen ability scores.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '7',
@@ -116,6 +122,7 @@ const characterCreationSteps = [
     method: 'PATCH',
     endpoint: '/api/characters/{id}',
     note: 'Choose extra skill proficiencies when the class allows it.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '8',
@@ -123,6 +130,7 @@ const characterCreationSteps = [
     method: 'POST',
     endpoint: '/api/characters/{id}/equipment/class-choice',
     note: 'Resolve the class equipment package when classEquipmentSelection is pending.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '9',
@@ -130,6 +138,7 @@ const characterCreationSteps = [
     method: 'POST',
     endpoint: '/api/characters/{id}/equipment/background-choice',
     note: 'Resolve the background equipment package when backgroundEquipmentSelection is pending.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '10',
@@ -137,6 +146,7 @@ const characterCreationSteps = [
     method: 'GET',
     endpoint: '/api/characters/{id}/spell-options',
     note: 'Only needed when spellcastingSummary.canCastSpells is true.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '11',
@@ -144,6 +154,7 @@ const characterCreationSteps = [
     method: 'GET',
     endpoint: '/api/characters/{id}/spell-selection',
     note: 'Read the current spell selection before saving changes.',
+    expectedStatus: 'in_progress',
   },
   {
     step: '12',
@@ -151,6 +162,7 @@ const characterCreationSteps = [
     method: 'PUT',
     endpoint: '/api/characters/{id}/spells',
     note: 'Save the chosen spells for the character.',
+    expectedStatus: 'complete',
   },
   {
     step: '13',
@@ -158,6 +170,7 @@ const characterCreationSteps = [
     method: 'GET',
     endpoint: '/api/characters/{id}',
     note: 'Read the final detail response and confirm the current state.',
+    expectedStatus: 'complete',
   },
 ] as const;
 
@@ -214,9 +227,9 @@ const characterTickets: CharacterTicket[] = [
       },
       {
         name: 'status',
-        type: 'draft | complete',
+        type: 'draft | in_progress | complete',
         description:
-          'Status becomes complete when missingFields is empty, even if the flow still has pending choices to resolve.',
+          'Creation state for the guided flow: draft before setup starts, in_progress while required steps are unresolved, and complete only when the flow is resolved.',
       },
     ],
     responseExamples: [
@@ -241,7 +254,7 @@ const characterTickets: CharacterTicket[] = [
         payload: {
           id: 101,
           name: 'Merien',
-          status: 'complete',
+          status: 'in_progress',
           missingFields: [],
           pendingChoices: [
             'classEquipmentSelection',
@@ -292,8 +305,9 @@ const characterTickets: CharacterTicket[] = [
       },
       {
         name: 'status',
-        type: 'draft | complete',
-        description: 'Current setup state of the character.',
+        type: 'draft | in_progress | complete',
+        description:
+          'Current creation state of the character for list views.',
       },
       {
         name: 'level',
@@ -320,6 +334,12 @@ const characterTickets: CharacterTicket[] = [
           {
             id: 102,
             name: 'Arin',
+            status: 'in_progress',
+            level: 2,
+          },
+          {
+            id: 103,
+            name: 'Lyra',
             status: 'complete',
             level: 3,
           },
@@ -481,8 +501,9 @@ const characterTickets: CharacterTicket[] = [
       },
       {
         name: 'status',
-        type: 'draft | complete',
-        description: 'Current setup state of the selected character.',
+        type: 'draft | in_progress | complete',
+        description:
+          'Current creation state of the selected character.',
       },
       {
         name: 'level',
@@ -576,9 +597,9 @@ const characterTickets: CharacterTicket[] = [
       },
       {
         name: 'status',
-        type: 'draft | complete',
+        type: 'draft | in_progress | complete',
         description:
-          'The character can still remain draft if other important fields are missing.',
+          'Becomes in_progress after creation has started but required steps are still unresolved.',
       },
     ],
     responseExamples: [
@@ -595,7 +616,7 @@ const characterTickets: CharacterTicket[] = [
         payload: {
           id: 101,
           name: 'Merien',
-          status: 'draft',
+          status: 'in_progress',
           classId: 12,
           speciesId: null,
           backgroundId: null,
@@ -652,9 +673,9 @@ const characterTickets: CharacterTicket[] = [
       },
       {
         name: 'status',
-        type: 'draft | complete',
+        type: 'draft | in_progress | complete',
         description:
-          'The character can still remain draft if other important fields are missing.',
+          'Remains in_progress while required structure or later creation steps are unresolved.',
       },
     ],
     responseExamples: [
@@ -671,7 +692,7 @@ const characterTickets: CharacterTicket[] = [
         payload: {
           id: 101,
           name: 'Merien',
-          status: 'draft',
+          status: 'in_progress',
           classId: 12,
           speciesId: 3,
           backgroundId: null,
@@ -738,9 +759,9 @@ const characterTickets: CharacterTicket[] = [
       },
       {
         name: 'status',
-        type: 'draft | complete',
+        type: 'draft | in_progress | complete',
         description:
-          'Once backgroundId is filled, status can already become complete even if equipment choices are still pending.',
+          'Usually remains in_progress after background selection until ability scores, required choices, equipment packages, skills, and spells are resolved.',
       },
     ],
     responseExamples: [
@@ -757,7 +778,7 @@ const characterTickets: CharacterTicket[] = [
         payload: {
           id: 101,
           name: 'Merien',
-          status: 'complete',
+          status: 'in_progress',
           classId: 12,
           speciesId: 3,
           backgroundId: 13,
@@ -1632,6 +1653,28 @@ function renderEndpointPath(value: string) {
   );
 }
 
+function renderFlowRequest(item: (typeof characterCreationSteps)[number]) {
+  return (
+    <div className="characters-flow-table__request">
+      {renderMethodBadges(item.method, item.step)}
+      {renderEndpointPath(item.endpoint)}
+    </div>
+  );
+}
+
+function renderExpectedStatus(status: (typeof characterCreationSteps)[number]['expectedStatus']) {
+  const label = status
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  return (
+    <code className={`characters-flow-table__status characters-flow-table__status--${status}`}>
+      {label}
+    </code>
+  );
+}
+
 export function CharactersGuideChapter({
   isOpen,
   onClose,
@@ -1699,7 +1742,6 @@ export function CharactersGuideChapter({
             once in a single <code>POST</code> request or gradually by choosing
             character details step by step.
           </p>
-
           <section className="guide-expected-return">
             <div className="section-heading">
               <h3>Create flow</h3>
@@ -1707,7 +1749,7 @@ export function CharactersGuideChapter({
               <p>
                 This table shows the happy path before the chapter details
                 below. It helps the user understand which request usually comes
-                next during character creation.
+                next and which character status to expect after each step.
               </p>
             </div>
 
@@ -1718,8 +1760,8 @@ export function CharactersGuideChapter({
                     <th scope="col">Step</th>
                     <th scope="col">Action</th>
                     <th scope="col">What happens</th>
-                    <th scope="col">Request type</th>
-                    <th scope="col">Path</th>
+                    <th scope="col">Request</th>
+                    <th scope="col">Expected status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1728,8 +1770,10 @@ export function CharactersGuideChapter({
                       <td>{item.step}</td>
                       <td>{item.title}</td>
                       <td>{item.note}</td>
-                      <td>{renderMethodBadges(item.method, item.step)}</td>
-                      <td>{renderEndpointPath(item.endpoint)}</td>
+                      <td>{renderFlowRequest(item)}</td>
+                      <td>
+                        {renderExpectedStatus(item.expectedStatus)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
