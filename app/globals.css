@@ -4027,6 +4027,7 @@ li {
 }
 
 .character-sheet__masthead-status {
+  appearance: none;
   position: relative;
   justify-self: center;
   margin-bottom: 4px;
@@ -4047,6 +4048,7 @@ li {
     ),
     linear-gradient(180deg, #9f372c 0%, #661b16 100%);
   color: #ffe6bd;
+  cursor: pointer;
   font-family: var(--font-heading), sans-serif;
   font-size: 0.84rem;
   letter-spacing: 0.14em;
@@ -4057,6 +4059,19 @@ li {
   box-shadow:
     inset 0 1px 0 rgba(255, 211, 160, 0.22),
     0 8px 16px rgba(77, 18, 15, 0.22);
+  transition:
+    filter 160ms ease,
+    transform 160ms ease;
+}
+
+.character-sheet__masthead-status:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.character-sheet__masthead-status:focus-visible {
+  outline: 3px solid rgba(47, 18, 11, 0.32);
+  outline-offset: 4px;
 }
 
 .character-sheet__masthead-status--in_progress {
@@ -4089,6 +4104,127 @@ li {
   box-shadow:
     inset 0 1px 0 rgba(218, 242, 188, 0.18),
     0 8px 16px rgba(20, 58, 18, 0.24);
+}
+
+.character-completion-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  align-items: start;
+  justify-items: center;
+  width: min(100%, 980px);
+  margin-top: 22px;
+  padding: 20px 24px;
+  border: 2px solid rgba(71, 32, 18, 0.74);
+  border-radius: 12px;
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none;
+}
+
+.character-completion-summary--draft {
+  border-color: rgba(114, 36, 29, 0.74);
+}
+
+.character-completion-summary--in_progress {
+  border-color: rgba(122, 67, 20, 0.74);
+}
+
+.character-completion-summary--complete {
+  border-color: rgba(43, 94, 42, 0.74);
+}
+
+.character-completion-summary__copy {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+}
+
+.character-completion-summary__copy h2,
+.character-completion-summary__copy p {
+  margin: 0;
+}
+
+.character-completion-summary__copy .kicker {
+  color: #2f120b;
+}
+
+.character-completion-summary__copy h2 {
+  color: #2f120b;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  line-height: 1.1;
+}
+
+.character-completion-summary__copy p:not(.kicker) {
+  color: #4b2c1d;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.character-completion-summary__list {
+  display: grid;
+  gap: 7px;
+  justify-items: stretch;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.character-completion-summary__list li {
+  position: relative;
+  min-height: 0;
+  padding: 0 0 0 30px;
+  border: 0;
+  border-radius: 0;
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #2f120b;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.character-completion-summary__list li::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid rgba(90, 42, 26, 0.58);
+  border-radius: 50%;
+  content: '';
+  transform: translateY(-50%);
+}
+
+.character-completion-summary__item--complete,
+.character-completion-summary__list li[data-complete='true'] {
+  color: rgba(47, 18, 11, 0.68);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(47, 18, 11, 0.52);
+}
+
+.character-completion-summary__item--complete::before,
+.character-completion-summary__list li[data-complete='true']::before,
+.character-completion-summary--complete .character-completion-summary__list li::before {
+  border-color: #315f2d;
+  color: #315f2d;
+  content: '✓';
+  font-family: var(--font-heading), sans-serif;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .character-sheet__identity,
@@ -6087,6 +6223,7 @@ button.character-weapon-mastery--expandable small,
   }
 
   .character-preview-search,
+  .character-completion-summary,
   .character-sheet__stats,
   .character-sheet__icon-stats,
   .character-sheet__two-column,

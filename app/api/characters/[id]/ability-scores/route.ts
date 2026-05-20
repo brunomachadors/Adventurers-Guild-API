@@ -5,6 +5,7 @@ import {
 } from '@/app/lib/character-ability-scores';
 import {
   serializeCharacterAbilityScoresInput,
+  updateStoredCharacterStatus,
 } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
 import {
@@ -91,6 +92,8 @@ export async function PUT(request: Request, { params }: RouteContext) {
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
     `;
+
+    await updateStoredCharacterStatus(parsedId);
 
     const updatedContext = await getCharacterAbilityScoreSelectionContext(
       authenticatedOwner.id,

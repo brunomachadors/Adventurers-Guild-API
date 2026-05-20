@@ -9,6 +9,7 @@ import {
   isCharacterAbilityScoresOrNull,
   isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
+  persistCharacterStatus,
   isSkillProficiencies,
   serializeCharacterAbilityScoresInput,
   serializeCharacterCurrency,
@@ -190,10 +191,7 @@ export async function POST(request: Request) {
         nextBackgroundId: backgroundId,
       }),
     );
-    const status =
-      classId !== null && speciesId !== null && backgroundId !== null
-        ? 'complete'
-        : 'draft';
+    const status = 'draft';
 
     const sql = getSql();
     const characterRows = await sql`
@@ -236,6 +234,8 @@ export async function POST(request: Request) {
       currency: character.currency,
       skillProficiencies: character.skillproficiencies,
     });
+
+    await persistCharacterStatus(responseBody.id, responseBody.status);
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {

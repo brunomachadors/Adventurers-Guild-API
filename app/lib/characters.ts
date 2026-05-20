@@ -210,6 +210,59 @@ export async function getCharacterComputedStatus(character: {
   });
 }
 
+export async function persistCharacterStatus(
+  characterId: number,
+  status: CharacterStatus,
+): Promise<void> {
+  const sql = getSql();
+
+  await sql`
+    UPDATE characters
+    SET
+      status = ${status},
+      updatedat = NOW()
+    WHERE id = ${characterId}
+  `;
+}
+
+export async function updateStoredCharacterStatus(
+  characterId: number,
+): Promise<CharacterStatus | null> {
+  const sql = getSql();
+  const characterRows = await sql`
+    SELECT
+      id,
+      classid,
+      speciesid,
+      backgroundid,
+      level,
+      abilityscores,
+      skillproficiencies
+    FROM characters
+    WHERE id = ${characterId}
+    LIMIT 1
+  `;
+
+  if (!characterRows || characterRows.length === 0) {
+    return null;
+  }
+
+  const character = characterRows[0];
+  const status = await getCharacterComputedStatus({
+    id: character.id,
+    classId: character.classid,
+    speciesId: character.speciesid,
+    backgroundId: character.backgroundid,
+    level: character.level,
+    abilityScores: character.abilityscores,
+    skillProficiencies: character.skillproficiencies,
+  });
+
+  await persistCharacterStatus(toNumber(character.id), status);
+
+  return status;
+}
+
 export async function getCharacterClassDetails(
   classId: number | null,
   characterLevel: number,
@@ -1090,7 +1143,7 @@ export async function getOwnedCharacterResponse(
 ): Promise<CharacterResponseBody | null> {
   const sql = getSql();
   const characterRows = await sql`
-    SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+    SELECT id, name, status, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
     FROM characters
     WHERE id = ${characterId}
       AND ownerid = ${ownerId}
@@ -1102,8 +1155,7 @@ export async function getOwnedCharacterResponse(
   }
 
   const character = characterRows[0];
-
-  return formatCharacterResponse({
+  const responseBody = await formatCharacterResponse({
     id: character.id,
     name: character.name,
     classId: character.classid,
@@ -1114,6 +1166,12 @@ export async function getOwnedCharacterResponse(
     currency: character.currency,
     skillProficiencies: character.skillproficiencies,
   });
+
+  if (character.status !== responseBody.status) {
+    await persistCharacterStatus(responseBody.id, responseBody.status);
+  }
+
+  return responseBody;
 }
 
 export async function getCharacterResponse(
@@ -1121,7 +1179,7 @@ export async function getCharacterResponse(
 ): Promise<CharacterResponseBody | null> {
   const sql = getSql();
   const characterRows = await sql`
-    SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+    SELECT id, name, status, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
     FROM characters
     WHERE id = ${characterId}
     LIMIT 1
@@ -1132,8 +1190,7 @@ export async function getCharacterResponse(
   }
 
   const character = characterRows[0];
-
-  return formatCharacterResponse({
+  const responseBody = await formatCharacterResponse({
     id: character.id,
     name: character.name,
     classId: character.classid,
@@ -1144,6 +1201,12 @@ export async function getCharacterResponse(
     currency: character.currency,
     skillProficiencies: character.skillproficiencies,
   });
+
+  if (character.status !== responseBody.status) {
+    await persistCharacterStatus(responseBody.id, responseBody.status);
+  }
+
+  return responseBody;
 }
 
 function getCharacterSkillItems(

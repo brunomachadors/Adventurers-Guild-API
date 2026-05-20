@@ -18,6 +18,20 @@ type CharacterPreviewResponse = CharacterResponseBody & {
   equipment?: CharacterEquipmentItem[];
 };
 
+type PendingStep = {
+  isComplete: boolean;
+  key: string;
+  label: string;
+};
+
+type SpellcastingSelectionConfig = {
+  cantrips?: Record<string, number>;
+  mode?: string;
+  preparedSpells?: Record<string, number>;
+  spellbookSpells?: Record<string, number>;
+  spells?: Record<string, number>;
+};
+
 type PreviewState =
   | { status: 'idle' }
   | { status: 'loading' }
@@ -67,6 +81,19 @@ const armorTrainingOptions = [
   { label: 'Heavy Armor', matches: ['Heavy Armor'] },
   { label: 'Shield', matches: ['Shield', 'Shields'] },
 ];
+const missingFieldLabels: Partial<
+  Record<CharacterPreviewResponse['missingFields'][number], string>
+> = {
+  backgroundId: 'Choose a background',
+  classId: 'Choose a class',
+  speciesId: 'Choose a species',
+};
+const pendingChoiceLabels: Partial<
+  Record<CharacterPreviewResponse['pendingChoices'][number], string>
+> = {
+  backgroundEquipmentSelection: 'Choose background equipment',
+  classEquipmentSelection: 'Choose class equipment',
+};
 
 function formatFallback(value: unknown, fallback = 'Not returned') {
   if (value === null || value === undefined || value === '') {
@@ -349,6 +376,308 @@ function getCharacterStatusClassName(status: CharacterPreviewResponse['status'])
   return `character-sheet__masthead-status character-sheet__masthead-status--${status}`;
 }
 
+function formatCountedStep(count: number, singular: string, plural: string) {
+  return `${count} more ${count === 1 ? singular : plural}`;
+}
+
+function isNumberRecord(value: unknown): value is Record<string, number> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every((item) => typeof item === 'number')
+  );
+}
+
+function getSpellcastingSelectionConfig(
+  character: CharacterPreviewResponse,
+): SpellcastingSelectionConfig | null {
+  const spellcasting = character.classDetails?.spellcasting;
+
+  if (
+    typeof spellcasting !== 'object' ||
+    spellcasting === null ||
+    Array.isArray(spellcasting)
+  ) {
+    return null;
+  }
+
+  const selection = spellcasting.selection;
+
+  if (
+    typeof selection !== 'object' ||
+    selection === null ||
+    Array.isArray(selection)
+  ) {
+    return null;
+  }
+
+  const selectionRecord = selection as Record<string, unknown>;
+
+  return {
+    cantrips: isNumberRecord(selectionRecord.cantrips)
+      ? selectionRecord.cantrips
+      : undefined,
+    mode:
+      typeof selectionRecord.mode === 'string'
+        ? selectionRecord.mode
+        : undefined,
+    preparedSpells: isNumberRecord(selectionRecord.preparedSpells)
+      ? selectionRecord.preparedSpells
+      : undefined,
+    spellbookSpells: isNumberRecord(selectionRecord.spellbookSpells)
+      ? selectionRecord.spellbookSpells
+      : undefined,
+    spells: isNumberRecord(selectionRecord.spells)
+      ? selectionRecord.spells
+      : undefined,
+  };
+}
+
+function getSelectionLimitByCharacterLevel(
+  limits: Record<string, number> | undefined,
+  characterLevel: number,
+) {
+  return limits?.[String(characterLevel)] ?? 0;
+}
+
+function getPendingSpellSteps(character: CharacterPreviewResponse): PendingStep[] {
+  if (!character.spellcastingSummary.canCastSpells) {
+    return [];
+  }
+
+  const selection = getSpellcastingSelectionConfig(character);
+
+  if (!selection) {
+    return character.selectedSpells.length === 0
+      ? [
+          {
+            isComplete: false,
+            key: 'spell-selection',
+            label: 'Complete spell selection',
+          },
+        ]
+      : [
+          {
+            isComplete: true,
+            key: 'spell-selection',
+            label: 'Complete spell selection',
+          },
+        ];
+  }
+
+  const requiredCantrips = getSelectionLimitByCharacterLevel(
+    selection.cantrips,
+    character.level,
+  );
+  const requiredLeveledSpells = getSelectionLimitByCharacterLevel(
+    selection.mode === 'spellbook_plus_prepared'
+      ? selection.spellbookSpells
+      : (selection.preparedSpells ?? selection.spells ?? selection.spellbookSpells),
+    character.level,
+  );
+  const selectedCantrips = character.selectedSpells.filter(
+    (spell) => spell.level === 0,
+  ).length;
+  const selectedLeveledSpells =
+    character.selectedSpells.length - selectedCantrips;
+  const steps: PendingStep[] = [];
+  const missingCantrips = requiredCantrips - selectedCantrips;
+  const missingLeveledSpells = requiredLeveledSpells - selectedLeveledSpells;
+
+  if (missingCantrips > 0) {
+    steps.push({
+      isComplete: false,
+      key: 'spell-selection-cantrips',
+      label: `Choose ${formatCountedStep(
+        missingCantrips,
+        'cantrip',
+        'cantrips',
+      )}`,
+    });
+  }
+
+  if (missingLeveledSpells > 0) {
+    steps.push({
+      isComplete: false,
+      key: 'spell-selection-leveled',
+      label: `Choose ${formatCountedStep(
+        missingLeveledSpells,
+        'leveled spell',
+        'leveled spells',
+      )}`,
+    });
+  }
+
+  if (
+    steps.length === 0 &&
+    requiredCantrips === 0 &&
+    requiredLeveledSpells === 0 &&
+    character.selectedSpells.length === 0
+  ) {
+    return [
+      {
+        isComplete: false,
+        key: 'spell-selection',
+        label: 'Complete spell selection',
+      },
+    ];
+  }
+
+  return [
+    ...steps,
+    ...(requiredCantrips > 0 && missingCantrips <= 0
+      ? [
+          {
+            isComplete: true,
+            key: 'spell-selection-cantrips',
+            label: 'Choose cantrips',
+          },
+        ]
+      : []),
+    ...(requiredLeveledSpells > 0 && missingLeveledSpells <= 0
+      ? [
+          {
+            isComplete: true,
+            key: 'spell-selection-leveled',
+            label: 'Choose leveled spells',
+          },
+        ]
+      : []),
+  ].sort((firstStep, secondStep) =>
+    firstStep.key.localeCompare(secondStep.key),
+  );
+}
+
+function getCharacterCompletionSteps(
+  character: CharacterPreviewResponse,
+): PendingStep[] {
+  const missingFieldSet = new Set(character.missingFields);
+  const structuralFields = [
+    'classId',
+    'speciesId',
+    'backgroundId',
+  ] satisfies CharacterPreviewResponse['missingFields'];
+
+  const missingFieldSteps = structuralFields.map((field) => ({
+    isComplete: !missingFieldSet.has(field),
+    key: `missing-field-${field}`,
+    label: missingFieldLabels[field] ?? `Complete ${field}`,
+  }));
+  const abilityScoreSteps = [
+    {
+      isComplete: character.abilityScores !== null,
+      key: 'ability-scores',
+      label: 'Set ability scores',
+    },
+  ];
+  const backgroundSkillSet = new Set(
+    character.backgroundDetails?.skillProficiencies ?? [],
+  );
+  const classSelectedSkills = character.skillProficiencies.filter(
+    (skill) => !backgroundSkillSet.has(skill),
+  );
+  const requiredClassSkills =
+    character.classDetails?.skillProficiencyChoices.choose ?? 0;
+  const missingClassSkills = Math.max(
+    requiredClassSkills - classSelectedSkills.length,
+    0,
+  );
+  const classSkillSteps =
+    requiredClassSkills > 0
+      ? [
+          {
+            isComplete: missingClassSkills === 0,
+            key: 'class-skill-choices',
+            label:
+              missingClassSkills > 0
+                ? `Choose ${formatCountedStep(
+                    missingClassSkills,
+                    'class skill',
+                    'class skills',
+                  )}`
+                : 'Choose class skills',
+          },
+        ]
+      : [];
+  const pendingChoiceSet = new Set(character.pendingChoices);
+  const equipmentChoiceSteps: PendingStep[] = [
+    character.classDetails
+      ? {
+          isComplete: !pendingChoiceSet.has('classEquipmentSelection'),
+          key: 'pending-choice-classEquipmentSelection',
+          label: pendingChoiceLabels.classEquipmentSelection ?? '',
+        }
+      : null,
+    character.backgroundDetails
+      ? {
+          isComplete: !pendingChoiceSet.has('backgroundEquipmentSelection'),
+          key: 'pending-choice-backgroundEquipmentSelection',
+          label: pendingChoiceLabels.backgroundEquipmentSelection ?? '',
+        }
+      : null,
+  ].filter((step): step is PendingStep => Boolean(step));
+
+  return [
+    ...missingFieldSteps,
+    ...abilityScoreSteps,
+    ...classSkillSteps,
+    ...equipmentChoiceSteps,
+    ...getPendingSpellSteps(character),
+  ];
+}
+
+function CharacterCompletionSummary({
+  character,
+  id,
+  pendingSteps,
+}: {
+  character: CharacterPreviewResponse;
+  id: string;
+  pendingSteps: PendingStep[];
+}) {
+  const hasPendingSteps = pendingSteps.some((step) => !step.isComplete);
+
+  return (
+    <section
+      className={`character-completion-summary character-completion-summary--${character.status}${
+        hasPendingSteps ? '' : ' character-completion-summary--complete'
+      }`}
+      id={id}
+    >
+      <div className="character-completion-summary__copy">
+        <p className="kicker">
+          {hasPendingSteps ? 'Pending steps' : 'Character complete'}
+        </p>
+        <h2>
+          {hasPendingSteps
+            ? 'This character is still in progress.'
+            : 'This character is complete.'}
+        </h2>
+        {hasPendingSteps ? (
+          <p>To complete this character, finish the following steps:</p>
+        ) : null}
+      </div>
+
+      <ul className="character-completion-summary__list">
+        {pendingSteps.map((step) => (
+          <li
+            className={
+              step.isComplete
+                ? 'character-completion-summary__item--complete'
+                : undefined
+            }
+            data-complete={step.isComplete ? 'true' : 'false'}
+            key={step.key}
+          >
+            {step.label}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function SheetBlock({
   children,
   className,
@@ -559,6 +888,8 @@ function CharacterSheet({
   const [expandedSpells, setExpandedSpells] = useState<Set<number>>(
     () => new Set(),
   );
+  const [isCompletionSummaryVisible, setIsCompletionSummaryVisible] =
+    useState(false);
   const equipment = character.equipment ?? [];
   const featureGroups = getCharacterFeatures(character);
   const proficiencyBonus = getReturnedProficiencyBonus(character);
@@ -580,6 +911,8 @@ function CharacterSheet({
     attackKey: `${attack.equipmentId}-${attack.name}-${index}`,
     attackModes: getRenderedWeaponAttackModes(attack),
   }));
+  const pendingSteps = getCharacterCompletionSteps(character);
+  const completionSummaryId = `character-completion-summary-${character.id}`;
 
   function toggleExpandedProperty(propertyKey: string) {
     setExpandedProperties((currentProperties) => {
@@ -617,9 +950,28 @@ function CharacterSheet({
             <p className="kicker">Character ID</p>
             <h2>#{character.id}</h2>
           </div>
-          <strong className={getCharacterStatusClassName(character.status)}>
+          <button
+            aria-controls={completionSummaryId}
+            aria-expanded={isCompletionSummaryVisible}
+            className={getCharacterStatusClassName(character.status)}
+            onClick={() =>
+              setIsCompletionSummaryVisible(
+                (currentVisibility) => !currentVisibility,
+              )
+            }
+            type="button"
+          >
             {formatCharacterStatusLabel(character.status)}
-          </strong>
+          </button>
+
+          {isCompletionSummaryVisible ? (
+            <CharacterCompletionSummary
+              character={character}
+              id={completionSummaryId}
+              pendingSteps={pendingSteps}
+            />
+          ) : null}
+
           <div className="character-sheet__masthead-details">
             <dl>
               <div className="character-sheet__masthead-field character-sheet__masthead-field--name">

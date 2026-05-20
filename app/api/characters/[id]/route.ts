@@ -11,6 +11,7 @@ import {
   isCharacterAbilityScoresOrNull,
   isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
+  persistCharacterStatus,
   isSkillProficiencies,
   serializeCharacterAbilityScoresInput,
   serializeCharacterCurrency,
@@ -101,7 +102,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
     const sql = getSql();
     const existingRows = await sql`
-      SELECT id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+      SELECT id, name, status, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
       FROM characters
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
@@ -197,12 +198,6 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         nextBackgroundId: nextBackgroundId,
       }),
     );
-    const nextStatus =
-      nextClassId !== null &&
-      nextSpeciesId !== null &&
-      nextBackgroundId !== null
-        ? 'complete'
-        : 'draft';
     const shouldClearEquipmentChoiceRecords =
       nextClassId !== existingCharacter.classid ||
       nextBackgroundId !== existingCharacter.backgroundid;
@@ -211,7 +206,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       UPDATE characters
       SET
         name = ${nextName},
-        status = ${nextStatus},
+        status = ${existingCharacter.status},
         classid = ${nextClassId},
         speciesid = ${nextSpeciesId},
         backgroundid = ${nextBackgroundId},
@@ -241,6 +236,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       currency: character.currency,
       skillProficiencies: character.skillproficiencies,
     });
+
+    await persistCharacterStatus(responseBody.id, responseBody.status);
 
     return NextResponse.json(responseBody, { status: 200 });
   } catch (error) {
