@@ -6,6 +6,7 @@ import {
   removeCharacterEquipment,
   updateCharacterEquipment,
 } from '@/app/lib/character-equipment';
+import { updateStoredCharacterStatus } from '@/app/lib/characters';
 import { CharacterEquipmentUpdateRequestBody } from '@/app/types/character';
 import { NextResponse } from 'next/server';
 
@@ -83,6 +84,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       isEquipped: body.isEquipped,
     });
 
+    await updateStoredCharacterStatus(parsedId);
+
     const characterEquipment = await getCharacterEquipment(
       authenticatedOwner.id,
       parsedId,
@@ -136,6 +139,8 @@ export async function DELETE(_: Request, { params }: RouteContext) {
     }
 
     await removeCharacterEquipment(parsedId, parsedEquipmentId);
+
+    await updateStoredCharacterStatus(parsedId);
 
     const characterEquipment = await getCharacterEquipment(
       authenticatedOwner.id,

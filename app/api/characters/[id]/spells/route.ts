@@ -1,5 +1,6 @@
 import { getAuthenticatedOwnerFromRequest } from '@/app/lib/auth';
 import { getCharacterSpellSelectionContext } from '@/app/lib/character-spells';
+import { updateStoredCharacterStatus } from '@/app/lib/characters';
 import { getSql } from '@/app/lib/db';
 import {
   CharacterSpellOptionItem,
@@ -127,6 +128,8 @@ export async function PUT(request: Request, { params }: RouteContext) {
         VALUES (${context.characterId}, ${spell!.id}, ${selectionType})
       `;
     }
+
+    await updateStoredCharacterStatus(context.characterId);
 
     const updatedContext = await getCharacterSpellSelectionContext(
       authenticatedOwner.id,

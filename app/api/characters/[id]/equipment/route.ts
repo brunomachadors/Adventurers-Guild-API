@@ -5,6 +5,7 @@ import {
   equipmentExists,
   getCharacterEquipment,
 } from '@/app/lib/character-equipment';
+import { updateStoredCharacterStatus } from '@/app/lib/characters';
 import { CharacterEquipmentAddRequestBody } from '@/app/types/character';
 import { NextResponse } from 'next/server';
 
@@ -116,6 +117,8 @@ export async function POST(request: Request, { params }: RouteContext) {
       body.quantity ?? 1,
       body.isEquipped ?? false,
     );
+
+    await updateStoredCharacterStatus(parsedId);
 
     const characterEquipment = await getCharacterEquipment(
       authenticatedOwner.id,
