@@ -387,6 +387,7 @@ const sorcererHitPoints: CharacterHitPoints = {
 const barbarianSkillProficiencies: SkillName[] = [
   'Athletics',
   'Intimidation',
+  'Insight',
   'Perception',
   'Survival',
 ];
@@ -394,9 +395,47 @@ const barbarianSkillProficiencies: SkillName[] = [
 const wizardSkillProficiencies: SkillName[] = [
   'Arcana',
   'History',
+  'Insight',
   'Investigation',
   'Religion',
 ];
+
+const wizardBaseSkillProficienciesWithoutSpecies: SkillName[] = [
+  'Arcana',
+  'History',
+  'Investigation',
+  'Religion',
+];
+
+const humanSelectedSpeciesSkillProficiencies: SkillName[] = ['Insight'];
+
+const elfSelectedSpeciesSkillProficiencies: SkillName[] = ['Insight'];
+
+const elfSelectedSpeciesChoices = {
+  'elven-lineage': 'high-elf',
+};
+
+const drowSelectedSpeciesSkillProficiencies: SkillName[] = ['Perception'];
+
+const drowSelectedSpeciesChoices = {
+  'elven-lineage': 'drow',
+};
+
+const dragonbornSelectedSpeciesChoices = {
+  'draconic-ancestry': 'blue-dragon-ancestry',
+};
+
+const gnomeSelectedSpeciesChoices = {
+  'gnomish-lineage': 'forest-gnome',
+};
+
+const goliathSelectedSpeciesChoices = {
+  'giant-ancestry': 'storm-giant-ancestry',
+};
+
+const tieflingSelectedSpeciesChoices = {
+  'fiendish-legacy': 'infernal-legacy',
+};
 
 const monkExtraSkillProficiencies: SkillName[] = ['Acrobatics', 'Stealth'];
 
@@ -421,6 +460,13 @@ const rangerExtraSkillProficiencies: SkillName[] = [
 const rangerSkillProficiencies: SkillName[] = [
   ...(expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[]),
   ...rangerExtraSkillProficiencies,
+];
+
+const fighterBaseSkillProficienciesWithoutSpecies: SkillName[] = [
+  'Athletics',
+  'Intimidation',
+  'Perception',
+  'Survival',
 ];
 
 const rogueExtraSkillProficiencies: SkillName[] = [
@@ -880,11 +926,19 @@ test.describe(
         ]);
         await charactersAssert.validatePendingChoices(
           character.pendingChoices,
-          ['classEquipmentSelection'],
+          ['speciesSkillSelection', 'classEquipmentSelection'],
         );
         await charactersAssert.validateAbilityScores(
           character.abilityScores,
           null,
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          character.selectedSpeciesSkillProficiencies,
+          [],
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          character.selectedSpeciesChoices,
+          {},
         );
         await charactersAssert.validateSpeciesDetailsPresence(
           character.speciesDetails ?? null,
@@ -901,6 +955,49 @@ test.describe(
             character.speciesDetails,
           );
         }
+      },
+    );
+
+    test(
+      'Select Species Skill Human',
+      { tag: ['@patch', '@data'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacter(
+          createdCharacterId,
+          {
+            selectedSpeciesSkillProficiencies:
+              humanSelectedSpeciesSkillProficiencies,
+          },
+          authToken,
+        );
+
+        await charactersAssert.success(response);
+
+        const character: CharacterResponseBody = await response.json();
+
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateStatus(character.status, 'in_progress');
+        await charactersAssert.validateClassId(character.classId, 1);
+        await charactersAssert.validateSpeciesId(character.speciesId, 7);
+        await charactersAssert.validateBackgroundId(
+          character.backgroundId,
+          null,
+        );
+        await charactersAssert.validatePendingChoices(
+          character.pendingChoices,
+          ['classEquipmentSelection'],
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          character.selectedSpeciesSkillProficiencies,
+          humanSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          character.selectedSpeciesChoices,
+          {},
+        );
       },
     );
 
@@ -937,6 +1034,14 @@ test.describe(
         await charactersAssert.validateAbilityScores(
           character.abilityScores,
           null,
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          character.selectedSpeciesSkillProficiencies,
+          humanSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          character.selectedSpeciesChoices,
+          {},
         );
         await charactersAssert.validateSpeciesDetailsPresence(
           character.speciesDetails ?? null,
@@ -997,7 +1102,11 @@ test.describe(
         );
         await charactersAssert.validateSkillProficiencies(
           updatedCharacter.skillProficiencies,
-          expectedDetailedBackgrounds.soldier.skillProficiencies,
+          [
+            ...(expectedDetailedBackgrounds.soldier
+              .skillProficiencies as SkillName[]),
+            ...humanSelectedSpeciesSkillProficiencies,
+          ],
         );
         await charactersAssert.validatePendingChoices(
           updatedCharacter.pendingChoices,
@@ -1014,6 +1123,14 @@ test.describe(
         await charactersAssert.validateSpeciesDetailsPresence(
           updatedCharacter.speciesDetails ?? null,
           true,
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          updatedCharacter.selectedSpeciesSkillProficiencies,
+          humanSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          updatedCharacter.selectedSpeciesChoices,
+          {},
         );
         await charactersAssert.validateBackgroundDetailsPresence(
           updatedCharacter.backgroundDetails ?? null,
@@ -1102,7 +1219,19 @@ test.describe(
         );
         await charactersAssert.validateSkillProficiencies(
           character.skillProficiencies,
-          expectedDetailedBackgrounds.soldier.skillProficiencies,
+          [
+            ...(expectedDetailedBackgrounds.soldier
+              .skillProficiencies as SkillName[]),
+            ...humanSelectedSpeciesSkillProficiencies,
+          ],
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          character.selectedSpeciesSkillProficiencies,
+          humanSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          character.selectedSpeciesChoices,
+          {},
         );
         await charactersAssert.validateAbilityScores(
           character.abilityScores,
@@ -1332,6 +1461,14 @@ test.describe(
           updatedCharacter.skillProficiencies,
           barbarianSkillProficiencies,
         );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          updatedCharacter.selectedSpeciesSkillProficiencies,
+          humanSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          updatedCharacter.selectedSpeciesChoices,
+          {},
+        );
         await charactersAssert.validateAbilityScores(
           updatedCharacter.abilityScores,
           barbarianAbilityScores,
@@ -1361,6 +1498,14 @@ test.describe(
         await charactersAssert.validateSkillProficiencies(
           character.skillProficiencies,
           barbarianSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          character.selectedSpeciesSkillProficiencies,
+          humanSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          character.selectedSpeciesChoices,
+          {},
         );
       },
     );
@@ -1935,6 +2080,14 @@ test.describe(
         await charactersAssert.validateCurrency(
           finalCharacter.currency,
           soldierCurrency,
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          finalCharacter.selectedSpeciesSkillProficiencies,
+          humanSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          finalCharacter.selectedSpeciesChoices,
+          {},
         );
         await charactersAssert.validateSkillProficiencies(
           finalCharacter.skillProficiencies,
@@ -3310,9 +3463,21 @@ test.describe(
         await charactersAssert.validateMissingFields(character.missingFields, [
           'backgroundId',
         ]);
+        await charactersAssert.validatePendingChoices(
+          character.pendingChoices,
+          ['speciesSkillSelection', 'speciesChoiceSelection', 'classEquipmentSelection'],
+        );
         await charactersAssert.validateAbilityScores(
           character.abilityScores,
           null,
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          character.selectedSpeciesSkillProficiencies,
+          [],
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          character.selectedSpeciesChoices,
+          {},
         );
         await charactersAssert.validateSpeciesDetailsPresence(
           character.speciesDetails ?? null,
@@ -3329,6 +3494,44 @@ test.describe(
             character.speciesDetails,
           );
         }
+      },
+    );
+
+    test(
+      'Select Species Choices Elf',
+      { tag: ['@patch', '@data'] },
+      async ({ request }) => {
+        const charactersClient = new CharactersClient(request);
+        const charactersAssert = new CharactersAssert();
+
+        const response = await charactersClient.updateCharacter(
+          createdCharacterId,
+          {
+            selectedSpeciesSkillProficiencies:
+              elfSelectedSpeciesSkillProficiencies,
+            selectedSpeciesChoices: elfSelectedSpeciesChoices,
+          },
+          authToken,
+        );
+
+        await charactersAssert.success(response);
+
+        const character: CharacterResponseBody = await response.json();
+
+        await charactersAssert.validateCharacterResponseSchema(character);
+        await charactersAssert.validateStatus(character.status, 'in_progress');
+        await charactersAssert.validatePendingChoices(
+          character.pendingChoices,
+          ['classEquipmentSelection'],
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          character.selectedSpeciesSkillProficiencies,
+          elfSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          character.selectedSpeciesChoices,
+          elfSelectedSpeciesChoices,
+        );
       },
     );
 
@@ -3352,9 +3555,20 @@ test.describe(
       await charactersAssert.validateMissingFields(character.missingFields, [
         'backgroundId',
       ]);
+      await charactersAssert.validatePendingChoices(character.pendingChoices, [
+        'classEquipmentSelection',
+      ]);
       await charactersAssert.validateAbilityScores(
         character.abilityScores,
         null,
+      );
+      await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+        character.selectedSpeciesSkillProficiencies,
+        elfSelectedSpeciesSkillProficiencies,
+      );
+      await charactersAssert.validateSelectedSpeciesChoices(
+        character.selectedSpeciesChoices,
+        elfSelectedSpeciesChoices,
       );
       await charactersAssert.validateSpeciesDetailsPresence(
         character.speciesDetails ?? null,
@@ -3414,11 +3628,27 @@ test.describe(
         );
         await charactersAssert.validateSkillProficiencies(
           updatedCharacter.skillProficiencies,
-          expectedDetailedBackgrounds.sage.skillProficiencies,
+          [
+            ...(expectedDetailedBackgrounds.sage
+              .skillProficiencies as SkillName[]),
+            ...elfSelectedSpeciesSkillProficiencies,
+          ],
+        );
+        await charactersAssert.validatePendingChoices(
+          updatedCharacter.pendingChoices,
+          ['classEquipmentSelection', 'backgroundEquipmentSelection'],
         );
         await charactersAssert.validateAbilityScores(
           updatedCharacter.abilityScores,
           null,
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          updatedCharacter.selectedSpeciesSkillProficiencies,
+          elfSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          updatedCharacter.selectedSpeciesChoices,
+          elfSelectedSpeciesChoices,
         );
         await charactersAssert.validateClassDetailsPresence(
           updatedCharacter.classDetails ?? null,
@@ -3469,7 +3699,19 @@ test.describe(
       await charactersAssert.validateMissingFields(character.missingFields, []);
       await charactersAssert.validateSkillProficiencies(
         character.skillProficiencies,
-        expectedDetailedBackgrounds.sage.skillProficiencies,
+        [
+          ...(expectedDetailedBackgrounds.sage
+            .skillProficiencies as SkillName[]),
+          ...elfSelectedSpeciesSkillProficiencies,
+        ],
+      );
+      await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+        character.selectedSpeciesSkillProficiencies,
+        elfSelectedSpeciesSkillProficiencies,
+      );
+      await charactersAssert.validateSelectedSpeciesChoices(
+        character.selectedSpeciesChoices,
+        elfSelectedSpeciesChoices,
       );
       await charactersAssert.validateAbilityScores(
         character.abilityScores,
@@ -3875,6 +4117,14 @@ test.describe(
           updatedCharacter.skillProficiencies,
           wizardSkillProficiencies,
         );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          updatedCharacter.selectedSpeciesSkillProficiencies,
+          elfSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          updatedCharacter.selectedSpeciesChoices,
+          elfSelectedSpeciesChoices,
+        );
         await charactersAssert.validateAbilityScores(
           updatedCharacter.abilityScores,
           wizardAbilityScores,
@@ -3904,6 +4154,14 @@ test.describe(
         await charactersAssert.validateSkillProficiencies(
           character.skillProficiencies,
           wizardSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          character.selectedSpeciesSkillProficiencies,
+          elfSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          character.selectedSpeciesChoices,
+          elfSelectedSpeciesChoices,
         );
       },
     );
@@ -4201,6 +4459,14 @@ test.describe(
         await charactersAssert.validateCurrency(
           finalCharacter.currency,
           sageCurrency,
+        );
+        await charactersAssert.validateSelectedSpeciesSkillProficiencies(
+          finalCharacter.selectedSpeciesSkillProficiencies,
+          elfSelectedSpeciesSkillProficiencies,
+        );
+        await charactersAssert.validateSelectedSpeciesChoices(
+          finalCharacter.selectedSpeciesChoices,
+          elfSelectedSpeciesChoices,
         );
         await charactersAssert.validateSkillProficiencies(
           finalCharacter.skillProficiencies,
@@ -5207,2325 +5473,6 @@ test.describe(
             selectedSpellsCount: 0,
             selectedCantripsCount: 0,
           },
-        );
-      },
-    );
-  },
-);
-
-test.describe(
-  'Characters API - Gimli The Fighter Equipment Flow',
-  { tag: ['@characters', '@equipment', '@fighter', '@dwarf'] },
-  () => {
-    test.describe.configure({ mode: 'serial' });
-
-    let authToken: string;
-    let characterWithEquipmentId: number;
-    let greataxeEquipmentId: number;
-    let shortbowEquipmentId: number;
-
-    test.beforeAll(async ({ request }) => {
-      authToken = await issueDemoToken(request);
-
-      const equipmentClient = new EquipmentClient(request);
-      const greataxeResponse =
-        await equipmentClient.getEquipmentDetail('greataxe');
-      expect(greataxeResponse.status()).toBe(200);
-      const greataxe: EquipmentDetail = await greataxeResponse.json();
-      expect(greataxe.name).toBe('Greataxe');
-      greataxeEquipmentId = greataxe.id;
-
-      const shortbowResponse =
-        await equipmentClient.getEquipmentDetail('shortbow');
-      expect(shortbowResponse.status()).toBe(200);
-      const shortbow: EquipmentDetail = await shortbowResponse.json();
-      expect(shortbow.name).toBe('Shortbow');
-      shortbowEquipmentId = shortbow.id;
-    });
-
-    test(
-      'Create Gimli The Fighter',
-      { tag: ['@post', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.createCharacter(
-          {
-            name: `Gimli The Fighter ${Date.now()}`,
-            classId: 5,
-            speciesId: 2,
-            backgroundId: 16,
-            level: 1,
-            abilityScores: gimliAbilityScoresInput,
-          },
-          authToken,
-        );
-
-        await charactersAssert.created(response);
-
-        const character: CharacterResponseBody = await response.json();
-        characterWithEquipmentId = character.id;
-
-        await charactersAssert.validateCharacterResponseSchema(character);
-        await charactersAssert.validateClassId(character.classId, 5);
-        await charactersAssert.validateSpeciesId(character.speciesId, 2);
-        await charactersAssert.validateBackgroundId(character.backgroundId, 16);
-        await charactersAssert.validateAbilityScores(
-          character.abilityScores,
-          gimliAbilityScores,
-          gimliAbilityBonuses,
-        );
-        await charactersAssert.validateHitPoints(
-          character.hitPoints,
-          fighterHitPoints,
-        );
-        await charactersAssert.validateStatus(character.status, 'in_progress');
-      },
-    );
-
-    test(
-      'Get Empty Equipment',
-      { tag: ['@get', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacterEquipment(
-          characterWithEquipmentId,
-          authToken,
-        );
-
-        await charactersAssert.success(response);
-
-        const characterEquipment: CharacterEquipmentResponseBody =
-          await response.json();
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateId(
-          characterEquipment.characterId,
-          characterWithEquipmentId,
-        );
-
-        await test.step('Validate character has no equipment', async () => {
-          expect(characterEquipment.equipment).toEqual([]);
-        });
-
-        const detailResponse = await charactersClient.getCharacterDetail(
-          characterWithEquipmentId,
-          authToken,
-        );
-
-        await charactersAssert.success(detailResponse);
-
-        const character: CharacterResponseBody = await detailResponse.json();
-
-        await charactersAssert.validateCharacterResponseSchema(character);
-        await charactersAssert.validateHitPoints(
-          character.hitPoints,
-          fighterHitPoints,
-        );
-        await charactersAssert.validatePassivePerception(
-          character.passivePerception,
-          {
-            skill: 'Perception',
-            ability: 'WIS',
-            base: 10,
-            skillModifier: 1,
-            bonus: 0,
-            total: 11,
-          },
-        );
-        await charactersAssert.validateMovement(
-          character.movement,
-          { baseSpeed: 30, unit: 'ft' },
-          { type: 'species', name: 'Dwarf', value: 30 },
-        );
-        await charactersAssert.validateInventoryWeight(
-          character.inventoryWeight,
-          {
-            total: 0,
-            sources: [],
-          },
-        );
-
-        await test.step('Validate character has no weapon attacks', async () => {
-          expect(character.weaponAttacks).toEqual([]);
-        });
-      },
-    );
-
-    test(
-      'Add Gimli Equipment',
-      { tag: ['@post', '@data'] },
-      async ({ request }) => {
-        const charactersAssert = new CharactersAssert();
-
-        const characterEquipment = await addCharacterEquipmentBySlug(
-          request,
-          characterWithEquipmentId,
-          authToken,
-          [
-            { slug: 'greataxe', quantity: 1, isEquipped: true },
-            { slug: 'shortbow', quantity: 1, isEquipped: true },
-            { slug: 'dagger', quantity: 1, isEquipped: false },
-            { slug: 'chain-mail', quantity: 1, isEquipped: true },
-            { slug: 'shield', quantity: 1, isEquipped: true },
-          ],
-        );
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateId(
-          characterEquipment.characterId,
-          characterWithEquipmentId,
-        );
-        await charactersAssert.validateCharacterEquipmentItem(
-          characterEquipment,
-          {
-            id: greataxeEquipmentId,
-            name: 'Greataxe',
-            quantity: 1,
-            isEquipped: true,
-          },
-        );
-        await charactersAssert.validateCharacterEquipmentItems(
-          characterEquipment,
-          [
-            { name: 'Greataxe', quantity: 1, isEquipped: true },
-            { name: 'Shortbow', quantity: 1, isEquipped: true },
-            { name: 'Dagger', quantity: 1, isEquipped: false },
-            { name: 'Chain Mail', quantity: 1, isEquipped: true },
-            { name: 'Shield', quantity: 1, isEquipped: true },
-          ],
-        );
-      },
-    );
-
-    test(
-      'Get Gimli Equipment',
-      { tag: ['@get', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacterEquipment(
-          characterWithEquipmentId,
-          authToken,
-        );
-
-        await charactersAssert.success(response);
-
-        const characterEquipment: CharacterEquipmentResponseBody =
-          await response.json();
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateId(
-          characterEquipment.characterId,
-          characterWithEquipmentId,
-        );
-        await charactersAssert.validateCharacterEquipmentItem(
-          characterEquipment,
-          {
-            id: greataxeEquipmentId,
-            quantity: 1,
-            isEquipped: true,
-          },
-        );
-        await charactersAssert.validateCharacterEquipmentItems(
-          characterEquipment,
-          [
-            { name: 'Greataxe', quantity: 1, isEquipped: true },
-            { name: 'Shortbow', quantity: 1, isEquipped: true },
-            { name: 'Dagger', quantity: 1, isEquipped: false },
-            { name: 'Chain Mail', quantity: 1, isEquipped: true },
-            { name: 'Shield', quantity: 1, isEquipped: true },
-          ],
-        );
-      },
-    );
-
-    test(
-      'Get Gimli Weapon Attacks',
-      { tag: ['@get', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacterDetail(
-          characterWithEquipmentId,
-          authToken,
-        );
-
-        await charactersAssert.success(response);
-
-        const character: CharacterResponseBody = await response.json();
-
-        await charactersAssert.validateCharacterResponseSchema(character);
-        await charactersAssert.validateHitPoints(
-          character.hitPoints,
-          fighterHitPoints,
-        );
-        await charactersAssert.validateInitiative(character.initiative, {
-          ability: 'DEX',
-          abilityModifier: 2,
-          bonus: 0,
-          total: 2,
-        });
-        await charactersAssert.validatePassivePerception(
-          character.passivePerception,
-          {
-            skill: 'Perception',
-            ability: 'WIS',
-            base: 10,
-            skillModifier: 1,
-            bonus: 0,
-            total: 11,
-          },
-        );
-        await charactersAssert.validateMovement(
-          character.movement,
-          { baseSpeed: 30, unit: 'ft' },
-          { type: 'species', name: 'Dwarf', value: 30 },
-        );
-        await charactersAssert.validateInventoryWeight(
-          character.inventoryWeight,
-          {
-            total: 71,
-            sources: [
-              { name: 'Greataxe', quantity: 1, weight: 7, total: 7 },
-              { name: 'Shortbow', quantity: 1, weight: 2, total: 2 },
-              { name: 'Dagger', quantity: 1, weight: 1, total: 1 },
-              { name: 'Chain Mail', quantity: 1, weight: 55, total: 55 },
-              { name: 'Shield', quantity: 1, weight: 6, total: 6 },
-            ],
-          },
-        );
-        await charactersAssert.validateSavingThrowOrder(character.savingThrows);
-        await charactersAssert.validateSavingThrow(character.savingThrows, {
-          ability: 'STR',
-          isProficient: true,
-          abilityModifier: 3,
-          proficiencyBonus: 2,
-          bonus: 0,
-          total: 5,
-        });
-        await charactersAssert.validateSavingThrow(character.savingThrows, {
-          ability: 'CON',
-          isProficient: true,
-          abilityModifier: 2,
-          proficiencyBonus: 2,
-          bonus: 0,
-          total: 4,
-        });
-        await charactersAssert.validateSavingThrow(character.savingThrows, {
-          ability: 'DEX',
-          isProficient: false,
-          abilityModifier: 2,
-          proficiencyBonus: 0,
-          bonus: 0,
-          total: 2,
-        });
-        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
-          equipmentId: greataxeEquipmentId,
-          name: 'Greataxe',
-          attackType: 'melee',
-          ability: 'STR',
-          isProficient: true,
-          abilityModifier: 3,
-          proficiencyBonus: 2,
-          attackBonus: 5,
-          damage: {
-            formula: '1d12 + 3',
-            base: '1d12',
-            modifier: 3,
-            damageType: 'Slashing',
-          },
-          properties: ['Heavy', 'Two-Handed'],
-          rangeExists: false,
-        });
-        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
-          equipmentId: shortbowEquipmentId,
-          name: 'Shortbow',
-          attackType: 'ranged',
-          ability: 'DEX',
-          isProficient: true,
-          abilityModifier: 2,
-          proficiencyBonus: 2,
-          attackBonus: 4,
-          damage: {
-            formula: '1d6 + 2',
-            base: '1d6',
-            modifier: 2,
-            damageType: 'Piercing',
-          },
-          properties: ['Ammunition', 'Two-Handed'],
-          rangeExists: true,
-        });
-        await charactersAssert.validateWeaponAttackAbsent(
-          character.weaponAttacks,
-          'Dagger',
-        );
-        await charactersAssert.validateWeaponAttackAbsent(
-          character.weaponAttacks,
-          'Chain Mail',
-        );
-        await charactersAssert.validateWeaponAttackAbsent(
-          character.weaponAttacks,
-          'Shield',
-        );
-      },
-    );
-
-    test(
-      'Add Greataxe Again',
-      { tag: ['@post', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.addCharacterEquipment(
-          characterWithEquipmentId,
-          {
-            equipmentId: greataxeEquipmentId,
-            quantity: 2,
-            isEquipped: false,
-          },
-          authToken,
-        );
-
-        await charactersAssert.created(response);
-
-        const characterEquipment: CharacterEquipmentResponseBody =
-          await response.json();
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateId(
-          characterEquipment.characterId,
-          characterWithEquipmentId,
-        );
-        await charactersAssert.validateCharacterEquipmentItem(
-          characterEquipment,
-          {
-            id: greataxeEquipmentId,
-            quantity: 3,
-            isEquipped: false,
-          },
-        );
-        await charactersAssert.validateCharacterEquipmentItems(
-          characterEquipment,
-          [
-            { name: 'Shortbow', quantity: 1, isEquipped: true },
-            { name: 'Dagger', quantity: 1, isEquipped: false },
-            { name: 'Chain Mail', quantity: 1, isEquipped: true },
-            { name: 'Shield', quantity: 1, isEquipped: true },
-          ],
-        );
-      },
-    );
-
-    test(
-      'Patch Greataxe Equipment',
-      { tag: ['@patch', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.patchCharacterEquipment(
-          characterWithEquipmentId,
-          greataxeEquipmentId,
-          {
-            quantity: 2,
-            isEquipped: false,
-          },
-          authToken,
-        );
-
-        await charactersAssert.success(response);
-
-        const characterEquipment: CharacterEquipmentResponseBody =
-          await response.json();
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateId(
-          characterEquipment.characterId,
-          characterWithEquipmentId,
-        );
-        await charactersAssert.validateCharacterEquipmentItem(
-          characterEquipment,
-          {
-            id: greataxeEquipmentId,
-            quantity: 2,
-            isEquipped: false,
-          },
-        );
-      },
-    );
-
-    test(
-      'Patch Greataxe Equipped',
-      { tag: ['@patch', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.patchCharacterEquipment(
-          characterWithEquipmentId,
-          greataxeEquipmentId,
-          {
-            isEquipped: true,
-          },
-          authToken,
-        );
-
-        await charactersAssert.success(response);
-
-        const characterEquipment: CharacterEquipmentResponseBody =
-          await response.json();
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateId(
-          characterEquipment.characterId,
-          characterWithEquipmentId,
-        );
-        await charactersAssert.validateCharacterEquipmentItem(
-          characterEquipment,
-          {
-            id: greataxeEquipmentId,
-            quantity: 2,
-            isEquipped: true,
-          },
-        );
-      },
-    );
-
-    test(
-      'Delete Greataxe Equipment',
-      { tag: ['@delete', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.deleteCharacterEquipment(
-          characterWithEquipmentId,
-          greataxeEquipmentId,
-          authToken,
-        );
-
-        await charactersAssert.success(response);
-
-        const characterEquipment: CharacterEquipmentResponseBody =
-          await response.json();
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateId(
-          characterEquipment.characterId,
-          characterWithEquipmentId,
-        );
-        await charactersAssert.validateCharacterEquipmentItemAbsent(
-          characterEquipment,
-          greataxeEquipmentId,
-        );
-        await charactersAssert.validateCharacterEquipmentItems(
-          characterEquipment,
-          [
-            { name: 'Shortbow', quantity: 1, isEquipped: true },
-            { name: 'Dagger', quantity: 1, isEquipped: false },
-            { name: 'Chain Mail', quantity: 1, isEquipped: true },
-            { name: 'Shield', quantity: 1, isEquipped: true },
-          ],
-        );
-      },
-    );
-
-    test(
-      'Get Equipment Without Greataxe',
-      { tag: ['@get', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacterEquipment(
-          characterWithEquipmentId,
-          authToken,
-        );
-
-        await charactersAssert.success(response);
-
-        const characterEquipment: CharacterEquipmentResponseBody =
-          await response.json();
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateId(
-          characterEquipment.characterId,
-          characterWithEquipmentId,
-        );
-        await charactersAssert.validateCharacterEquipmentItemAbsent(
-          characterEquipment,
-          greataxeEquipmentId,
-        );
-        await charactersAssert.validateCharacterEquipmentItems(
-          characterEquipment,
-          [
-            { name: 'Shortbow', quantity: 1, isEquipped: true },
-            { name: 'Dagger', quantity: 1, isEquipped: false },
-            { name: 'Chain Mail', quantity: 1, isEquipped: true },
-            { name: 'Shield', quantity: 1, isEquipped: true },
-          ],
-        );
-
-        const detailResponse = await charactersClient.getCharacterDetail(
-          characterWithEquipmentId,
-          authToken,
-        );
-
-        await charactersAssert.success(detailResponse);
-
-        const character: CharacterResponseBody = await detailResponse.json();
-
-        await charactersAssert.validateCharacterResponseSchema(character);
-        await charactersAssert.validateHitPoints(
-          character.hitPoints,
-          fighterHitPoints,
-        );
-        await charactersAssert.validateInventoryWeight(
-          character.inventoryWeight,
-          {
-            total: 64,
-            sources: [
-              { name: 'Shortbow', quantity: 1, weight: 2, total: 2 },
-              { name: 'Dagger', quantity: 1, weight: 1, total: 1 },
-              { name: 'Chain Mail', quantity: 1, weight: 55, total: 55 },
-              { name: 'Shield', quantity: 1, weight: 6, total: 6 },
-            ],
-          },
-        );
-        await charactersAssert.validateWeaponAttackAbsent(
-          character.weaponAttacks,
-          'Greataxe',
-        );
-        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
-          equipmentId: shortbowEquipmentId,
-          name: 'Shortbow',
-          attackType: 'ranged',
-          ability: 'DEX',
-          isProficient: true,
-          abilityModifier: 2,
-          proficiencyBonus: 2,
-          attackBonus: 4,
-        });
-        await charactersAssert.validateWeaponAttackAbsent(
-          character.weaponAttacks,
-          'Chain Mail',
-        );
-        await charactersAssert.validateWeaponAttackAbsent(
-          character.weaponAttacks,
-          'Shield',
-        );
-      },
-    );
-  },
-);
-
-test.describe(
-  'Characters API - Bilbo The Rogue Delete Flow',
-  { tag: ['@characters', '@flow', '@delete', '@rogue'] },
-  () => {
-    test.describe.configure({ mode: 'serial' });
-
-    let authToken: string;
-    let createdCharacterId: number;
-    let createdCharacterName: string;
-
-    test.beforeAll(async ({ request }) => {
-      authToken = await issueDemoToken(request);
-    });
-
-    test(
-      'Create Bilbo The Rogue For Delete',
-      { tag: ['@post', '@smoke', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-        createdCharacterName = `Bilbo The Rogue ${Date.now()}`;
-
-        const response = await charactersClient.createCharacter(
-          {
-            name: createdCharacterName,
-            classId: 9,
-            speciesId: 7,
-            backgroundId: 5,
-            level: 1,
-            abilityScores: bilboAbilityScoresInput,
-          },
-          authToken,
-        );
-
-        await charactersAssert.created(response);
-
-        const character: CharacterResponseBody = await response.json();
-        createdCharacterId = character.id;
-
-        await charactersAssert.validateCharacterResponseSchema(character);
-        await charactersAssert.validateId(character.id, createdCharacterId);
-        await charactersAssert.validateName(
-          character.name,
-          createdCharacterName,
-        );
-        await charactersAssert.validateStatus(character.status, 'in_progress');
-        await charactersAssert.validateClassId(character.classId, 9);
-        await charactersAssert.validateSpeciesId(character.speciesId, 7);
-        await charactersAssert.validateBackgroundId(character.backgroundId, 5);
-        await charactersAssert.validateLevel(character.level, 1);
-        await charactersAssert.validateMissingFields(
-          character.missingFields,
-          [],
-        );
-        await charactersAssert.validateAbilityScores(
-          character.abilityScores,
-          bilboAbilityScores,
-          bilboAbilityBonuses,
-        );
-      },
-    );
-
-    test(
-      'Add Bilbo Finesse Weapon And Bow',
-      { tag: ['@post', '@get', '@data', '@equipment', '@rogue'] },
-      async ({ request }) => {
-        const charactersAssert = new CharactersAssert();
-        const charactersClient = new CharactersClient(request);
-
-        const characterEquipment = await addCharacterEquipmentBySlug(
-          request,
-          createdCharacterId,
-          authToken,
-          [
-            { slug: 'dagger', quantity: 1, isEquipped: true },
-            { slug: 'shortbow', quantity: 1, isEquipped: true },
-          ],
-        );
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
-          { name: 'Dagger', quantity: 1, isEquipped: true },
-          { name: 'Shortbow', quantity: 1, isEquipped: true },
-        ]);
-
-        const detailResponse = await charactersClient.getCharacterDetail(
-          createdCharacterId,
-          authToken,
-        );
-
-        await charactersAssert.success(detailResponse);
-
-        const character: CharacterResponseBody = await detailResponse.json();
-
-        await charactersAssert.validateCharacterResponseSchema(character);
-        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
-          name: 'Dagger',
-          attackType: 'melee',
-          ability: 'DEX',
-          isProficient: true,
-          abilityModifier: 3,
-          proficiencyBonus: 2,
-          attackBonus: 5,
-          damage: {
-            formula: '1d4 + 3',
-            base: '1d4',
-            modifier: 3,
-            damageType: 'Piercing',
-          },
-          properties: ['Finesse', 'Light', 'Thrown'],
-          rangeExists: false,
-          attackModes: [
-            {
-              mode: 'melee',
-              attackType: 'melee',
-              ability: 'DEX',
-              attackBonus: 5,
-              damage: {
-                formula: '1d4 + 3',
-                base: '1d4',
-                modifier: 3,
-                damageType: 'Piercing',
-              },
-              range: null,
-            },
-            {
-              mode: 'thrown',
-              attackType: 'ranged',
-              ability: 'DEX',
-              attackBonus: 5,
-              damage: {
-                formula: '1d4 + 3',
-                base: '1d4',
-                modifier: 3,
-                damageType: 'Piercing',
-              },
-              range: {
-                normal: 20,
-                long: 60,
-                unit: 'ft',
-              },
-            },
-          ],
-        });
-        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
-          name: 'Shortbow',
-          attackType: 'ranged',
-          ability: 'DEX',
-          isProficient: true,
-          abilityModifier: 3,
-          proficiencyBonus: 2,
-          attackBonus: 5,
-          damage: {
-            formula: '1d6 + 3',
-            base: '1d6',
-            modifier: 3,
-            damageType: 'Piercing',
-          },
-          properties: ['Ammunition', 'Two-Handed'],
-          rangeExists: true,
-        });
-      },
-    );
-
-    test(
-      'Delete Bilbo The Rogue',
-      { tag: ['@delete', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.deleteCharacter(
-          createdCharacterId,
-          authToken,
-        );
-
-        await charactersAssert.success(response);
-
-        const body: { message: string } = await response.json();
-
-        await charactersAssert.validateMessageResponse(
-          body,
-          'Character deleted successfully',
-        );
-      },
-    );
-
-    test(
-      'Get Deleted Bilbo Returns Not Found',
-      { tag: ['@get', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacterDetail(
-          createdCharacterId,
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character not found',
-        );
-      },
-    );
-
-    test(
-      'List Excludes Deleted Bilbo',
-      { tag: ['@get', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacters(authToken);
-
-        await charactersAssert.success(response);
-
-        const characters: CharacterListItem[] = await response.json();
-
-        await charactersAssert.validateCharacterListSchema(characters);
-
-        await test.step('Validate deleted character is absent from list', async () => {
-          expect(
-            characters.some((character) => character.id === createdCharacterId),
-          ).toBe(false);
-        });
-      },
-    );
-  },
-);
-
-test.describe(
-  'Characters API - Robin The Rogue Equipment Preview Flow',
-  { tag: ['@characters', '@flow', '@rogue', '@equipment', '@preview'] },
-  () => {
-    test.describe.configure({ mode: 'serial' });
-
-    let authToken: string;
-    let createdCharacterId: number;
-    let createdCharacterName: string;
-
-    test.beforeAll(async ({ request }) => {
-      authToken = await issueDemoToken(request);
-    });
-
-    test(
-      'Create Robin The Rogue For Equipment Preview',
-      { tag: ['@post', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-        createdCharacterName = `Robin The Rogue ${Date.now()}`;
-
-        const response = await charactersClient.createCharacter(
-          {
-            name: createdCharacterName,
-            classId: 9,
-            speciesId: 7,
-            backgroundId: 5,
-            level: 1,
-            abilityScores: bilboAbilityScoresInput,
-          },
-          authToken,
-        );
-
-        await charactersAssert.created(response);
-
-        const character: CharacterResponseBody = await response.json();
-        createdCharacterId = character.id;
-
-        await charactersAssert.validateCharacterResponseSchema(character);
-        await charactersAssert.validateId(character.id, createdCharacterId);
-        await charactersAssert.validateName(
-          character.name,
-          createdCharacterName,
-        );
-        await charactersAssert.validateStatus(character.status, 'in_progress');
-        await charactersAssert.validateClassId(character.classId, 9);
-        await charactersAssert.validateSpeciesId(character.speciesId, 7);
-        await charactersAssert.validateBackgroundId(character.backgroundId, 5);
-        await charactersAssert.validateLevel(character.level, 1);
-        await charactersAssert.validateAbilityScores(
-          character.abilityScores,
-          bilboAbilityScores,
-          bilboAbilityBonuses,
-        );
-      },
-    );
-
-    test(
-      'Add Robin Finesse Weapon And Bow',
-      { tag: ['@post', '@get', '@data'] },
-      async ({ request }) => {
-        const charactersAssert = new CharactersAssert();
-        const charactersClient = new CharactersClient(request);
-
-        const characterEquipment = await addCharacterEquipmentBySlug(
-          request,
-          createdCharacterId,
-          authToken,
-          [
-            { slug: 'dagger', quantity: 1, isEquipped: true },
-            { slug: 'shortbow', quantity: 1, isEquipped: true },
-          ],
-        );
-
-        await charactersAssert.validateCharacterEquipmentSchema(
-          characterEquipment,
-        );
-        await charactersAssert.validateCharacterEquipmentItems(characterEquipment, [
-          { name: 'Dagger', quantity: 1, isEquipped: true },
-          { name: 'Shortbow', quantity: 1, isEquipped: true },
-        ]);
-
-        const detailResponse = await charactersClient.getCharacterDetail(
-          createdCharacterId,
-          authToken,
-        );
-
-        await charactersAssert.success(detailResponse);
-
-        const character: CharacterResponseBody = await detailResponse.json();
-
-        await charactersAssert.validateCharacterResponseSchema(character);
-        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
-          name: 'Dagger',
-          attackType: 'melee',
-          ability: 'DEX',
-          isProficient: true,
-          abilityModifier: 3,
-          proficiencyBonus: 2,
-          attackBonus: 5,
-          damage: {
-            formula: '1d4 + 3',
-            base: '1d4',
-            modifier: 3,
-            damageType: 'Piercing',
-          },
-          properties: ['Finesse', 'Light', 'Thrown'],
-          rangeExists: false,
-          attackModes: [
-            {
-              mode: 'melee',
-              attackType: 'melee',
-              ability: 'DEX',
-              attackBonus: 5,
-              damage: {
-                formula: '1d4 + 3',
-                base: '1d4',
-                modifier: 3,
-                damageType: 'Piercing',
-              },
-              range: null,
-            },
-            {
-              mode: 'thrown',
-              attackType: 'ranged',
-              ability: 'DEX',
-              attackBonus: 5,
-              damage: {
-                formula: '1d4 + 3',
-                base: '1d4',
-                modifier: 3,
-                damageType: 'Piercing',
-              },
-              range: {
-                normal: 20,
-                long: 60,
-                unit: 'ft',
-              },
-            },
-          ],
-        });
-        await charactersAssert.validateWeaponAttack(character.weaponAttacks, {
-          name: 'Shortbow',
-          attackType: 'ranged',
-          ability: 'DEX',
-          isProficient: true,
-          abilityModifier: 3,
-          proficiencyBonus: 2,
-          attackBonus: 5,
-          damage: {
-            formula: '1d6 + 3',
-            base: '1d6',
-            modifier: 3,
-            damageType: 'Piercing',
-          },
-          properties: ['Ammunition', 'Two-Handed'],
-          rangeExists: true,
-        });
-      },
-    );
-  },
-);
-
-test.describe(
-  'Characters API - Background Skill Autofill Coverage',
-  { tag: ['@characters', '@skills', '@backgrounds', '@coverage'] },
-  () => {
-    const coverageCases: {
-      label: string;
-      classId: number;
-      speciesId: number;
-      backgroundId: number;
-      expectedBackgroundSkills: SkillName[];
-      extraSkillChoices: SkillName[];
-      expectedFinalSkills: SkillName[];
-    }[] = [
-      {
-        label: 'Monk Acolyte',
-        classId: 6,
-        speciesId: 7,
-        backgroundId: 1,
-        expectedBackgroundSkills:
-          expectedDetailedBackgrounds.acolyte.skillProficiencies as SkillName[],
-        extraSkillChoices: monkExtraSkillProficiencies,
-        expectedFinalSkills: monkSkillProficiencies,
-      },
-      {
-        label: 'Paladin Noble',
-        classId: 7,
-        speciesId: 7,
-        backgroundId: 12,
-        expectedBackgroundSkills:
-          expectedDetailedBackgrounds.noble.skillProficiencies as SkillName[],
-        extraSkillChoices: paladinExtraSkillProficiencies,
-        expectedFinalSkills: paladinSkillProficiencies,
-      },
-      {
-        label: 'Ranger Soldier',
-        classId: 8,
-        speciesId: 3,
-        backgroundId: 16,
-        expectedBackgroundSkills:
-          expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[],
-        extraSkillChoices: rangerExtraSkillProficiencies,
-        expectedFinalSkills: rangerSkillProficiencies,
-      },
-      {
-        label: 'Rogue Criminal',
-        classId: 9,
-        speciesId: 7,
-        backgroundId: 5,
-        expectedBackgroundSkills:
-          expectedDetailedBackgrounds.criminal.skillProficiencies as SkillName[],
-        extraSkillChoices: rogueExtraSkillProficiencies,
-        expectedFinalSkills: rogueSkillProficiencies,
-      },
-      {
-        label: 'Fighter Soldier',
-        classId: 5,
-        speciesId: 7,
-        backgroundId: 16,
-        expectedBackgroundSkills:
-          expectedDetailedBackgrounds.soldier.skillProficiencies as SkillName[],
-        extraSkillChoices: fighterExtraSkillProficiencies,
-        expectedFinalSkills: fighterSkillProficiencies,
-      },
-    ];
-
-    for (const coverageCase of coverageCases) {
-      test(
-        `Autofill background skills and merge chosen class skills - ${coverageCase.label}`,
-        async ({ request }) => {
-          const charactersClient = new CharactersClient(request);
-          const charactersAssert = new CharactersAssert();
-          const authToken = await issueDemoToken(request);
-          let createdCharacterId: number | null = null;
-
-          try {
-            const createResponse = await charactersClient.createCharacter(
-              {
-                name: `${coverageCase.label} ${Date.now()}`,
-                classId: coverageCase.classId,
-                speciesId: coverageCase.speciesId,
-                backgroundId: coverageCase.backgroundId,
-                level: 1,
-              },
-              authToken,
-            );
-
-            await charactersAssert.created(createResponse);
-
-            const createdCharacter: CharacterResponseBody =
-              await createResponse.json();
-            createdCharacterId = createdCharacter.id;
-
-            await test.step(
-              `Validate background skills are auto-applied for ${coverageCase.label}`,
-              async () => {
-                await charactersAssert.validateSkillProficiencies(
-                  createdCharacter.skillProficiencies,
-                  coverageCase.expectedBackgroundSkills,
-                );
-              },
-            );
-
-            const patchSkillsResponse = await charactersClient.updateCharacter(
-              createdCharacter.id,
-              {
-                skillProficiencies: coverageCase.extraSkillChoices,
-              },
-              authToken,
-            );
-
-            await charactersAssert.success(patchSkillsResponse);
-
-            const updatedCharacter: CharacterResponseBody =
-              await patchSkillsResponse.json();
-
-            await test.step(
-              `Validate chosen skills merge with background skills for ${coverageCase.label}`,
-              async () => {
-                await charactersAssert.validateSkillProficiencies(
-                  updatedCharacter.skillProficiencies,
-                  coverageCase.expectedFinalSkills,
-                );
-              },
-            );
-
-            const detailResponse = await charactersClient.getCharacterDetail(
-              createdCharacter.id,
-              authToken,
-            );
-
-            await charactersAssert.success(detailResponse);
-
-            const detailedCharacter: CharacterResponseBody =
-              await detailResponse.json();
-
-            await test.step(
-              `Validate final detail keeps merged skills for ${coverageCase.label}`,
-              async () => {
-                await charactersAssert.validateSkillProficiencies(
-                  detailedCharacter.skillProficiencies,
-                  coverageCase.expectedFinalSkills,
-                );
-              },
-            );
-          } finally {
-            if (createdCharacterId !== null) {
-              const deleteResponse = await charactersClient.deleteCharacter(
-                createdCharacterId,
-                authToken,
-              );
-
-              expect(deleteResponse.ok()).toBe(true);
-            }
-          }
-        },
-      );
-    }
-
-    test('Reject invalid class skill selections for Barbarian', async ({
-      request,
-    }) => {
-      const charactersClient = new CharactersClient(request);
-      const charactersAssert = new CharactersAssert();
-      const authToken = await issueDemoToken(request);
-
-      const createResponse = await charactersClient.createCharacter(
-        {
-          name: `Invalid Barbarian Skills ${Date.now()}`,
-          classId: 1,
-          speciesId: 7,
-          backgroundId: 16,
-          level: 1,
-        },
-        authToken,
-      );
-
-      await charactersAssert.created(createResponse);
-
-      const createdCharacter: CharacterResponseBody =
-        await createResponse.json();
-
-      try {
-        const wrongCountResponse = await charactersClient.updateCharacter(
-          createdCharacter.id,
-          {
-            skillProficiencies: ['Athletics', 'Intimidation', 'Perception'],
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(wrongCountResponse);
-
-        const wrongCountBody: { error: string } =
-          await wrongCountResponse.json();
-
-        await charactersAssert.validateErrorResponse(
-          wrongCountBody,
-          'Invalid character skill proficiencies payload: expected 2 class skill choices, received 1',
-        );
-
-        const invalidSkillResponse = await charactersClient.updateCharacter(
-          createdCharacter.id,
-          {
-            skillProficiencies: [
-              'Athletics',
-              'Intimidation',
-              'Arcana',
-              'Perception',
-            ],
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(invalidSkillResponse);
-
-        const invalidSkillBody: { error: string } =
-          await invalidSkillResponse.json();
-
-        await charactersAssert.validateErrorResponse(
-          invalidSkillBody,
-          'Invalid character skill proficiencies payload: Arcana is not allowed by this class. Allowed skills: Animal Handling, Athletics, Intimidation, Nature, Perception, Survival',
-        );
-      } finally {
-        const deleteResponse = await charactersClient.deleteCharacter(
-          createdCharacter.id,
-          authToken,
-        );
-
-        expect(deleteResponse.ok()).toBe(true);
-      }
-    });
-  },
-);
-
-test.describe(
-  'Characters API - Geralt Of Rivia The Warlock Negative Flow',
-  { tag: ['@characters', '@negative', '@warlock', '@dragonborn'] },
-  () => {
-    test.describe.configure({ mode: 'serial' });
-
-    let authToken: string;
-    let geraltCharacterId: number;
-
-    const buildGeraltWarlockPayload = (
-      name: string,
-      payload: Partial<Omit<CharacterCreateRequestBody, 'name'>> = {},
-    ): CharacterCreateRequestBody => ({
-      name,
-      classId: 11,
-      speciesId: 1,
-      backgroundId: 1,
-      level: 1,
-      ...payload,
-    });
-
-    test.beforeAll(async ({ request }) => {
-      authToken = await issueDemoToken(request);
-
-      const charactersClient = new CharactersClient(request);
-      const createResponse = await charactersClient.createCharacter(
-        buildGeraltWarlockPayload(`Geralt Of Rivia ${Date.now()}`),
-        authToken,
-      );
-
-      expect(createResponse.status()).toBe(201);
-
-      const character: CharacterResponseBody = await createResponse.json();
-      geraltCharacterId = character.id;
-    });
-
-    test(
-      'Create Geralt Without Token Is Unauthorized',
-      { tag: ['@post', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.createCharacter(
-          buildGeraltWarlockPayload('Geralt Of Rivia Unauthorized'),
-        );
-
-        await charactersAssert.unauthorized(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(body, 'Unauthorized');
-      },
-    );
-
-    test(
-      'Get Geralt Detail Without Token Is Public',
-      { tag: ['@get', '@public', '@data'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacterDetail(
-          geraltCharacterId,
-        );
-
-        await charactersAssert.success(response);
-
-        const character: CharacterResponseBody = await response.json();
-
-        await charactersAssert.validateCharacterResponseSchema(character);
-        await charactersAssert.validateId(character.id, geraltCharacterId);
-        await charactersAssert.validateClassId(character.classId, 11);
-        await charactersAssert.validateSpeciesId(character.speciesId, 1);
-        await charactersAssert.validateBackgroundId(character.backgroundId, 1);
-      },
-    );
-
-    test(
-      'Patch Character Without Token Is Unauthorized',
-      { tag: ['@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacter(
-          geraltCharacterId,
-          {
-            classId: 11,
-          },
-        );
-
-        await charactersAssert.unauthorized(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(body, 'Unauthorized');
-      },
-    );
-
-    test(
-      'Delete Character Without Token Is Unauthorized',
-      { tag: ['@delete', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.deleteCharacter(geraltCharacterId);
-
-        await charactersAssert.unauthorized(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(body, 'Unauthorized');
-      },
-    );
-
-    test(
-      'Get Character Equipment Without Token Is Unauthorized',
-      { tag: ['@get', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacterEquipment(
-          geraltCharacterId,
-        );
-
-        await charactersAssert.unauthorized(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(body, 'Unauthorized');
-      },
-    );
-
-    test(
-      'Add Character Equipment Without Token Is Unauthorized',
-      { tag: ['@post', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.addCharacterEquipment(
-          geraltCharacterId,
-          {
-            equipmentId: 1,
-            quantity: 1,
-            isEquipped: true,
-          },
-        );
-
-        await charactersAssert.unauthorized(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(body, 'Unauthorized');
-      },
-    );
-
-    test(
-      'Patch Character Equipment Without Token Is Unauthorized',
-      { tag: ['@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.patchCharacterEquipment(
-          geraltCharacterId,
-          1,
-          {
-            quantity: 1,
-          },
-        );
-
-        await charactersAssert.unauthorized(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(body, 'Unauthorized');
-      },
-    );
-
-    test(
-      'Delete Character Equipment Without Token Is Unauthorized',
-      { tag: ['@delete', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.deleteCharacterEquipment(
-          geraltCharacterId,
-          1,
-        );
-
-        await charactersAssert.unauthorized(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(body, 'Unauthorized');
-      },
-    );
-
-    test(
-      'Get Non-Existent Character Returns Not Found',
-      { tag: ['@get', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacterDetail(
-          999999,
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character not found',
-        );
-      },
-    );
-
-    test(
-      'Patch Non-Existent Character Returns Not Found',
-      { tag: ['@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacter(
-          999999,
-          { classId: 11 },
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character not found',
-        );
-      },
-    );
-
-    test(
-      'Delete Non-Existent Character Returns Not Found',
-      { tag: ['@delete', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.deleteCharacter(
-          999999,
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character not found',
-        );
-      },
-    );
-
-    test(
-      'Get Non-Existent Character Equipment Returns Not Found',
-      { tag: ['@get', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.getCharacterEquipment(
-          999999,
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character not found',
-        );
-      },
-    );
-
-    test(
-      'Add Equipment To Non-Existent Character Returns Not Found',
-      { tag: ['@post', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.addCharacterEquipment(
-          999999,
-          {
-            equipmentId: 1,
-            quantity: 1,
-            isEquipped: true,
-          },
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character not found',
-        );
-      },
-    );
-
-    test(
-      'Patch Equipment On Non-Existent Character Returns Not Found',
-      { tag: ['@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.patchCharacterEquipment(
-          999999,
-          1,
-          {
-            quantity: 1,
-          },
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character not found',
-        );
-      },
-    );
-
-    test(
-      'Delete Equipment On Non-Existent Character Returns Not Found',
-      { tag: ['@delete', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.deleteCharacterEquipment(
-          999999,
-          1,
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character not found',
-        );
-      },
-    );
-
-    test(
-      'Add Non-Existent Equipment To Geralt Returns Not Found',
-      { tag: ['@post', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.addCharacterEquipment(
-          geraltCharacterId,
-          {
-            equipmentId: 999999,
-            quantity: 1,
-            isEquipped: true,
-          },
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Equipment not found',
-        );
-      },
-    );
-
-    test(
-      'Patch Missing Geralt Equipment Returns Not Found',
-      { tag: ['@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.patchCharacterEquipment(
-          geraltCharacterId,
-          999999,
-          {
-            quantity: 1,
-          },
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character equipment not found',
-        );
-      },
-    );
-
-    test(
-      'Delete Missing Geralt Equipment Returns Not Found',
-      { tag: ['@delete', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.deleteCharacterEquipment(
-          geraltCharacterId,
-          999999,
-          authToken,
-        );
-
-        await charactersAssert.notFound(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Character equipment not found',
-        );
-      },
-    );
-
-    test(
-      'Add Geralt Equipment With Invalid Payload',
-      { tag: ['@post', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.addCharacterEquipment(
-          geraltCharacterId,
-          {
-            equipmentId: 1,
-            quantity: 0,
-            isEquipped: true,
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character equipment request payload',
-        );
-      },
-    );
-
-    test(
-      'Patch Character Equipment With Invalid Quantity',
-      { tag: ['@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.patchCharacterEquipment(
-          geraltCharacterId,
-          1,
-          {
-            quantity: 0,
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character equipment request payload',
-        );
-      },
-    );
-
-    test(
-      'Patch Character Equipment With Empty Payload',
-      { tag: ['@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.patchCharacterEquipment(
-          geraltCharacterId,
-          1,
-          {},
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character equipment request payload',
-        );
-      },
-    );
-
-    test(
-      'Patch Character Equipment With Non-Numeric Quantity',
-      { tag: ['@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.patchCharacterEquipment(
-          geraltCharacterId,
-          1,
-          {
-            quantity: '3',
-          } as unknown as { quantity: number },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character equipment request payload',
-        );
-      },
-    );
-
-    test(
-      'Create Geralt With Invalid Payload',
-      { tag: ['@post', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.createCharacter(
-          {
-            name: '',
-            classId: 11,
-            speciesId: 1,
-            backgroundId: 1,
-            level: 1,
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character request payload',
-        );
-      },
-    );
-
-    test(
-      'Patch Geralt With Invalid Payload',
-      { tag: ['@post', '@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const updateResponse = await charactersClient.updateCharacter(
-          geraltCharacterId,
-          {
-            level: 0,
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(updateResponse);
-
-        const body: { error: string } = await updateResponse.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character request payload',
-        );
-      },
-    );
-
-    test(
-      'Create Geralt With Incomplete Scores',
-      { tag: ['@post', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.createCharacter(
-          buildGeraltWarlockPayload(
-            `Geralt Of Rivia Incomplete Scores ${Date.now()}`,
-            {
-              abilityScores: {
-                base: {
-                  STR: 15,
-                },
-                bonuses: {
-                  STR: 2,
-                },
-              } as unknown as CharacterAbilityScoresInput,
-            },
-          ),
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character request payload',
-        );
-      },
-    );
-
-    test(
-      'Put Geralt Scores With Base Above Creation Maximum',
-      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacterAbilityScores(
-          geraltCharacterId,
-          {
-            abilityScores: {
-              ...yenneferAbilityScoresInput,
-              base: {
-                ...yenneferAbilityScoresInput.base,
-                STR: 16,
-              },
-            },
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character ability scores payload: base.STR must be between 8 and 15 for character levels 1 to 3; received 16',
-        );
-      },
-    );
-
-    test(
-      'Put Geralt Scores With Base Below Creation Minimum',
-      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacterAbilityScores(
-          geraltCharacterId,
-          {
-            abilityScores: {
-              ...yenneferAbilityScoresInput,
-              base: {
-                ...yenneferAbilityScoresInput.base,
-                INT: 7,
-              },
-            },
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character ability scores payload: base.INT must be between 8 and 15 for character levels 1 to 3; received 7',
-        );
-      },
-    );
-
-    test(
-      'Put Geralt Scores With Bonus Above Maximum',
-      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacterAbilityScores(
-          geraltCharacterId,
-          {
-            abilityScores: {
-              ...yenneferAbilityScoresInput,
-              bonuses: {
-                ...yenneferAbilityScoresInput.bonuses,
-                WIS: 3,
-              },
-            },
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character ability scores payload: bonuses.WIS must be between 0 and 2; received 3',
-        );
-      },
-    );
-
-    test(
-      'Put Geralt Scores With Negative Bonus',
-      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacterAbilityScores(
-          geraltCharacterId,
-          {
-            abilityScores: {
-              ...yenneferAbilityScoresInput,
-              bonuses: {
-                ...yenneferAbilityScoresInput.bonuses,
-                WIS: -1,
-              },
-            },
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character ability scores payload: bonuses.WIS must be between 0 and 2; received -1',
-        );
-      },
-    );
-
-    test(
-      'Put Geralt Scores With Bonus Outside Background Choices',
-      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacterAbilityScores(
-          geraltCharacterId,
-          {
-            abilityScores: {
-              ...yenneferAbilityScoresInput,
-              bonuses: {
-                STR: 1,
-                DEX: 0,
-                CON: 0,
-                INT: 0,
-                WIS: 0,
-                CHA: 2,
-              },
-            },
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          "Invalid character ability scores payload: bonuses.STR is not allowed by this character's background. Allowed abilities: INT, WIS, CHA",
-        );
-      },
-    );
-
-    test(
-      'Put Geralt Scores With Bonus Total Mismatch',
-      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacterAbilityScores(
-          geraltCharacterId,
-          {
-            abilityScores: {
-              ...yenneferAbilityScoresInput,
-              bonuses: {
-                STR: 0,
-                DEX: 0,
-                CON: 0,
-                INT: 0,
-                WIS: 2,
-                CHA: 0,
-              },
-            },
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character ability scores payload: bonuses must match one of the background ability score rules (+2/+1 across different allowed abilities or +1 to each background-allowed ability); received WIS +2',
-        );
-      },
-    );
-
-    test(
-      'Put Geralt Scores With Incomplete Payload',
-      { tag: ['@put', '@negative', '@error', '@ability-scores'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacterAbilityScores(
-          geraltCharacterId,
-          {
-            abilityScores: {
-              base: {
-                STR: 15,
-              },
-              bonuses: yenneferAbilityScoresInput.bonuses,
-            } as unknown as CharacterAbilityScoresInput,
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character ability scores payload: abilityScores must contain exactly base and bonuses with integer STR, DEX, CON, INT, WIS, and CHA values',
-        );
-      },
-    );
-
-    test(
-      'Patch Geralt Scores With Base Above Creation Maximum',
-      { tag: ['@patch', '@negative', '@error', '@ability-scores'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacter(
-          geraltCharacterId,
-          {
-            abilityScores: {
-              ...yenneferAbilityScoresInput,
-              base: {
-                ...yenneferAbilityScoresInput.base,
-                STR: 16,
-              },
-            },
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character ability scores payload: base.STR must be between 8 and 15 for character levels 1 to 3; received 16',
-        );
-      },
-    );
-
-    test(
-      'Create Geralt With Base Above Creation Maximum',
-      { tag: ['@post', '@negative', '@error', '@ability-scores'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.createCharacter(
-          buildGeraltWarlockPayload(
-            `Geralt Of Rivia High Score ${Date.now()}`,
-            {
-              abilityScores: {
-                ...yenneferAbilityScoresInput,
-                base: {
-                  ...yenneferAbilityScoresInput.base,
-                  STR: 16,
-                },
-              },
-            },
-          ),
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character ability scores payload: base.STR must be between 8 and 15 for character levels 1 to 3; received 16',
-        );
-      },
-    );
-
-    test(
-      'Patch Geralt With Non-Numeric Score',
-      { tag: ['@post', '@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacter(
-          geraltCharacterId,
-          {
-            abilityScores: {
-              base: {
-                STR: '15',
-                DEX: 14,
-                CON: 13,
-                INT: 10,
-                WIS: 12,
-                CHA: 8,
-              },
-              bonuses: {
-                STR: 2,
-                DEX: 0,
-                CON: 1,
-                INT: 0,
-                WIS: 0,
-                CHA: 0,
-              },
-            } as unknown as CharacterAbilityScoresInput,
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character request payload',
-        );
-      },
-    );
-
-    test(
-      'Create Geralt With Incomplete Currency',
-      { tag: ['@post', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.createCharacter(
-          buildGeraltWarlockPayload(
-            `Geralt Of Rivia Incomplete Currency ${Date.now()}`,
-            {
-              currency: {
-                gp: 10,
-              } as unknown as CharacterCurrency,
-            },
-          ),
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character request payload',
-        );
-      },
-    );
-
-    test(
-      'Patch Geralt With Non-Numeric Currency',
-      { tag: ['@post', '@patch', '@negative', '@error'] },
-      async ({ request }) => {
-        const charactersClient = new CharactersClient(request);
-        const charactersAssert = new CharactersAssert();
-
-        const response = await charactersClient.updateCharacter(
-          geraltCharacterId,
-          {
-            currency: {
-              cp: 0,
-              sp: '5',
-              ep: 0,
-              gp: 12,
-              pp: 0,
-            } as unknown as CharacterCurrency,
-          },
-          authToken,
-        );
-
-        await charactersAssert.badRequest(response);
-
-        const body: { error: string } = await response.json();
-
-        await charactersAssert.validateErrorResponse(
-          body,
-          'Invalid character request payload',
         );
       },
     );

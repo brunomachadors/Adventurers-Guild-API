@@ -341,6 +341,11 @@ Response fields:
 - `speed`
 - `specialTraits`
 - `subspecies`
+- `grantedSkillProficiencies`
+- `speciesSkillProficiencyChoices`
+- `grantedToolProficiencies`
+- `grantedLanguageProficiencies`
+- `speciesChoices`
 
 Returns:
 
@@ -356,7 +361,7 @@ Requires bearer token.
 `status` currently follows this meaning:
 
 - `draft`: the character has not started yet and still has no class, species, or background
-- `in_progress`: the character has started, but still has unresolved required steps such as missing ability scores, pending equipment package choices, incomplete class skill choices, or incomplete required spell selection
+- `in_progress`: the character has started, but still has unresolved required steps such as missing ability scores, pending equipment package choices, incomplete class skill choices, incomplete species selections, or incomplete required spell selection
 - `complete`: the current creation flow is fully resolved
 
 List item fields:
@@ -387,14 +392,33 @@ Request body fields:
 - `abilityScores` optional
 - `currency` optional
 - `skillProficiencies` optional
+- `selectedSpeciesSkillProficiencies` optional
+- `selectedSpeciesChoices` optional
 
 If `abilityScores` is provided, it uses the same validation rules as `PUT /api/characters/{id}/ability-scores`: complete `base` and `bonuses` blocks, integer `STR`, `DEX`, `CON`, `INT`, `WIS`, and `CHA` values, level 1 to 3 base scores between `8` and `15`, bonuses between `0` and `2`, and background-compatible bonus choices.
 
 If `backgroundId` is provided, the background's fixed `skillProficiencies` are applied automatically to the created character.
 
+If `speciesId` is provided, the API can also accept species-specific selections:
+
+- `selectedSpeciesSkillProficiencies` for species that require one or more skill choices
+- `selectedSpeciesChoices` for structured species choices such as lineage, ancestry, or legacy
+
+Example species selection payload:
+
+```json
+{
+  "selectedSpeciesSkillProficiencies": ["Insight"],
+  "selectedSpeciesChoices": {
+    "elven-lineage": "high-elf"
+  }
+}
+```
+
 If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
 
 - background skills are auto-applied and do not count against the class choice limit
+- species-granted and selected species skills are also preserved outside the class choice limit
 - the number of chosen class skills must match `classDetails.skillProficiencyChoices.choose`
 - each chosen class skill must exist in `classDetails.skillProficiencyChoices.options`
 
@@ -424,6 +448,8 @@ Response fields:
 - `selectedSpells`
 - `currency`
 - `skillProficiencies`
+- `selectedSpeciesSkillProficiencies`
+- `selectedSpeciesChoices`
 - `abilityScoreRules`
 - `classDetails`
 - `speciesDetails`
@@ -461,6 +487,8 @@ Response fields:
 - `missingFields`
 - `pendingChoices`
 - `skillProficiencies`
+- `selectedSpeciesSkillProficiencies`
+- `selectedSpeciesChoices`
 - `abilityScores`
 - `abilityModifiers`
 - `armorClass`
@@ -502,15 +530,24 @@ Returns:
 
 `inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
 
-`pendingChoices` lists unresolved package-selection steps that still need to be completed through the dedicated equipment choice endpoints. It is currently used for `classEquipmentSelection` and `backgroundEquipmentSelection`.
+`pendingChoices` lists unresolved creation steps that still need to be completed before the character is fully resolved. It can currently include:
+
+- `classEquipmentSelection`
+- `backgroundEquipmentSelection`
+- `speciesSkillSelection`
+- `speciesChoiceSelection`
+
+`speciesSkillSelection` appears when the selected species requires one or more skill choices that have not been fully submitted yet.
+
+`speciesChoiceSelection` appears when the selected species requires a structural choice such as lineage, ancestry, or legacy and that choice has not been fully submitted yet.
 
 `status` follows the same meaning as the list endpoint:
 
 - `draft`: no class, species, or background has been selected yet
 - `in_progress`: the character has started, but still has unresolved required creation steps
-- `complete`: the current creation flow is resolved, including saved ability scores, no pending equipment package choices, complete class skill choices, and required spell selection for spellcasters
+- `complete`: the current creation flow is resolved, including saved ability scores, no pending equipment package choices, complete class skill choices, complete species selections, and required spell selection for spellcasters
 
-`skillProficiencies` contains the merged character skills currently saved on the sheet. Background skill proficiencies are auto-applied when a background is selected, while manually submitted `skillProficiencies` are validated as the class-choice portion of the selection.
+`skillProficiencies` contains the merged character skills currently saved on the sheet. The final list can include skills coming from background, species, and class. Background skill proficiencies are auto-applied when a background is selected, species skill selections are tracked separately in `selectedSpeciesSkillProficiencies`, and manually submitted `skillProficiencies` are validated as the class-choice portion of the selection.
 
 `spellcastingSummary` is derived from the character class spellcasting metadata, character level, resolved spellcasting ability modifier, and selected spells. For non-casters, `canCastSpells` is `false`, spellcasting ability values are `null`, and selected spell counts are `0`.
 
@@ -534,6 +571,8 @@ Accepted fields:
 - `abilityScores`
 - `currency`
 - `skillProficiencies`
+- `selectedSpeciesSkillProficiencies`
+- `selectedSpeciesChoices`
 
 If `abilityScores` is provided, it uses the same validation rules as `PUT /api/characters/{id}/ability-scores`. Sending `abilityScores: null` clears the saved scores.
 
@@ -543,9 +582,15 @@ If `backgroundId` changes, the API automatically refreshes the background-provid
 - fixed skills from the new background are applied
 - manual class skill choices are preserved when possible
 
+If `speciesId` changes, the API resets species-specific selections unless the same species is still selected. The update flow can accept:
+
+- `selectedSpeciesSkillProficiencies`
+- `selectedSpeciesChoices`
+
 If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
 
 - background skills do not count against the class choice limit
+- species-granted and selected species skills do not count against the class choice limit
 - the number of chosen class skills must match the class requirement
 - each chosen class skill must be allowed by the class
 
@@ -1012,7 +1057,11 @@ Character detail:
   "level": 1,
   "missingFields": [],
   "pendingChoices": [],
-  "skillProficiencies": ["Arcana", "History"],
+  "skillProficiencies": ["Arcana", "History", "Perception"],
+  "selectedSpeciesSkillProficiencies": ["Perception"],
+  "selectedSpeciesChoices": {
+    "elven-lineage": "high-elf"
+  },
   "abilityScores": {
     "base": {
       "STR": 8,
@@ -1203,7 +1252,7 @@ Character detail:
   "movement": {
     "baseSpeed": 30,
     "unit": "ft",
-    "sources": [{ "type": "species", "name": "Human", "value": 30 }]
+    "sources": [{ "type": "species", "name": "Elf", "value": 30 }]
   },
   "inventoryWeight": {
     "total": 2,
@@ -1345,10 +1394,32 @@ Character detail:
     "creatureType": "Humanoid",
     "size": "Medium",
     "speed": 30,
+    "grantedSkillProficiencies": [],
+    "speciesSkillProficiencyChoices": {
+      "choose": 1,
+      "options": ["Insight", "Perception", "Survival"]
+    },
+    "grantedToolProficiencies": [],
+    "grantedLanguageProficiencies": [],
     "specialTraits": [
       {
         "name": "Darkvision",
         "description": "You have Darkvision with a range of 60 feet."
+      }
+    ],
+    "speciesChoices": [
+      {
+        "key": "elven-lineage",
+        "label": "Elven Lineage",
+        "description": "Choose the elven lineage that shapes your magical heritage.",
+        "choose": 1,
+        "options": [
+          {
+            "name": "High Elf",
+            "slug": "high-elf",
+            "description": "An elf lineage with strong ties to arcane study and refined magical tradition."
+          }
+        ]
       }
     ]
   },
@@ -1648,10 +1719,29 @@ Species detail:
   "creatureType": "Humanoid",
   "size": "Medium",
   "speed": 30,
+  "grantedSkillProficiencies": [],
+  "speciesSkillProficiencyChoices": null,
+  "grantedToolProficiencies": [],
+  "grantedLanguageProficiencies": [],
   "specialTraits": [
     {
       "name": "Draconic Ancestry",
       "description": "You have a dragon ancestor, which grants you a Breath Weapon and damage resistance tied to that ancestry."
+    }
+  ],
+  "speciesChoices": [
+    {
+      "key": "draconic-ancestry",
+      "label": "Draconic Ancestry",
+      "description": "You have a dragon ancestor, which grants you a Breath Weapon and damage resistance tied to that ancestry.",
+      "choose": 1,
+      "options": [
+        {
+          "name": "Black Dragon Ancestry",
+          "slug": "black-dragon-ancestry",
+          "description": "A dragonborn ancestry tied to black dragons and acid damage."
+        }
+      ]
     }
   ],
   "subspecies": [

@@ -632,6 +632,8 @@ export class CharactersAssert {
       expect(character).toHaveProperty('selectedSpells');
       expect(character).toHaveProperty('currency');
       expect(character).toHaveProperty('skillProficiencies');
+      expect(character).toHaveProperty('selectedSpeciesSkillProficiencies');
+      expect(character).toHaveProperty('selectedSpeciesChoices');
       expect(character).toHaveProperty('abilityScoreRules');
       expect(character).toHaveProperty('classDetails');
       expect(character).toHaveProperty('speciesDetails');
@@ -685,6 +687,12 @@ export class CharactersAssert {
         character.currency === null || typeof character.currency === 'object',
       ).toBe(true);
       expect(Array.isArray(character.skillProficiencies)).toBe(true);
+      expect(Array.isArray(character.selectedSpeciesSkillProficiencies)).toBe(
+        true,
+      );
+      expect(typeof character.selectedSpeciesChoices).toBe('object');
+      expect(character.selectedSpeciesChoices).not.toBeNull();
+      expect(Array.isArray(character.selectedSpeciesChoices)).toBe(false);
       expect(
         character.abilityScoreRules === null ||
           typeof character.abilityScoreRules === 'object',
@@ -723,6 +731,27 @@ export class CharactersAssert {
         `Validate skill proficiency schema for ${skillProficiency}`,
         async () => {
           expect(typeof skillProficiency).toBe('string');
+        },
+      );
+    }
+
+    for (const skillProficiency of character.selectedSpeciesSkillProficiencies) {
+      await test.step(
+        `Validate species skill proficiency schema for ${skillProficiency}`,
+        async () => {
+          expect(typeof skillProficiency).toBe('string');
+        },
+      );
+    }
+
+    for (const [choiceKey, choiceValue] of Object.entries(
+      character.selectedSpeciesChoices,
+    )) {
+      await test.step(
+        `Validate species choice selection schema for ${choiceKey}`,
+        async () => {
+          expect(typeof choiceKey).toBe('string');
+          expect(typeof choiceValue).toBe('string');
         },
       );
     }
@@ -947,6 +976,11 @@ export class CharactersAssert {
         expect(speciesDetails).toHaveProperty('speed');
         expect(speciesDetails).toHaveProperty('specialTraits');
         expect(speciesDetails).toHaveProperty('subspecies');
+        expect(speciesDetails).toHaveProperty('grantedSkillProficiencies');
+        expect(speciesDetails).toHaveProperty('speciesSkillProficiencyChoices');
+        expect(speciesDetails).toHaveProperty('grantedToolProficiencies');
+        expect(speciesDetails).toHaveProperty('grantedLanguageProficiencies');
+        expect(speciesDetails).toHaveProperty('speciesChoices');
 
         expect(typeof speciesDetails.id).toBe('number');
         expect(typeof speciesDetails.name).toBe('string');
@@ -957,6 +991,14 @@ export class CharactersAssert {
         expect(typeof speciesDetails.speed).toBe('number');
         expect(Array.isArray(speciesDetails.specialTraits)).toBe(true);
         expect(Array.isArray(speciesDetails.subspecies)).toBe(true);
+        expect(Array.isArray(speciesDetails.grantedSkillProficiencies)).toBe(true);
+        expect(
+          speciesDetails.speciesSkillProficiencyChoices === null ||
+            typeof speciesDetails.speciesSkillProficiencyChoices === 'object',
+        ).toBe(true);
+        expect(Array.isArray(speciesDetails.grantedToolProficiencies)).toBe(true);
+        expect(Array.isArray(speciesDetails.grantedLanguageProficiencies)).toBe(true);
+        expect(Array.isArray(speciesDetails.speciesChoices)).toBe(true);
       },
     );
 
@@ -984,6 +1026,51 @@ export class CharactersAssert {
           expect(typeof subspecies.slug).toBe('string');
           expect(typeof subspecies.description).toBe('string');
           expect(Array.isArray(subspecies.specialTraits)).toBe(true);
+        },
+      );
+    }
+
+    if (speciesDetails.speciesSkillProficiencyChoices) {
+      const skillChoices = speciesDetails.speciesSkillProficiencyChoices;
+
+      await test.step(
+        `Validate species skill proficiency choices schema for ${speciesDetails.name}`,
+        async () => {
+          expect(skillChoices).toHaveProperty('choose');
+          expect(skillChoices).toHaveProperty('options');
+          expect(typeof skillChoices.choose).toBe('number');
+          expect(Array.isArray(skillChoices.options)).toBe(true);
+          expect(
+            skillChoices.options.every((option) => typeof option === 'string'),
+          ).toBe(true);
+        },
+      );
+    }
+
+    for (const speciesChoice of speciesDetails.speciesChoices) {
+      await test.step(
+        `Validate species choice schema for ${speciesDetails.name}: ${speciesChoice.label}`,
+        async () => {
+          expect(speciesChoice).toHaveProperty('key');
+          expect(speciesChoice).toHaveProperty('label');
+          expect(speciesChoice).toHaveProperty('description');
+          expect(speciesChoice).toHaveProperty('choose');
+          expect(speciesChoice).toHaveProperty('options');
+          expect(typeof speciesChoice.key).toBe('string');
+          expect(typeof speciesChoice.label).toBe('string');
+          expect(typeof speciesChoice.description).toBe('string');
+          expect(typeof speciesChoice.choose).toBe('number');
+          expect(Array.isArray(speciesChoice.options)).toBe(true);
+          expect(
+            speciesChoice.options.every(
+              (option) =>
+                typeof option === 'object' &&
+                option !== null &&
+                typeof option.name === 'string' &&
+                typeof option.slug === 'string' &&
+                typeof option.description === 'string',
+            ),
+          ).toBe(true);
         },
       );
     }
@@ -1925,6 +2012,26 @@ export class CharactersAssert {
   ) {
     await test.step('Validate Skill Proficiencies', async () => {
       expect(skillProficiencies).toEqual(expectedSkillProficiencies);
+    });
+  }
+
+  async validateSelectedSpeciesSkillProficiencies(
+    selectedSpeciesSkillProficiencies: CharacterResponseBody['selectedSpeciesSkillProficiencies'],
+    expectedSelectedSpeciesSkillProficiencies: string[],
+  ) {
+    await test.step('Validate Selected Species Skill Proficiencies', async () => {
+      expect(selectedSpeciesSkillProficiencies).toEqual(
+        expectedSelectedSpeciesSkillProficiencies,
+      );
+    });
+  }
+
+  async validateSelectedSpeciesChoices(
+    selectedSpeciesChoices: CharacterResponseBody['selectedSpeciesChoices'],
+    expectedSelectedSpeciesChoices: Record<string, string>,
+  ) {
+    await test.step('Validate Selected Species Choices', async () => {
+      expect(selectedSpeciesChoices).toEqual(expectedSelectedSpeciesChoices);
     });
   }
 

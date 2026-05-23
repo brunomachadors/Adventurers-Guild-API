@@ -2,7 +2,7 @@ openapi: 3.0.3
 
 info:
   title: Adventurers Guild API
-  version: 0.3.0
+  version: 0.4.0
   description: |
     Fantasy-themed API designed for backend testing, API automation, and contract validation practice.
 
@@ -1077,7 +1077,7 @@ paths:
         `status` currently follows this meaning:
 
         - `draft`: the character has not started yet and still has no class, species, or background
-        - `in_progress`: the character has started, but still has unresolved required steps such as missing ability scores, pending equipment package choices, incomplete class skill choices, or incomplete required spell selection
+        - `in_progress`: the character has started, but still has unresolved required steps such as missing ability scores, pending equipment package choices, incomplete class skill choices, incomplete species selections, or incomplete required spell selection
         - `complete`: the current creation flow is fully resolved
       security:
         - bearerAuth: []
@@ -1129,9 +1129,15 @@ paths:
 
         If `backgroundId` is provided, the background's fixed `skillProficiencies` are applied automatically to the created character.
 
+        If `speciesId` is provided, the API can also accept:
+
+        - `selectedSpeciesSkillProficiencies` for species that require skill choices
+        - `selectedSpeciesChoices` for structured species choices such as lineage, ancestry, or legacy
+
         If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
 
         - background skills are auto-applied and do not count against the class choice limit
+        - species-granted and selected species skills are also preserved outside the class choice limit
         - the number of chosen class skills must match `classDetails.skillProficiencyChoices.choose`
         - each chosen class skill must exist in `classDetails.skillProficiencyChoices.options`
       security:
@@ -1177,6 +1183,20 @@ paths:
                       INT: 2
                       WIS: 1
                       CHA: 0
+              withSpeciesSelections:
+                summary: Create character with species selections
+                value:
+                  name: Merien
+                  classId: 12
+                  speciesId: 3
+                  backgroundId: 13
+                  skillProficiencies:
+                    - Arcana
+                    - History
+                  selectedSpeciesSkillProficiencies:
+                    - Insight
+                  selectedSpeciesChoices:
+                    elven-lineage: high-elf
       responses:
         '201':
           description: Character created successfully
@@ -1231,6 +1251,8 @@ paths:
                 selectedSpells: []
                 currency: null
                 skillProficiencies: []
+                selectedSpeciesSkillProficiencies: []
+                selectedSpeciesChoices: {}
                 abilityScoreRules: null
                 classDetails: null
                 speciesDetails: null
@@ -1286,6 +1308,8 @@ paths:
         - `selectedSpells`
         - `currency`
         - `skillProficiencies`
+        - `selectedSpeciesSkillProficiencies`
+        - `selectedSpeciesChoices`
         - `abilityScoreRules`
         - `classDetails`
         - `speciesDetails`
@@ -1307,15 +1331,24 @@ paths:
 
         `inventoryWeight` is derived from character equipment rows with a non-null equipment weight. Each source uses `equipment.weight * quantity`; when the character has no weighted equipment, it returns `{ "total": 0, "unit": "lb", "sources": [] }`.
 
-        `pendingChoices` lists unresolved package-selection steps that still need to be completed through the dedicated equipment choice endpoints. It is currently used for `classEquipmentSelection` and `backgroundEquipmentSelection`.
+        `pendingChoices` lists unresolved creation steps that still need to be completed before the character is fully resolved. It can currently include:
+
+        - `classEquipmentSelection`
+        - `backgroundEquipmentSelection`
+        - `speciesSkillSelection`
+        - `speciesChoiceSelection`
+
+        `speciesSkillSelection` appears when the selected species requires one or more skill choices that have not been fully submitted yet.
+
+        `speciesChoiceSelection` appears when the selected species requires a structural choice such as lineage, ancestry, or legacy and that choice has not been fully submitted yet.
 
         `status` uses the following meaning:
 
         - `draft`: no class, species, or background has been selected yet
         - `in_progress`: the character has started, but still has unresolved required creation steps
-        - `complete`: the current creation flow is resolved, including saved ability scores, no pending equipment package choices, complete class skill choices, and required spell selection for spellcasters
+        - `complete`: the current creation flow is resolved, including saved ability scores, no pending equipment package choices, complete class skill choices, complete species selections, and required spell selection for spellcasters
 
-        `skillProficiencies` contains the merged character skills currently saved on the sheet. Background skill proficiencies are auto-applied when a background is selected, while manually submitted `skillProficiencies` are validated as the class-choice portion of the selection.
+        `skillProficiencies` contains the merged character skills currently saved on the sheet. The final list can include skills coming from background, species, and class. Background skill proficiencies are auto-applied when a background is selected, species skill selections are tracked separately in `selectedSpeciesSkillProficiencies`, and manually submitted `skillProficiencies` are validated as the class-choice portion of the selection.
 
         `spellcastingSummary` is derived from the character class spellcasting metadata, character level, resolved spellcasting ability modifier, and selected spells. For non-casters, `canCastSpells` is `false`, spellcasting ability values are `null`, and selected spell counts are `0`.
 
@@ -1346,6 +1379,11 @@ paths:
                 skillProficiencies:
                   - Arcana
                   - History
+                  - Perception
+                selectedSpeciesSkillProficiencies:
+                  - Perception
+                selectedSpeciesChoices:
+                  elven-lineage: high-elf
                 abilityScores:
                   base:
                     STR: 8
@@ -1518,7 +1556,7 @@ paths:
                   unit: ft
                   sources:
                     - type: species
-                      name: Human
+                      name: Elf
                       value: 30
                 inventoryWeight:
                   total: 2
@@ -1652,9 +1690,27 @@ paths:
                   creatureType: Humanoid
                   size: Medium
                   speed: 30
+                  grantedSkillProficiencies: []
+                  speciesSkillProficiencyChoices:
+                    choose: 1
+                    options:
+                      - Insight
+                      - Perception
+                      - Survival
+                  grantedToolProficiencies: []
+                  grantedLanguageProficiencies: []
                   specialTraits:
                     - name: Darkvision
                       description: You have Darkvision with a range of 60 feet.
+                  speciesChoices:
+                    - key: elven-lineage
+                      label: Elven Lineage
+                      description: Choose the elven lineage that shapes your magical heritage.
+                      choose: 1
+                      options:
+                        - name: High Elf
+                          slug: high-elf
+                          description: An elf lineage with strong ties to arcane study and refined magical tradition.
                   subspecies: []
                 backgroundDetails:
                   id: 13
@@ -1711,9 +1767,15 @@ paths:
         - fixed skills from the new background are applied
         - manual class skill choices are preserved when possible
 
+        If `speciesId` changes, the API resets species-specific selections unless the same species is still selected. The update flow can accept:
+
+        - `selectedSpeciesSkillProficiencies`
+        - `selectedSpeciesChoices`
+
         If `skillProficiencies` is provided, the API validates only the class-choice portion of the payload:
 
         - background skills do not count against the class choice limit
+        - species-granted and selected species skills do not count against the class choice limit
         - the number of chosen class skills must match the class requirement
         - each chosen class skill must be allowed by the class
       security:
@@ -3935,6 +3997,67 @@ components:
           items:
             $ref: '#/components/schemas/SpeciesTrait'
 
+    SpeciesSkillProficiencyChoices:
+      type: object
+      required:
+        - choose
+        - options
+      properties:
+        choose:
+          type: integer
+          example: 1
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Insight
+            - Perception
+            - Survival
+
+    SpeciesChoiceOption:
+      type: object
+      required:
+        - name
+        - slug
+        - description
+      properties:
+        name:
+          type: string
+          example: High Elf
+        slug:
+          type: string
+          example: high-elf
+        description:
+          type: string
+          example: A magical elven lineage with an arcane cantrip and additional arcane magic.
+
+    SpeciesChoice:
+      type: object
+      required:
+        - key
+        - label
+        - description
+        - choose
+        - options
+      properties:
+        key:
+          type: string
+          example: elven-lineage
+        label:
+          type: string
+          example: Elven Lineage
+        description:
+          type: string
+          example: Choose a lineage from the Elven Lineages table.
+        choose:
+          type: integer
+          example: 1
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeciesChoiceOption'
+
     SpeciesDetail:
       type: object
       required:
@@ -3947,6 +4070,11 @@ components:
         - speed
         - specialTraits
         - subspecies
+        - grantedSkillProficiencies
+        - speciesSkillProficiencyChoices
+        - grantedToolProficiencies
+        - grantedLanguageProficiencies
+        - speciesChoices
       properties:
         id:
           type: integer
@@ -3977,6 +4105,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SpeciesSubspecies'
+        grantedSkillProficiencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example: []
+        speciesSkillProficiencyChoices:
+          allOf:
+            - $ref: '#/components/schemas/SpeciesSkillProficiencyChoices'
+          nullable: true
+        grantedToolProficiencies:
+          type: array
+          items:
+            type: string
+          example: []
+        grantedLanguageProficiencies:
+          type: array
+          items:
+            type: string
+          example: []
+        speciesChoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpeciesChoice'
 
     CharacterStatus:
       type: string
@@ -3999,6 +4150,8 @@ components:
       enum:
         - classEquipmentSelection
         - backgroundEquipmentSelection
+        - speciesSkillSelection
+        - speciesChoiceSelection
       example: classEquipmentSelection
 
     CharacterListItem:
@@ -4778,6 +4931,18 @@ components:
           example:
             - Arcana
             - History
+        selectedSpeciesSkillProficiencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Insight
+        selectedSpeciesChoices:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            elven-lineage: high-elf
 
     CharacterUpdateRequestBody:
       type: object
@@ -4820,6 +4985,18 @@ components:
           example:
             - Arcana
             - History
+        selectedSpeciesSkillProficiencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Insight
+        selectedSpeciesChoices:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            elven-lineage: high-elf
 
     CharacterClassFeatureItem:
       type: object
@@ -4977,6 +5154,8 @@ components:
         - selectedSpells
         - currency
         - skillProficiencies
+        - selectedSpeciesSkillProficiencies
+        - selectedSpeciesChoices
         - abilityScoreRules
         - classDetails
         - speciesDetails
@@ -5074,6 +5253,18 @@ components:
           example:
             - Arcana
             - History
+        selectedSpeciesSkillProficiencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillName'
+          example:
+            - Perception
+        selectedSpeciesChoices:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            elven-lineage: high-elf
         abilityScoreRules:
           nullable: true
           allOf:

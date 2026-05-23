@@ -1,5 +1,7 @@
 import {
+  SpeciesChoice,
   SpeciesDetail,
+  SpeciesSkillProficiencyChoices,
   SpeciesListItem,
   SpeciesSubspecies,
   SpeciesTrait,
@@ -50,6 +52,11 @@ export class SpeciesAssert {
       expect(species).toHaveProperty('speed');
       expect(species).toHaveProperty('specialTraits');
       expect(species).toHaveProperty('subspecies');
+      expect(species).toHaveProperty('grantedSkillProficiencies');
+      expect(species).toHaveProperty('speciesSkillProficiencyChoices');
+      expect(species).toHaveProperty('grantedToolProficiencies');
+      expect(species).toHaveProperty('grantedLanguageProficiencies');
+      expect(species).toHaveProperty('speciesChoices');
 
       expect(typeof species.id).toBe('number');
       expect(typeof species.name).toBe('string');
@@ -60,6 +67,14 @@ export class SpeciesAssert {
       expect(typeof species.speed).toBe('number');
       expect(Array.isArray(species.specialTraits)).toBe(true);
       expect(Array.isArray(species.subspecies)).toBe(true);
+      expect(Array.isArray(species.grantedSkillProficiencies)).toBe(true);
+      expect(
+        species.speciesSkillProficiencyChoices === null ||
+          typeof species.speciesSkillProficiencyChoices === 'object',
+      ).toBe(true);
+      expect(Array.isArray(species.grantedToolProficiencies)).toBe(true);
+      expect(Array.isArray(species.grantedLanguageProficiencies)).toBe(true);
+      expect(Array.isArray(species.speciesChoices)).toBe(true);
     });
 
     for (const trait of species.specialTraits) {
@@ -97,6 +112,53 @@ export class SpeciesAssert {
           },
         );
       }
+    }
+
+    if (species.speciesSkillProficiencyChoices) {
+      const skillChoices = species.speciesSkillProficiencyChoices;
+
+      await test.step(
+        `Validate species skill proficiency choices schema for ${species.name}`,
+        async () => {
+          expect(skillChoices).toHaveProperty('choose');
+          expect(skillChoices).toHaveProperty('options');
+          expect(typeof skillChoices.choose).toBe('number');
+          expect(Array.isArray(skillChoices.options)).toBe(true);
+          expect(
+            skillChoices.options.every(
+              (option) => typeof option === 'string',
+            ),
+          ).toBe(true);
+        },
+      );
+    }
+
+    for (const speciesChoice of species.speciesChoices) {
+      await test.step(
+        `Validate species choice schema for ${species.name}: ${speciesChoice.label}`,
+        async () => {
+          expect(speciesChoice).toHaveProperty('key');
+          expect(speciesChoice).toHaveProperty('label');
+          expect(speciesChoice).toHaveProperty('description');
+          expect(speciesChoice).toHaveProperty('choose');
+          expect(speciesChoice).toHaveProperty('options');
+          expect(typeof speciesChoice.key).toBe('string');
+          expect(typeof speciesChoice.label).toBe('string');
+          expect(typeof speciesChoice.description).toBe('string');
+          expect(typeof speciesChoice.choose).toBe('number');
+          expect(Array.isArray(speciesChoice.options)).toBe(true);
+          expect(
+            speciesChoice.options.every(
+              (option) =>
+                typeof option === 'object' &&
+                option !== null &&
+                typeof option.name === 'string' &&
+                typeof option.slug === 'string' &&
+                typeof option.description === 'string',
+            ),
+          ).toBe(true);
+        },
+      );
     }
   }
 
@@ -176,6 +238,59 @@ export class SpeciesAssert {
     });
   }
 
+  async validateGrantedSkillProficiencies(
+    grantedSkillProficiencies: SpeciesDetail['grantedSkillProficiencies'],
+    expectedGrantedSkillProficiencies: SpeciesDetail['grantedSkillProficiencies'],
+  ) {
+    await test.step('Validate Granted Skill Proficiencies', async () => {
+      expect(grantedSkillProficiencies).toEqual(
+        expectedGrantedSkillProficiencies,
+      );
+    });
+  }
+
+  async validateSpeciesSkillProficiencyChoices(
+    speciesSkillProficiencyChoices: SpeciesSkillProficiencyChoices | null,
+    expectedSpeciesSkillProficiencyChoices: SpeciesSkillProficiencyChoices | null,
+  ) {
+    await test.step('Validate Species Skill Proficiency Choices', async () => {
+      expect(speciesSkillProficiencyChoices).toEqual(
+        expectedSpeciesSkillProficiencyChoices,
+      );
+    });
+  }
+
+  async validateGrantedToolProficiencies(
+    grantedToolProficiencies: SpeciesDetail['grantedToolProficiencies'],
+    expectedGrantedToolProficiencies: SpeciesDetail['grantedToolProficiencies'],
+  ) {
+    await test.step('Validate Granted Tool Proficiencies', async () => {
+      expect(grantedToolProficiencies).toEqual(
+        expectedGrantedToolProficiencies,
+      );
+    });
+  }
+
+  async validateGrantedLanguageProficiencies(
+    grantedLanguageProficiencies: SpeciesDetail['grantedLanguageProficiencies'],
+    expectedGrantedLanguageProficiencies: SpeciesDetail['grantedLanguageProficiencies'],
+  ) {
+    await test.step('Validate Granted Language Proficiencies', async () => {
+      expect(grantedLanguageProficiencies).toEqual(
+        expectedGrantedLanguageProficiencies,
+      );
+    });
+  }
+
+  async validateSpeciesChoices(
+    speciesChoices: SpeciesChoice[],
+    expectedSpeciesChoices: SpeciesChoice[],
+  ) {
+    await test.step('Validate Species Choices', async () => {
+      expect(speciesChoices).toEqual(expectedSpeciesChoices);
+    });
+  }
+
   async validateErrorMessage(error: string, expectedError: string) {
     await test.step('Validate Error Message', async () => {
       expect(error).toBe(expectedError);
@@ -217,6 +332,26 @@ export class SpeciesAssert {
     await this.validateSubspecies(
       actualSpecies.subspecies,
       expectedSpecies.subspecies,
+    );
+    await this.validateGrantedSkillProficiencies(
+      actualSpecies.grantedSkillProficiencies,
+      expectedSpecies.grantedSkillProficiencies,
+    );
+    await this.validateSpeciesSkillProficiencyChoices(
+      actualSpecies.speciesSkillProficiencyChoices,
+      expectedSpecies.speciesSkillProficiencyChoices,
+    );
+    await this.validateGrantedToolProficiencies(
+      actualSpecies.grantedToolProficiencies,
+      expectedSpecies.grantedToolProficiencies,
+    );
+    await this.validateGrantedLanguageProficiencies(
+      actualSpecies.grantedLanguageProficiencies,
+      expectedSpecies.grantedLanguageProficiencies,
+    );
+    await this.validateSpeciesChoices(
+      actualSpecies.speciesChoices,
+      expectedSpecies.speciesChoices,
     );
   }
 

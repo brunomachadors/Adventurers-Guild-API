@@ -40,6 +40,11 @@ import {
   getCharacterSpellcastingSummary,
   getCharacterSpellSlots,
 } from './character-spellcasting';
+import {
+  getSpeciesEffectiveSkillProficiencies,
+  getSpeciesPendingChoices,
+  parseSelectedSpeciesChoices,
+} from './character-species-selections';
 import { getSpellSelectionRule } from './character-spells';
 import { getCharacterWeaponAttacks } from './character-weapon-attacks';
 import { getSql } from './db';
@@ -91,7 +96,9 @@ export function getCharacterStatus(
     pendingChoices: CharacterPendingChoice[];
     classDetails: CharacterClassDetails | null;
     backgroundDetails: BackgroundDetail | null;
+    speciesDetails: SpeciesDetail | null;
     skillProficiencies: SkillName[];
+    selectedSpeciesSkillProficiencies: SkillName[];
     level: number;
     selectedSpells: CharacterSelectedSpellDetail[];
   },
@@ -105,7 +112,9 @@ export function getCharacterStatus(
     pendingChoices,
     classDetails,
     backgroundDetails,
+    speciesDetails,
     skillProficiencies,
+    selectedSpeciesSkillProficiencies,
     level,
     selectedSpells,
   } = params;
@@ -120,7 +129,9 @@ export function getCharacterStatus(
   const hasCompleteSkills = hasCompleteCharacterSkillProficiencies(
     classDetails,
     backgroundDetails,
+    speciesDetails,
     skillProficiencies,
+    selectedSpeciesSkillProficiencies,
   );
   const hasCompleteSpells = hasCompleteCharacterSpellSelection(
     classDetails,
@@ -154,6 +165,8 @@ export async function getCharacterComputedStatus(character: {
     | string
     | null;
   skillProficiencies?: SkillName[] | string | null;
+  selectedSpeciesSkillProficiencies?: SkillName[] | string | null;
+  selectedSpeciesChoices?: Record<string, string> | string | null;
 }): Promise<CharacterStatus> {
   const formattedCharacter = {
     id: toNumber(character.id),
@@ -170,12 +183,21 @@ export async function getCharacterComputedStatus(character: {
     skillProficiencies: parseSkillProficiencies(
       character.skillProficiencies ?? [],
     ),
+    selectedSpeciesSkillProficiencies: parseSkillProficiencies(
+      character.selectedSpeciesSkillProficiencies ?? [],
+    ),
+    selectedSpeciesChoices: parseSelectedSpeciesChoices(
+      character.selectedSpeciesChoices ?? {},
+    ),
   };
 
   const missingFields = getCharacterMissingFields(formattedCharacter);
   const classDetails = await getCharacterClassDetails(
     formattedCharacter.classId,
     formattedCharacter.level,
+  );
+  const speciesDetails = await getCharacterSpeciesDetails(
+    formattedCharacter.speciesId,
   );
   const backgroundDetails = await getCharacterBackgroundDetails(
     formattedCharacter.backgroundId,
@@ -187,9 +209,12 @@ export async function getCharacterComputedStatus(character: {
   );
   const pendingChoices = getCharacterPendingChoices(
     classDetails,
+    speciesDetails,
     backgroundDetails,
     await hasCharacterEquipment(formattedCharacter.id),
     resolvedEquipmentChoiceSources,
+    formattedCharacter.selectedSpeciesSkillProficiencies,
+    formattedCharacter.selectedSpeciesChoices,
   );
   const selectedSpells = await getCharacterSelectedSpellDetails(
     formattedCharacter.id,
@@ -204,7 +229,10 @@ export async function getCharacterComputedStatus(character: {
     pendingChoices,
     classDetails,
     backgroundDetails,
+    speciesDetails,
     skillProficiencies: formattedCharacter.skillProficiencies,
+    selectedSpeciesSkillProficiencies:
+      formattedCharacter.selectedSpeciesSkillProficiencies,
     level: formattedCharacter.level,
     selectedSpells,
   });
@@ -237,7 +265,9 @@ export async function updateStoredCharacterStatus(
       backgroundid,
       level,
       abilityscores,
-      skillproficiencies
+      skillproficiencies,
+      selectedspeciesskills,
+      selectedspecieschoices
     FROM characters
     WHERE id = ${characterId}
     LIMIT 1
@@ -256,6 +286,8 @@ export async function updateStoredCharacterStatus(
     level: character.level,
     abilityScores: character.abilityscores,
     skillProficiencies: character.skillproficiencies,
+    selectedSpeciesSkillProficiencies: character.selectedspeciesskills,
+    selectedSpeciesChoices: character.selectedspecieschoices,
   });
 
   await persistCharacterStatus(toNumber(character.id), status);
@@ -777,12 +809,20 @@ export async function getCharacterSkillProficienciesWithBackground(params: {
   providedSkillProficiencies?: SkillName[];
   previousBackgroundId: number | null;
   nextBackgroundId: number | null;
+  previousSpeciesDetails: SpeciesDetail | null;
+  nextSpeciesDetails: SpeciesDetail | null;
+  previousSelectedSpeciesSkillProficiencies: SkillName[];
+  selectedSpeciesSkillProficiencies: SkillName[];
 }): Promise<SkillName[]> {
   const {
     existingSkillProficiencies,
     providedSkillProficiencies,
     previousBackgroundId,
     nextBackgroundId,
+    previousSpeciesDetails,
+    nextSpeciesDetails,
+    previousSelectedSpeciesSkillProficiencies,
+    selectedSpeciesSkillProficiencies,
   } = params;
   const existingSkills = parseSkillProficiencies(existingSkillProficiencies ?? []);
   const previousBackgroundSkills =
@@ -792,18 +832,37 @@ export async function getCharacterSkillProficienciesWithBackground(params: {
       ? previousBackgroundSkills
       : await getBackgroundSkillProficiencies(nextBackgroundId);
   const previousBackgroundSkillSet = new Set(previousBackgroundSkills);
+  const previousSpeciesSkillSet = new Set(
+    getSpeciesEffectiveSkillProficiencies(
+      previousSpeciesDetails,
+      previousSelectedSpeciesSkillProficiencies,
+    ),
+  );
   const preservedManualSkills = existingSkills.filter(
-    (skill) => !previousBackgroundSkillSet.has(skill),
+    (skill) =>
+      !previousBackgroundSkillSet.has(skill) &&
+      !previousSpeciesSkillSet.has(skill),
   );
   const nextManualSkills = providedSkillProficiencies ?? preservedManualSkills;
+  const nextSpeciesSkills = getSpeciesEffectiveSkillProficiencies(
+    nextSpeciesDetails,
+    selectedSpeciesSkillProficiencies,
+  );
 
-  return [...new Set([...nextBackgroundSkills, ...nextManualSkills])];
+  return [
+    ...new Set([
+      ...nextBackgroundSkills,
+      ...nextSpeciesSkills,
+      ...nextManualSkills,
+    ]),
+  ];
 }
 
 export async function validateCharacterSkillProficienciesInput(params: {
   classId: number | null;
   backgroundId: number | null;
   skillProficiencies: SkillName[];
+  speciesAutoSkillProficiencies?: SkillName[];
 }): Promise<
   | {
       valid: true;
@@ -814,14 +873,22 @@ export async function validateCharacterSkillProficienciesInput(params: {
       error: string;
     }
 > {
-  const { classId, backgroundId, skillProficiencies } = params;
+  const {
+    classId,
+    backgroundId,
+    skillProficiencies,
+    speciesAutoSkillProficiencies = [],
+  } = params;
   const normalizedSkillProficiencies = [...new Set(skillProficiencies)];
   const backgroundSkills = await getBackgroundSkillProficiencies(backgroundId);
-  const backgroundSkillSet = new Set(backgroundSkills);
+  const autoSkillSet = new Set([
+    ...backgroundSkills,
+    ...speciesAutoSkillProficiencies,
+  ]);
   const classSkillChoices =
     await getCharacterClassSkillProficiencyChoices(classId);
   const manualSkillChoices = normalizedSkillProficiencies.filter(
-    (skill) => !backgroundSkillSet.has(skill),
+    (skill) => !autoSkillSet.has(skill),
   );
 
   if (classSkillChoices.choose === 0) {
@@ -867,17 +934,25 @@ export async function validateCharacterSkillProficienciesInput(params: {
 function hasCompleteCharacterSkillProficiencies(
   classDetails: CharacterClassDetails | null,
   backgroundDetails: BackgroundDetail | null,
+  speciesDetails: SpeciesDetail | null,
   skillProficiencies: SkillName[],
+  selectedSpeciesSkillProficiencies: SkillName[],
 ): boolean {
   if (!classDetails) {
     return false;
   }
 
-  const backgroundSkillSet = new Set(
-    parseSkillProficiencies(backgroundDetails?.skillProficiencies ?? []),
+  const autoSkillSet = new Set(
+    [
+      ...parseSkillProficiencies(backgroundDetails?.skillProficiencies ?? []),
+      ...getSpeciesEffectiveSkillProficiencies(
+        speciesDetails,
+        selectedSpeciesSkillProficiencies,
+      ),
+    ],
   );
   const manualSkillChoices = skillProficiencies.filter(
-    (skill) => !backgroundSkillSet.has(skill),
+    (skill) => !autoSkillSet.has(skill),
   );
   const { choose, options } = classDetails.skillProficiencyChoices;
 
@@ -931,15 +1006,22 @@ async function hasCharacterEquipment(characterId: number): Promise<boolean> {
 
 function getCharacterPendingChoices(
   classDetails: CharacterClassDetails | null,
+  speciesDetails: SpeciesDetail | null,
   backgroundDetails: BackgroundDetail | null,
   hasEquipment: boolean,
   resolvedEquipmentChoiceSources: Set<'class' | 'background'>,
+  selectedSpeciesSkillProficiencies: SkillName[],
+  selectedSpeciesChoices: Record<string, string>,
 ): CharacterPendingChoice[] {
-  if (hasEquipment && resolvedEquipmentChoiceSources.size === 0) {
-    return [];
-  }
+  const pendingChoices = getSpeciesPendingChoices(
+    speciesDetails,
+    selectedSpeciesSkillProficiencies,
+    selectedSpeciesChoices,
+  );
 
-  const pendingChoices: CharacterPendingChoice[] = [];
+  if (hasEquipment && resolvedEquipmentChoiceSources.size === 0) {
+    return pendingChoices;
+  }
 
   if (
     classDetails &&
@@ -997,6 +1079,8 @@ export async function formatCharacterResponse(character: {
     | null;
   currency?: CharacterCurrency | string | null;
   skillProficiencies?: SkillName[] | string | null;
+  selectedSpeciesSkillProficiencies?: SkillName[] | string | null;
+  selectedSpeciesChoices?: Record<string, string> | string | null;
 }): Promise<CharacterResponseBody> {
   const formattedCharacter = {
     id: toNumber(character.id),
@@ -1014,6 +1098,12 @@ export async function formatCharacterResponse(character: {
     currency: parseCharacterCurrency(character.currency ?? null),
     skillProficiencies: parseSkillProficiencies(
       character.skillProficiencies ?? [],
+    ),
+    selectedSpeciesSkillProficiencies: parseSkillProficiencies(
+      character.selectedSpeciesSkillProficiencies ?? [],
+    ),
+    selectedSpeciesChoices: parseSelectedSpeciesChoices(
+      character.selectedSpeciesChoices ?? {},
     ),
   };
 
@@ -1038,9 +1128,12 @@ export async function formatCharacterResponse(character: {
   );
   const pendingChoices = getCharacterPendingChoices(
     classDetails,
+    speciesDetails,
     backgroundDetails,
     await hasCharacterEquipment(formattedCharacter.id),
     resolvedEquipmentChoiceSources,
+    formattedCharacter.selectedSpeciesSkillProficiencies,
+    formattedCharacter.selectedSpeciesChoices,
   );
   const abilityScoreRules = getCharacterAbilityScoreRules(
     backgroundDetails,
@@ -1108,7 +1201,10 @@ export async function formatCharacterResponse(character: {
       pendingChoices,
       classDetails,
       backgroundDetails,
+      speciesDetails,
       skillProficiencies: formattedCharacter.skillProficiencies,
+      selectedSpeciesSkillProficiencies:
+        formattedCharacter.selectedSpeciesSkillProficiencies,
       level: formattedCharacter.level,
       selectedSpells,
     }),
@@ -1129,6 +1225,9 @@ export async function formatCharacterResponse(character: {
     selectedSpells,
     currency: formattedCharacter.currency,
     skillProficiencies: formattedCharacter.skillProficiencies,
+    selectedSpeciesSkillProficiencies:
+      formattedCharacter.selectedSpeciesSkillProficiencies,
+    selectedSpeciesChoices: formattedCharacter.selectedSpeciesChoices,
     skills,
     abilityScoreRules,
     classDetails,
@@ -1143,7 +1242,7 @@ export async function getOwnedCharacterResponse(
 ): Promise<CharacterResponseBody | null> {
   const sql = getSql();
   const characterRows = await sql`
-    SELECT id, name, status, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+    SELECT id, name, status, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies, selectedspeciesskills, selectedspecieschoices
     FROM characters
     WHERE id = ${characterId}
       AND ownerid = ${ownerId}
@@ -1165,6 +1264,8 @@ export async function getOwnedCharacterResponse(
     abilityScores: character.abilityscores,
     currency: character.currency,
     skillProficiencies: character.skillproficiencies,
+    selectedSpeciesSkillProficiencies: character.selectedspeciesskills,
+    selectedSpeciesChoices: character.selectedspecieschoices,
   });
 
   if (character.status !== responseBody.status) {
@@ -1179,7 +1280,7 @@ export async function getCharacterResponse(
 ): Promise<CharacterResponseBody | null> {
   const sql = getSql();
   const characterRows = await sql`
-    SELECT id, name, status, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+    SELECT id, name, status, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies, selectedspeciesskills, selectedspecieschoices
     FROM characters
     WHERE id = ${characterId}
     LIMIT 1
@@ -1200,6 +1301,8 @@ export async function getCharacterResponse(
     abilityScores: character.abilityscores,
     currency: character.currency,
     skillProficiencies: character.skillproficiencies,
+    selectedSpeciesSkillProficiencies: character.selectedspeciesskills,
+    selectedSpeciesChoices: character.selectedspecieschoices,
   });
 
   if (character.status !== responseBody.status) {
