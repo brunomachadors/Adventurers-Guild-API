@@ -35,6 +35,12 @@ export class CharactersClient {
     });
   }
 
+  async getCharacterChoices(id: number, token?: string): Promise<APIResponse> {
+    return this.request.get(`/api/characters/${id}/choices`, {
+      headers: this.buildAuthHeaders(token),
+    });
+  }
+
   async getCharacterSpellOptions(
     id: number,
     token?: string,
