@@ -1,4 +1,5 @@
 import { SpeciesDetail, SpeciesListItem } from '@/app/types/species';
+import { SKILL_NAMES } from '@/app/types/skill';
 
 export const expectedSpeciesList: SpeciesListItem[] = [
   { id: 1, name: 'Dragonborn' },
@@ -13,8 +14,38 @@ export const expectedSpeciesList: SpeciesListItem[] = [
   { id: 10, name: 'Aasimar' },
 ];
 
+function withSpeciesCreationDefaults(
+  species: Omit<
+    SpeciesDetail,
+    | 'grantedSkillProficiencies'
+    | 'speciesSkillProficiencyChoices'
+    | 'grantedToolProficiencies'
+    | 'grantedLanguageProficiencies'
+    | 'speciesChoices'
+  > &
+    Partial<
+      Pick<
+        SpeciesDetail,
+        | 'grantedSkillProficiencies'
+        | 'speciesSkillProficiencyChoices'
+        | 'grantedToolProficiencies'
+        | 'grantedLanguageProficiencies'
+        | 'speciesChoices'
+      >
+    >,
+): SpeciesDetail {
+  return {
+    grantedSkillProficiencies: [],
+    speciesSkillProficiencyChoices: null,
+    grantedToolProficiencies: [],
+    grantedLanguageProficiencies: [],
+    speciesChoices: [],
+    ...species,
+  };
+}
+
 export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
-  dragonborn: {
+  dragonborn: withSpeciesCreationDefaults({
     id: 1,
     name: 'Dragonborn',
     slug: 'dragonborn',
@@ -170,8 +201,79 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
         ],
       },
     ],
-  },
-  dwarf: {
+    speciesChoices: [
+      {
+        key: 'draconic-ancestry',
+        label: 'Draconic Ancestry',
+        description:
+          'Your lineage stems from a dragon progenitor. Choose the kind of dragon from the Draconic Ancestors table. Your choice affects your Breath Weapon and Damage Resistance traits as well as your appearance.',
+        choose: 1,
+        options: [
+          {
+            name: 'Black Dragon Ancestry',
+            slug: 'black-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to black dragons and acid damage.',
+          },
+          {
+            name: 'Blue Dragon Ancestry',
+            slug: 'blue-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to blue dragons and lightning damage.',
+          },
+          {
+            name: 'Brass Dragon Ancestry',
+            slug: 'brass-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to brass dragons and fire damage.',
+          },
+          {
+            name: 'Bronze Dragon Ancestry',
+            slug: 'bronze-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to bronze dragons and lightning damage.',
+          },
+          {
+            name: 'Copper Dragon Ancestry',
+            slug: 'copper-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to copper dragons and acid damage.',
+          },
+          {
+            name: 'Gold Dragon Ancestry',
+            slug: 'gold-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to gold dragons and fire damage.',
+          },
+          {
+            name: 'Green Dragon Ancestry',
+            slug: 'green-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to green dragons and poison damage.',
+          },
+          {
+            name: 'Red Dragon Ancestry',
+            slug: 'red-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to red dragons and fire damage.',
+          },
+          {
+            name: 'Silver Dragon Ancestry',
+            slug: 'silver-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to silver dragons and cold damage.',
+          },
+          {
+            name: 'White Dragon Ancestry',
+            slug: 'white-dragon-ancestry',
+            description:
+              'A dragonborn ancestry tied to white dragons and cold damage.',
+          },
+        ],
+      },
+    ],
+  }),
+  dwarf: withSpeciesCreationDefaults({
     id: 2,
     name: 'Dwarf',
     slug: 'dwarf',
@@ -202,8 +304,8 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
       },
     ],
     subspecies: [],
-  },
-  elf: {
+  }),
+  elf: withSpeciesCreationDefaults({
     id: 3,
     name: 'Elf',
     slug: 'elf',
@@ -311,8 +413,53 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
         ],
       },
     ],
-  },
-  gnome: {
+    speciesSkillProficiencyChoices: {
+      choose: 1,
+      options: ['Insight', 'Perception', 'Survival'],
+    },
+    speciesChoices: [
+      {
+        key: 'elven-lineage',
+        label: 'Elven Lineage',
+        description:
+          'Choose a lineage from the Elven Lineages table. You gain the level 1 benefit, and at character levels 3 and 5 you learn additional spells tied to that lineage.',
+        choose: 1,
+        options: [
+          {
+            name: 'Drow',
+            slug: 'drow',
+            description:
+              'An elven lineage associated with the Underdark and innate magic.',
+          },
+          {
+            name: 'High Elf',
+            slug: 'high-elf',
+            description:
+              'A magical elven lineage with an arcane cantrip and additional arcane magic.',
+          },
+          {
+            name: 'Wood Elf',
+            slug: 'wood-elf',
+            description:
+              'An elven lineage tied to forests, speed, and primal magic.',
+          },
+          {
+            name: 'Lorwyn Elf',
+            slug: 'lorwyn-elf',
+            description:
+              'An elven lineage tied to primal magic from Lorwyn.',
+          },
+          {
+            name: 'Shadowmoor Elf',
+            slug: 'shadowmoor-elf',
+            description:
+              'An elven lineage tied to shadowed magic from Shadowmoor.',
+          },
+        ],
+      },
+    ],
+  }),
+  gnome: withSpeciesCreationDefaults({
     id: 4,
     name: 'Gnome',
     slug: 'gnome',
@@ -367,8 +514,31 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
         ],
       },
     ],
-  },
-  goliath: {
+    speciesChoices: [
+      {
+        key: 'gnomish-lineage',
+        label: 'Gnomish Lineage',
+        description:
+          'You are part of a lineage that grants you supernatural abilities. Choose Forest Gnome or Rock Gnome. Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait; choose the ability when you select the lineage.',
+        choose: 1,
+        options: [
+          {
+            name: 'Forest Gnome',
+            slug: 'forest-gnome',
+            description:
+              'A gnomish lineage connected to forests, illusion, and communication with animals.',
+          },
+          {
+            name: 'Rock Gnome',
+            slug: 'rock-gnome',
+            description:
+              'A gnomish lineage connected to invention, mending, and small clockwork devices.',
+          },
+        ],
+      },
+    ],
+  }),
+  goliath: withSpeciesCreationDefaults({
     id: 5,
     name: 'Goliath',
     slug: 'goliath',
@@ -473,8 +643,55 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
         ],
       },
     ],
-  },
-  halfling: {
+    speciesChoices: [
+      {
+        key: 'giant-ancestry',
+        label: 'Giant Ancestry',
+        description:
+          'You are descended from Giants. Choose one supernatural boon from your ancestry. You can use the chosen benefit a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest.',
+        choose: 1,
+        options: [
+          {
+            name: 'Cloud Giant Ancestry',
+            slug: 'cloud-giant-ancestry',
+            description:
+              'A goliath ancestry tied to cloud giants and magical movement.',
+          },
+          {
+            name: 'Fire Giant Ancestry',
+            slug: 'fire-giant-ancestry',
+            description:
+              'A goliath ancestry tied to fire giants and fiery attacks.',
+          },
+          {
+            name: 'Frost Giant Ancestry',
+            slug: 'frost-giant-ancestry',
+            description:
+              'A goliath ancestry tied to frost giants and chilling strikes.',
+          },
+          {
+            name: 'Hill Giant Ancestry',
+            slug: 'hill-giant-ancestry',
+            description:
+              'A goliath ancestry tied to hill giants and knocking foes down.',
+          },
+          {
+            name: 'Stone Giant Ancestry',
+            slug: 'stone-giant-ancestry',
+            description:
+              'A goliath ancestry tied to stone giants and supernatural endurance.',
+          },
+          {
+            name: 'Storm Giant Ancestry',
+            slug: 'storm-giant-ancestry',
+            description:
+              'A goliath ancestry tied to storm giants and retaliatory thunder.',
+          },
+        ],
+      },
+    ],
+  }),
+  halfling: withSpeciesCreationDefaults({
     id: 6,
     name: 'Halfling',
     slug: 'halfling',
@@ -506,8 +723,8 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
       },
     ],
     subspecies: [],
-  },
-  human: {
+  }),
+  human: withSpeciesCreationDefaults({
     id: 7,
     name: 'Human',
     slug: 'human',
@@ -531,8 +748,12 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
       },
     ],
     subspecies: [],
-  },
-  orc: {
+    speciesSkillProficiencyChoices: {
+      choose: 1,
+      options: [...SKILL_NAMES],
+    },
+  }),
+  orc: withSpeciesCreationDefaults({
     id: 8,
     name: 'Orc',
     slug: 'orc',
@@ -558,8 +779,8 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
       },
     ],
     subspecies: [],
-  },
-  tiefling: {
+  }),
+  tiefling: withSpeciesCreationDefaults({
     id: 9,
     name: 'Tiefling',
     slug: 'tiefling',
@@ -648,8 +869,37 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
         ],
       },
     ],
-  },
-  aasimar: {
+    speciesChoices: [
+      {
+        key: 'fiendish-legacy',
+        label: 'Fiendish Legacy',
+        description:
+          'You are the recipient of a legacy that grants you supernatural abilities. Choose a legacy from the Fiendish Legacies table. You gain the level 1 benefit of the chosen legacy. When you reach character levels 3 and 5, you learn a higher-level spell shown for that legacy. You always have that spell prepared, can cast it once without a spell slot, regain that use when you finish a Long Rest, and can also cast it using spell slots of the appropriate level. Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait, chosen when you select the legacy.',
+        choose: 1,
+        options: [
+          {
+            name: 'Abyssal Legacy',
+            slug: 'abyssal-legacy',
+            description:
+              'A tiefling legacy touched by the Abyss, Pandemonium, and Carceri, often associated with demonic ancestry.',
+          },
+          {
+            name: 'Chthonic Legacy',
+            slug: 'chthonic-legacy',
+            description:
+              'A tiefling legacy touched by Carceri, Gehenna, and Hades, associated with neutral evil fiendish ancestry.',
+          },
+          {
+            name: 'Infernal Legacy',
+            slug: 'infernal-legacy',
+            description:
+              'A tiefling legacy connected to Gehenna, the Nine Hells, and Acheron, often associated with devilish ancestry.',
+          },
+        ],
+      },
+    ],
+  }),
+  aasimar: withSpeciesCreationDefaults({
     id: 10,
     name: 'Aasimar',
     slug: 'aasimar',
@@ -695,5 +945,5 @@ export const expectedDetailedSpecies: Record<string, SpeciesDetail> = {
       },
     ],
     subspecies: [],
-  },
+  }),
 };

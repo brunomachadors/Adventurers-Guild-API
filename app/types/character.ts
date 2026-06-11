@@ -15,7 +15,9 @@ export type CharacterMissingField =
 
 export type CharacterPendingChoice =
   | 'classEquipmentSelection'
-  | 'backgroundEquipmentSelection';
+  | 'backgroundEquipmentSelection'
+  | 'speciesSkillSelection'
+  | 'speciesChoiceSelection';
 
 export interface CharacterClassFeatureItem {
   name: string;
@@ -270,6 +272,8 @@ export interface CharacterCreateRequestBody {
   abilityScores?: CharacterAbilityScoresInput | null;
   currency?: CharacterCurrency | null;
   skillProficiencies?: SkillName[];
+  selectedSpeciesSkillProficiencies?: SkillName[];
+  selectedSpeciesChoices?: Record<string, string>;
 }
 
 export interface CharacterUpdateRequestBody {
@@ -281,6 +285,8 @@ export interface CharacterUpdateRequestBody {
   abilityScores?: CharacterAbilityScoresInput | null;
   currency?: CharacterCurrency | null;
   skillProficiencies?: SkillName[];
+  selectedSpeciesSkillProficiencies?: SkillName[];
+  selectedSpeciesChoices?: Record<string, string>;
 }
 
 export interface CharacterListItem {
@@ -315,6 +321,8 @@ export interface CharacterResponseBody {
   selectedSpells: CharacterSelectedSpellDetail[];
   currency: CharacterCurrency | null;
   skillProficiencies: SkillName[];
+  selectedSpeciesSkillProficiencies: SkillName[];
+  selectedSpeciesChoices: Record<string, string>;
   skills: CharacterSkillItem[];
   abilityScoreRules: CharacterAbilityScoreRules | null;
   classDetails?: CharacterClassDetails | null;

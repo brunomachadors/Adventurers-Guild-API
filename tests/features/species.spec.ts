@@ -43,6 +43,20 @@ test.describe('Species API - List', { tag: ['@species', '@list'] }, () => {
 });
 
 test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
+  const structuredSpeciesCases = [
+    'dragonborn',
+    'elf',
+    'gnome',
+    'goliath',
+    'human',
+    'tiefling',
+  ] as const;
+  const speciesWithoutStructuredCreationRules = [
+    'dwarf',
+    'orc',
+    'aasimar',
+  ] as const;
+
   test('Validate Schema', { tag: ['@get', '@schema'] }, async ({ request }) => {
     const speciesClient = new SpeciesClient(request);
     const speciesAssert = new SpeciesAssert();
@@ -108,6 +122,86 @@ test.describe('Species API - Detail', { tag: ['@species', '@detail'] }, () => {
         const body: SpeciesDetail = await response.json();
 
         await speciesAssert.validateSpeciesDetail(body, expectedSpecies);
+      },
+    );
+  }
+
+  for (const identifier of structuredSpeciesCases) {
+    test(
+      `Validate Structured Creation Fields - ${expectedDetailedSpecies[identifier].name}`,
+      { tag: ['@get', '@data', '@creation-fields'] },
+      async ({ request }) => {
+        const speciesClient = new SpeciesClient(request);
+        const speciesAssert = new SpeciesAssert();
+        const expectedSpecies = expectedDetailedSpecies[identifier];
+
+        const response = await speciesClient.getSpeciesDetail(identifier);
+
+        await speciesAssert.success(response);
+
+        const body: SpeciesDetail = await response.json();
+
+        await speciesAssert.validateDetailSchema(body);
+        await speciesAssert.validateGrantedSkillProficiencies(
+          body.grantedSkillProficiencies,
+          expectedSpecies.grantedSkillProficiencies,
+        );
+        await speciesAssert.validateSpeciesSkillProficiencyChoices(
+          body.speciesSkillProficiencyChoices,
+          expectedSpecies.speciesSkillProficiencyChoices,
+        );
+        await speciesAssert.validateGrantedToolProficiencies(
+          body.grantedToolProficiencies,
+          expectedSpecies.grantedToolProficiencies,
+        );
+        await speciesAssert.validateGrantedLanguageProficiencies(
+          body.grantedLanguageProficiencies,
+          expectedSpecies.grantedLanguageProficiencies,
+        );
+        await speciesAssert.validateSpeciesChoices(
+          body.speciesChoices,
+          expectedSpecies.speciesChoices,
+        );
+      },
+    );
+  }
+
+  for (const identifier of speciesWithoutStructuredCreationRules) {
+    test(
+      `Validate Default Structured Creation Fields - ${expectedDetailedSpecies[identifier].name}`,
+      { tag: ['@get', '@data', '@creation-fields'] },
+      async ({ request }) => {
+        const speciesClient = new SpeciesClient(request);
+        const speciesAssert = new SpeciesAssert();
+        const expectedSpecies = expectedDetailedSpecies[identifier];
+
+        const response = await speciesClient.getSpeciesDetail(identifier);
+
+        await speciesAssert.success(response);
+
+        const body: SpeciesDetail = await response.json();
+
+        await speciesAssert.validateDetailSchema(body);
+        await speciesAssert.validateGrantedSkillProficiencies(
+          body.grantedSkillProficiencies,
+          expectedSpecies.grantedSkillProficiencies,
+        );
+        await speciesAssert.validateSpeciesSkillProficiencyChoices(
+          body.speciesSkillProficiencyChoices,
+          expectedSpecies.speciesSkillProficiencyChoices,
+        );
+        await speciesAssert.validateGrantedToolProficiencies(
+          body.grantedToolProficiencies,
+          expectedSpecies.grantedToolProficiencies,
+        );
+        await speciesAssert.validateGrantedLanguageProficiencies(
+          body.grantedLanguageProficiencies,
+          expectedSpecies.grantedLanguageProficiencies,
+        );
+        await speciesAssert.validateSpeciesChoices(
+          body.speciesChoices,
+          expectedSpecies.speciesChoices,
+        );
       },
     );
   }

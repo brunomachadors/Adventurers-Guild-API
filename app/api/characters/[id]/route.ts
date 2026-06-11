@@ -8,16 +8,23 @@ import {
   formatCharacterResponse,
   getCharacterResponse,
   getCharacterSkillProficienciesWithBackground,
+  getCharacterSpeciesDetails,
   isCharacterAbilityScoresOrNull,
   isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
   persistCharacterStatus,
+  parseSkillProficiencies,
   isSkillProficiencies,
   serializeCharacterAbilityScoresInput,
   serializeCharacterCurrency,
   serializeSkillProficiencies,
   validateCharacterSkillProficienciesInput,
 } from '@/app/lib/characters';
+import {
+  parseSelectedSpeciesChoices,
+  serializeSelectedSpeciesChoices,
+  validateCharacterSpeciesSelections,
+} from '@/app/lib/character-species-selections';
 import { getSql } from '@/app/lib/db';
 import { CharacterUpdateRequestBody } from '@/app/types/character';
 import { NextResponse } from 'next/server';
@@ -44,7 +51,16 @@ function isCharacterUpdateRequestBody(
       isCharacterAbilityScoresOrNull(value.abilityScores)) &&
     (!('currency' in value) || isCharacterCurrencyOrNull(value.currency)) &&
     (!('skillProficiencies' in value) ||
-      isSkillProficiencies(value.skillProficiencies))
+      isSkillProficiencies(value.skillProficiencies)) &&
+    (!('selectedSpeciesSkillProficiencies' in value) ||
+      isSkillProficiencies(value.selectedSpeciesSkillProficiencies)) &&
+    (!('selectedSpeciesChoices' in value) ||
+      (typeof value.selectedSpeciesChoices === 'object' &&
+        value.selectedSpeciesChoices !== null &&
+        !Array.isArray(value.selectedSpeciesChoices) &&
+        Object.values(value.selectedSpeciesChoices).every(
+          (entry) => typeof entry === 'string',
+        )))
   );
 }
 
@@ -102,7 +118,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
     const sql = getSql();
     const existingRows = await sql`
-      SELECT id, name, status, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+      SELECT id, name, status, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies, selectedspeciesskills, selectedspecieschoices
       FROM characters
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
@@ -137,6 +153,12 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       body.backgroundId !== undefined
         ? body.backgroundId
         : existingCharacter.backgroundid;
+    const previousSpeciesDetails = await getCharacterSpeciesDetails(
+      existingCharacter.speciesid === null ? null : Number(existingCharacter.speciesid),
+    );
+    const nextSpeciesDetails = await getCharacterSpeciesDetails(
+      nextSpeciesId === null ? null : Number(nextSpeciesId),
+    );
     const nextLevel =
       body.level !== undefined ? body.level : Number(existingCharacter.level);
     let nextAbilityScores = existingCharacter.abilityscores;
@@ -171,6 +193,31 @@ export async function PATCH(request: Request, { params }: RouteContext) {
           ? null
           : serializeCharacterCurrency(body.currency)
         : existingCharacter.currency;
+    const nextSelectedSpeciesSkillProficiencies =
+      body.selectedSpeciesSkillProficiencies !== undefined
+        ? body.selectedSpeciesSkillProficiencies
+        : nextSpeciesId === existingCharacter.speciesid
+          ? existingCharacter.selectedspeciesskills
+          : [];
+    const nextSelectedSpeciesChoices =
+      body.selectedSpeciesChoices !== undefined
+        ? parseSelectedSpeciesChoices(body.selectedSpeciesChoices)
+        : nextSpeciesId === existingCharacter.speciesid
+          ? parseSelectedSpeciesChoices(existingCharacter.selectedspecieschoices)
+          : {};
+    const speciesSelectionResult = validateCharacterSpeciesSelections(
+      nextSpeciesDetails,
+      parseSkillProficiencies(nextSelectedSpeciesSkillProficiencies),
+      nextSelectedSpeciesChoices,
+    );
+
+    if (!speciesSelectionResult.valid) {
+      return NextResponse.json(
+        { error: speciesSelectionResult.error },
+        { status: 400 },
+      );
+    }
+
     let providedSkillProficiencies = body.skillProficiencies;
 
     if (body.skillProficiencies !== undefined) {
@@ -178,6 +225,10 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         classId: nextClassId,
         backgroundId: nextBackgroundId,
         skillProficiencies: body.skillProficiencies,
+        speciesAutoSkillProficiencies: [
+          ...(nextSpeciesDetails?.grantedSkillProficiencies ?? []),
+          ...speciesSelectionResult.selectedSpeciesSkillProficiencies,
+        ],
       });
 
       if (!validationResult.valid) {
@@ -196,7 +247,21 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         providedSkillProficiencies,
         previousBackgroundId: existingCharacter.backgroundid,
         nextBackgroundId: nextBackgroundId,
+        previousSpeciesDetails,
+        nextSpeciesDetails,
+        previousSelectedSpeciesSkillProficiencies: parseSkillProficiencies(
+          existingCharacter.selectedspeciesskills,
+        ),
+        selectedSpeciesSkillProficiencies:
+          speciesSelectionResult.selectedSpeciesSkillProficiencies,
       }),
+    );
+    const serializedSelectedSpeciesSkillProficiencies =
+      serializeSkillProficiencies(
+        speciesSelectionResult.selectedSpeciesSkillProficiencies,
+      );
+    const serializedSelectedSpeciesChoices = serializeSelectedSpeciesChoices(
+      speciesSelectionResult.selectedSpeciesChoices,
     );
     const shouldClearEquipmentChoiceRecords =
       nextClassId !== existingCharacter.classid ||
@@ -214,10 +279,12 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         abilityscores = ${nextAbilityScores},
         currency = ${nextCurrency},
         skillproficiencies = ${nextSkillProficiencies}::jsonb,
+        selectedspeciesskills = ${serializedSelectedSpeciesSkillProficiencies}::jsonb,
+        selectedspecieschoices = ${serializedSelectedSpeciesChoices}::jsonb,
         updatedat = NOW()
       WHERE id = ${parsedId}
         AND ownerid = ${authenticatedOwner.id}
-      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies, selectedspeciesskills, selectedspecieschoices
     `;
 
     if (shouldClearEquipmentChoiceRecords) {
@@ -235,6 +302,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       abilityScores: character.abilityscores,
       currency: character.currency,
       skillProficiencies: character.skillproficiencies,
+      selectedSpeciesSkillProficiencies: character.selectedspeciesskills,
+      selectedSpeciesChoices: character.selectedspecieschoices,
     });
 
     await persistCharacterStatus(responseBody.id, responseBody.status);

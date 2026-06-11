@@ -1,8 +1,12 @@
 import {
+  SpeciesChoice,
+  SpeciesChoiceOption,
   SpeciesDetail,
+  SpeciesSkillProficiencyChoices,
   SpeciesSubspecies,
   SpeciesTrait,
 } from '@/app/types/species';
+import { SKILL_NAMES, SkillName } from '@/app/types/skill';
 
 type SpeciesRow = Record<string, unknown>;
 
@@ -56,6 +60,96 @@ function isSpeciesSubspecies(value: unknown): value is SpeciesSubspecies {
   );
 }
 
+function slugifyValue(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function getGrantedSkillProficiencies(): SkillName[] {
+  return [];
+}
+
+function getSpeciesSkillProficiencyChoices(
+  speciesSlug: string,
+): SpeciesSkillProficiencyChoices | null {
+  switch (speciesSlug) {
+    case 'elf':
+      return {
+        choose: 1,
+        options: ['Insight', 'Perception', 'Survival'],
+      };
+    case 'human':
+      return {
+        choose: 1,
+        options: [...SKILL_NAMES],
+      };
+    default:
+      return null;
+  }
+}
+
+function getGrantedToolProficiencies(): string[] {
+  return [];
+}
+
+function getGrantedLanguageProficiencies(): string[] {
+  return [];
+}
+
+function getSpeciesChoiceTrait(
+  specialTraits: SpeciesTrait[],
+  subspecies: SpeciesSubspecies[],
+): SpeciesTrait | null {
+  if (subspecies.length === 0) {
+    return null;
+  }
+
+  return (
+    specialTraits.find((trait) =>
+      /(lineage|ancestry|legacy)/i.test(trait.name),
+    ) ??
+    specialTraits.find((trait) =>
+      /(choose|select)/i.test(trait.description),
+    ) ??
+    null
+  );
+}
+
+function buildSpeciesChoiceOptions(
+  subspecies: SpeciesSubspecies[],
+): SpeciesChoiceOption[] {
+  return subspecies.map((subspeciesItem) => ({
+    name: subspeciesItem.name,
+    slug: subspeciesItem.slug,
+    description: subspeciesItem.description,
+  }));
+}
+
+function getSpeciesChoices(
+  specialTraits: SpeciesTrait[],
+  subspecies: SpeciesSubspecies[],
+): SpeciesChoice[] {
+  const choiceTrait = getSpeciesChoiceTrait(specialTraits, subspecies);
+
+  if (!choiceTrait) {
+    return [];
+  }
+
+  return [
+    {
+      key: slugifyValue(choiceTrait.name),
+      label: choiceTrait.name,
+      description: choiceTrait.description,
+      choose: 1,
+      options: buildSpeciesChoiceOptions(subspecies),
+    },
+  ];
+}
+
 export function parseSubspecies(value: unknown): SpeciesSubspecies[] {
   let parsed = value;
 
@@ -82,15 +176,24 @@ export function parseSubspecies(value: unknown): SpeciesSubspecies[] {
 }
 
 export function formatSpeciesDetail(speciesItem: SpeciesRow): SpeciesDetail {
+  const slug = toString(speciesItem.slug);
+  const specialTraits = parseSpecialTraits(speciesItem.specialtraits);
+  const subspecies = parseSubspecies(speciesItem.subspecies);
+
   return {
     id: toNumber(speciesItem.id),
     name: toString(speciesItem.name),
-    slug: toString(speciesItem.slug),
+    slug,
     description: toString(speciesItem.description),
     creatureType: toString(speciesItem.creaturetype),
     size: toString(speciesItem.size),
     speed: toNumber(speciesItem.speed),
-    specialTraits: parseSpecialTraits(speciesItem.specialtraits),
-    subspecies: parseSubspecies(speciesItem.subspecies),
+    specialTraits,
+    subspecies,
+    grantedSkillProficiencies: getGrantedSkillProficiencies(),
+    speciesSkillProficiencyChoices: getSpeciesSkillProficiencyChoices(slug),
+    grantedToolProficiencies: getGrantedToolProficiencies(),
+    grantedLanguageProficiencies: getGrantedLanguageProficiencies(),
+    speciesChoices: getSpeciesChoices(specialTraits, subspecies),
   };
 }

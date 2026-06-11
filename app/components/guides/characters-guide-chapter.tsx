@@ -18,6 +18,7 @@ type CharacterTicketId =
   | 'detail'
   | 'add-class'
   | 'add-specie'
+  | 'species-selections'
   | 'add-background'
   | 'skills'
   | 'class-equipment-choice'
@@ -53,6 +54,7 @@ const characterFlowTicketOrder: CharacterTicketId[] = [
   'draft',
   'add-class',
   'add-specie',
+  'species-selections',
   'add-background',
   'attributes',
   'skills',
@@ -94,6 +96,14 @@ const characterCreationSteps = [
   },
   {
     step: '4',
+    title: 'Species selections',
+    method: 'PATCH',
+    endpoint: '/api/characters/{id}',
+    note: 'Resolve speciesSkillSelection and speciesChoiceSelection from the structured speciesDetails rules.',
+    expectedStatus: 'in_progress',
+  },
+  {
+    step: '5',
     title: 'Background',
     method: 'PATCH',
     endpoint: '/api/characters/{id}',
@@ -101,7 +111,7 @@ const characterCreationSteps = [
     expectedStatus: 'in_progress',
   },
   {
-    step: '5',
+    step: '6',
     title: 'Attributes options',
     method: 'GET',
     endpoint: '/api/characters/{id}/ability-score-options',
@@ -109,7 +119,7 @@ const characterCreationSteps = [
     expectedStatus: 'in_progress',
   },
   {
-    step: '6',
+    step: '7',
     title: 'Attributes save',
     method: 'PUT',
     endpoint: '/api/characters/{id}/ability-scores',
@@ -117,7 +127,7 @@ const characterCreationSteps = [
     expectedStatus: 'in_progress',
   },
   {
-    step: '7',
+    step: '8',
     title: 'Skills',
     method: 'PATCH',
     endpoint: '/api/characters/{id}',
@@ -125,7 +135,7 @@ const characterCreationSteps = [
     expectedStatus: 'in_progress',
   },
   {
-    step: '8',
+    step: '9',
     title: 'Class equipment',
     method: 'POST',
     endpoint: '/api/characters/{id}/equipment/class-choice',
@@ -133,7 +143,7 @@ const characterCreationSteps = [
     expectedStatus: 'in_progress',
   },
   {
-    step: '9',
+    step: '10',
     title: 'Background equipment',
     method: 'POST',
     endpoint: '/api/characters/{id}/equipment/background-choice',
@@ -141,7 +151,7 @@ const characterCreationSteps = [
     expectedStatus: 'in_progress',
   },
   {
-    step: '10',
+    step: '11',
     title: 'Spell options',
     method: 'GET',
     endpoint: '/api/characters/{id}/spell-options',
@@ -149,7 +159,7 @@ const characterCreationSteps = [
     expectedStatus: 'in_progress',
   },
   {
-    step: '11',
+    step: '12',
     title: 'Spell selection',
     method: 'GET',
     endpoint: '/api/characters/{id}/spell-selection',
@@ -157,7 +167,7 @@ const characterCreationSteps = [
     expectedStatus: 'in_progress',
   },
   {
-    step: '12',
+    step: '13',
     title: 'Spell save',
     method: 'PUT',
     endpoint: '/api/characters/{id}/spells',
@@ -165,7 +175,7 @@ const characterCreationSteps = [
     expectedStatus: 'complete',
   },
   {
-    step: '13',
+    step: '14',
     title: 'Review',
     method: 'GET',
     endpoint: '/api/characters/{id}',
@@ -184,7 +194,7 @@ const characterTickets: CharacterTicket[] = [
       {
         label: 'Recommended order',
         value:
-          'Name, Class, Species, Background, Attributes, Skills, Equipment, Spells, Review.',
+          'Name, Class, Species, Species selections, Background, Attributes, Skills, Equipment, Spells, Review.',
       },
       {
         label: 'Use missingFields',
@@ -194,7 +204,12 @@ const characterTickets: CharacterTicket[] = [
       {
         label: 'Use pendingChoices',
         value:
-          'After the base draft is filled, use pendingChoices to continue equipment selection.',
+          'After the base draft is filled, use pendingChoices to continue species, equipment, and spell selection.',
+      },
+      {
+        label: 'Use speciesDetails',
+        value:
+          'Render species choices from speciesSkillProficiencyChoices and speciesChoices.',
       },
       {
         label: 'Use spellcastingSummary',
@@ -217,7 +232,13 @@ const characterTickets: CharacterTicket[] = [
         name: 'pendingChoices',
         type: 'string[]',
         description:
-          'Open equipment decisions that still need user input after the base character is defined.',
+          'Open species or equipment decisions that still need user input after the base character is defined.',
+      },
+      {
+        name: 'speciesDetails',
+        type: 'object | null',
+        description:
+          'Contains speciesSkillProficiencyChoices and speciesChoices, which define the species selection UI.',
       },
       {
         name: 'spellcastingSummary.canCastSpells',
@@ -240,12 +261,13 @@ const characterTickets: CharacterTicket[] = [
           '1. Create a draft with the character name.',
           '2. Choose a class.',
           '3. Choose a species.',
-          '4. Choose a background.',
-          '5. Read ability-score-options and submit ability-scores.',
-          '6. Choose extra skill proficiencies when needed.',
-          '7. Resolve class and background equipment choices.',
-          '8. If the class can cast spells, choose spells.',
-          '9. Review the final detail response.',
+          '4. Resolve species skill and lineage choices when pendingChoices asks for them.',
+          '5. Choose a background.',
+          '6. Read ability-score-options and submit ability-scores.',
+          '7. Choose extra class skill proficiencies when needed.',
+          '8. Resolve class and background equipment choices.',
+          '9. If the class can cast spells, choose spells.',
+          '10. Review the final detail response.',
         ],
       },
       {
@@ -257,9 +279,28 @@ const characterTickets: CharacterTicket[] = [
           status: 'in_progress',
           missingFields: [],
           pendingChoices: [
+            'speciesSkillSelection',
+            'speciesChoiceSelection',
             'classEquipmentSelection',
             'backgroundEquipmentSelection',
           ],
+          speciesDetails: {
+            speciesSkillProficiencyChoices: {
+              choose: 1,
+              options: ['Arcana', 'History', 'Insight', 'Perception'],
+            },
+            speciesChoices: [
+              {
+                key: 'elven-lineage',
+                label: 'Elven Lineage',
+                choose: 1,
+                options: [
+                  { name: 'High Elf', slug: 'high-elf' },
+                  { name: 'Wood Elf', slug: 'wood-elf' },
+                ],
+              },
+            ],
+          },
           spellcastingSummary: {
             canCastSpells: true,
             ability: 'INT',
@@ -467,7 +508,7 @@ const characterTickets: CharacterTicket[] = [
   },
   {
     id: 'detail',
-    kicker: 'Step 13',
+    kicker: 'Step 14',
     title: 'Review',
     detailsTitle: 'Requiriments',
     details: [
@@ -515,6 +556,24 @@ const characterTickets: CharacterTicket[] = [
         type: 'string[]',
         description: 'Shows which important setup fields are still missing.',
       },
+      {
+        name: 'pendingChoices',
+        type: 'string[]',
+        description:
+          'Includes unresolved equipment, spell, and species selection steps. A character is complete only when these are resolved.',
+      },
+      {
+        name: 'selectedSpeciesSkillProficiencies',
+        type: 'string[]',
+        description:
+          'Saved species skill choices returned with the character detail.',
+      },
+      {
+        name: 'selectedSpeciesChoices',
+        type: 'Record<string, string>',
+        description:
+          'Saved species lineage, ancestry, or legacy choices returned with the character detail.',
+      },
     ],
     responseExamples: [
       {
@@ -537,6 +596,10 @@ const characterTickets: CharacterTicket[] = [
           level: 1,
           missingFields: [],
           pendingChoices: [],
+          selectedSpeciesSkillProficiencies: ['Insight'],
+          selectedSpeciesChoices: {
+            'elven-lineage': 'high-elf',
+          },
           abilityScores: {
             final: {
               STR: 8,
@@ -698,10 +761,26 @@ const characterTickets: CharacterTicket[] = [
           backgroundId: null,
           level: 1,
           missingFields: ['backgroundId'],
+          pendingChoices: ['speciesSkillSelection', 'speciesChoiceSelection'],
           speciesDetails: {
             id: 3,
             name: 'Elf',
             slug: 'elf',
+            speciesSkillProficiencyChoices: {
+              choose: 1,
+              options: ['Arcana', 'History', 'Insight', 'Perception'],
+            },
+            speciesChoices: [
+              {
+                key: 'elven-lineage',
+                label: 'Elven Lineage',
+                choose: 1,
+                options: [
+                  { name: 'High Elf', slug: 'high-elf' },
+                  { name: 'Wood Elf', slug: 'wood-elf' },
+                ],
+              },
+            ],
           },
           movement: {
             baseSpeed: 30,
@@ -719,8 +798,111 @@ const characterTickets: CharacterTicket[] = [
     ],
   },
   {
-    id: 'add-background',
+    id: 'species-selections',
     kicker: 'Step 4',
+    title: 'Species selections',
+    detailsTitle: 'Requiriments',
+    details: [
+      {
+        label: 'Valid token',
+        value: 'Required to update the character.',
+      },
+      {
+        label: 'Request type',
+        value: 'PATCH',
+      },
+      {
+        label: 'When to show',
+        value:
+          'Show this step when pendingChoices includes speciesSkillSelection or speciesChoiceSelection.',
+      },
+      {
+        label: 'Rules source',
+        value:
+          'Use speciesDetails.speciesSkillProficiencyChoices and speciesDetails.speciesChoices.',
+      },
+    ],
+    responseHeading: 'Expected return',
+    responseSubheading: 'Response contract',
+    responseDescription:
+      'Species selections are saved through PATCH /api/characters/{id}. Do not infer them from trait text. Use pendingChoices only as the signal that the UI is still required, and use the structured speciesDetails rules to render the available choices.',
+    responseFields: [
+      {
+        name: 'selectedSpeciesSkillProficiencies',
+        type: 'string[]',
+        description:
+          'Species skill choices selected by the user, separate from class skill choices.',
+      },
+      {
+        name: 'selectedSpeciesChoices',
+        type: 'Record<string, string>',
+        description:
+          'Structured species choices keyed by lineage, ancestry, or legacy key.',
+      },
+      {
+        name: 'pendingChoices',
+        type: 'string[]',
+        description:
+          'Includes speciesSkillSelection or speciesChoiceSelection until the species choices are resolved.',
+      },
+      {
+        name: 'speciesDetails.speciesSkillProficiencyChoices',
+        type: 'object | null',
+        description:
+          'Defines how many species skills must be chosen and which skills are available.',
+      },
+      {
+        name: 'speciesDetails.speciesChoices',
+        type: 'object[]',
+        description:
+          'Structured choice groups such as elven-lineage, draconic-ancestry, gnomish-lineage, giant-ancestry, or fiendish-legacy.',
+      },
+    ],
+    responseExamples: [
+      {
+        label: 'Request body',
+        status: 'PATCH /api/characters/{id}',
+        payload: {
+          selectedSpeciesSkillProficiencies: ['Insight'],
+          selectedSpeciesChoices: {
+            'elven-lineage': 'high-elf',
+          },
+        },
+      },
+      {
+        label: 'Updated character',
+        status: '200 OK',
+        payload: {
+          id: 101,
+          status: 'in_progress',
+          pendingChoices: [
+            'classEquipmentSelection',
+            'backgroundEquipmentSelection',
+          ],
+          selectedSpeciesSkillProficiencies: ['Insight'],
+          selectedSpeciesChoices: {
+            'elven-lineage': 'high-elf',
+          },
+          speciesDetails: {
+            speciesSkillProficiencyChoices: {
+              choose: 1,
+              options: ['Arcana', 'History', 'Insight', 'Perception'],
+            },
+            speciesChoices: [
+              {
+                key: 'elven-lineage',
+                label: 'Elven Lineage',
+                choose: 1,
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: 'add-background',
+    kicker: 'Step 5',
     title: 'Background',
     detailsTitle: 'Requiriments',
     details: [
@@ -819,7 +1001,7 @@ const characterTickets: CharacterTicket[] = [
   },
   {
     id: 'skills',
-    kicker: 'Step 7',
+    kicker: 'Step 8',
     title: 'Skills',
     detailsTitle: 'Requiriments',
     details: [
@@ -834,13 +1016,13 @@ const characterTickets: CharacterTicket[] = [
       {
         label: 'How to guide',
         value:
-          'Use classDetails.skillProficiencyChoices and backgroundDetails.skillProficiencies to explain which skills are fixed and which still need a choice.',
+          'Use classDetails.skillProficiencyChoices, backgroundDetails.skillProficiencies, and selectedSpeciesSkillProficiencies to explain which skills are fixed and which class skills still need a choice.',
       },
     ],
     responseHeading: 'Expected return',
     responseSubheading: 'Response contract',
     responseDescription:
-      'Skill selection is part of the main character update route. The frontend can use class details and background details to explain how many skills the user must choose and which proficiencies are already granted.',
+      'Class skill selection is part of the main character update route. The frontend can use class, background, and species details to explain how many class skills the user must choose and which proficiencies are already granted.',
     responseFields: [
       {
         name: 'skillProficiencies',
@@ -859,6 +1041,12 @@ const characterTickets: CharacterTicket[] = [
         type: 'string[]',
         description:
           'Background skills that are already granted before class choices are added.',
+      },
+      {
+        name: 'selectedSpeciesSkillProficiencies',
+        type: 'string[]',
+        description:
+          'Species skills already selected by the user. Do not count them as unresolved class skill choices.',
       },
       {
         name: 'skills',
@@ -907,7 +1095,7 @@ const characterTickets: CharacterTicket[] = [
   },
   {
     id: 'class-equipment-choice',
-    kicker: 'Step 8',
+    kicker: 'Step 9',
     title: 'Class equipment',
     detailsTitle: 'Requiriments',
     details: [
@@ -997,7 +1185,7 @@ const characterTickets: CharacterTicket[] = [
   },
   {
     id: 'background-equipment-choice',
-    kicker: 'Step 9',
+    kicker: 'Step 10',
     title: 'Background equipment',
     detailsTitle: 'Requiriments',
     details: [
@@ -1257,7 +1445,7 @@ const characterTickets: CharacterTicket[] = [
   },
   {
     id: 'spell',
-    kicker: 'Steps 10 to 12',
+    kicker: 'Steps 11 to 13',
     title: 'Spell',
     detailsTitle: 'Requiriments',
     details: [
@@ -1390,7 +1578,7 @@ const characterTickets: CharacterTicket[] = [
   },
   {
     id: 'attributes',
-    kicker: 'Steps 5 and 6',
+    kicker: 'Steps 6 and 7',
     title: 'Attributes',
     detailsTitle: 'Requiriments',
     details: [

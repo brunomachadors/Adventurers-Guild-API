@@ -138,6 +138,8 @@ export const apiResources: ApiResource[] = [
       'pendingChoices',
       'currency',
       'skillProficiencies',
+      'selectedSpeciesSkillProficiencies',
+      'selectedSpeciesChoices',
       'abilityScoreRules',
       'classDetails',
       'speciesDetails',
@@ -160,6 +162,8 @@ export const apiResources: ApiResource[] = [
       'selectedSpells',
       'currency',
       'skillProficiencies',
+      'selectedSpeciesSkillProficiencies',
+      'selectedSpeciesChoices',
       'equipment',
     ],
     previewEndpoints: [

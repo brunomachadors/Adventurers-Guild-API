@@ -6,6 +6,7 @@ import {
 import {
   formatCharacterResponse,
   getCharacterSkillProficienciesWithBackground,
+  getCharacterSpeciesDetails,
   isCharacterAbilityScoresOrNull,
   isCharacterCurrencyOrNull,
   isNullablePositiveInteger,
@@ -16,6 +17,11 @@ import {
   serializeSkillProficiencies,
   validateCharacterSkillProficienciesInput,
 } from '@/app/lib/characters';
+import {
+  parseSelectedSpeciesChoices,
+  serializeSelectedSpeciesChoices,
+  validateCharacterSpeciesSelections,
+} from '@/app/lib/character-species-selections';
 import { getSql } from '@/app/lib/db';
 import {
   CharacterAbilityScoresInput,
@@ -41,7 +47,16 @@ function isCharacterCreateRequestBody(
       isCharacterAbilityScoresOrNull(value.abilityScores)) &&
     (!('currency' in value) || isCharacterCurrencyOrNull(value.currency)) &&
     (!('skillProficiencies' in value) ||
-      isSkillProficiencies(value.skillProficiencies))
+      isSkillProficiencies(value.skillProficiencies)) &&
+    (!('selectedSpeciesSkillProficiencies' in value) ||
+      isSkillProficiencies(value.selectedSpeciesSkillProficiencies)) &&
+    (!('selectedSpeciesChoices' in value) ||
+      (typeof value.selectedSpeciesChoices === 'object' &&
+        value.selectedSpeciesChoices !== null &&
+        !Array.isArray(value.selectedSpeciesChoices) &&
+        Object.values(value.selectedSpeciesChoices).every(
+          (entry) => typeof entry === 'string',
+        )))
   );
 }
 
@@ -138,6 +153,7 @@ export async function POST(request: Request) {
     const speciesId = body.speciesId ?? null;
     const backgroundId = body.backgroundId ?? null;
     const level = body.level ?? 1;
+    const speciesDetails = await getCharacterSpeciesDetails(speciesId);
     let abilityScores: CharacterAbilityScoresInput | null = null;
 
     if (body.abilityScores !== undefined && body.abilityScores !== null) {
@@ -164,6 +180,19 @@ export async function POST(request: Request) {
       body.currency === undefined || body.currency === null
         ? null
         : serializeCharacterCurrency(body.currency);
+    const speciesSelectionResult = validateCharacterSpeciesSelections(
+      speciesDetails,
+      body.selectedSpeciesSkillProficiencies ?? [],
+      parseSelectedSpeciesChoices(body.selectedSpeciesChoices ?? {}),
+    );
+
+    if (!speciesSelectionResult.valid) {
+      return NextResponse.json(
+        { error: speciesSelectionResult.error },
+        { status: 400 },
+      );
+    }
+
     let providedSkillProficiencies = body.skillProficiencies;
 
     if (body.skillProficiencies !== undefined) {
@@ -171,6 +200,10 @@ export async function POST(request: Request) {
         classId,
         backgroundId,
         skillProficiencies: body.skillProficiencies,
+        speciesAutoSkillProficiencies: [
+          ...(speciesDetails?.grantedSkillProficiencies ?? []),
+          ...speciesSelectionResult.selectedSpeciesSkillProficiencies,
+        ],
       });
 
       if (!validationResult.valid) {
@@ -189,7 +222,18 @@ export async function POST(request: Request) {
         providedSkillProficiencies,
         previousBackgroundId: null,
         nextBackgroundId: backgroundId,
+        previousSpeciesDetails: null,
+        nextSpeciesDetails: speciesDetails,
+        previousSelectedSpeciesSkillProficiencies: [],
+        selectedSpeciesSkillProficiencies:
+          speciesSelectionResult.selectedSpeciesSkillProficiencies,
       }),
+    );
+    const selectedSpeciesSkillProficiencies = serializeSkillProficiencies(
+      speciesSelectionResult.selectedSpeciesSkillProficiencies,
+    );
+    const selectedSpeciesChoices = serializeSelectedSpeciesChoices(
+      speciesSelectionResult.selectedSpeciesChoices,
     );
     const status = 'draft';
 
@@ -205,7 +249,9 @@ export async function POST(request: Request) {
         level,
         abilityscores,
         currency,
-        skillproficiencies
+        skillproficiencies,
+        selectedspeciesskills,
+        selectedspecieschoices
       )
       VALUES (
         ${authenticatedOwner.id},
@@ -217,9 +263,11 @@ export async function POST(request: Request) {
         ${level},
         ${abilityScores},
         ${currency},
-        ${skillProficiencies}::jsonb
+        ${skillProficiencies}::jsonb,
+        ${selectedSpeciesSkillProficiencies}::jsonb,
+        ${selectedSpeciesChoices}::jsonb
       )
-      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies
+      RETURNING id, name, classid, speciesid, backgroundid, level, abilityscores, currency, skillproficiencies, selectedspeciesskills, selectedspecieschoices
     `;
 
     const character = characterRows[0];
@@ -233,6 +281,8 @@ export async function POST(request: Request) {
       abilityScores: character.abilityscores,
       currency: character.currency,
       skillProficiencies: character.skillproficiencies,
+      selectedSpeciesSkillProficiencies: character.selectedspeciesskills,
+      selectedSpeciesChoices: character.selectedspecieschoices,
     });
 
     await persistCharacterStatus(responseBody.id, responseBody.status);

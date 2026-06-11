@@ -2170,7 +2170,16 @@ export function GuidesAccordion({
                             creatureType: speciesDetailExample.creatureType,
                             size: speciesDetailExample.size,
                             speed: speciesDetailExample.speed,
+                            grantedSkillProficiencies:
+                              speciesDetailExample.grantedSkillProficiencies,
+                            speciesSkillProficiencyChoices:
+                              speciesDetailExample.speciesSkillProficiencyChoices,
+                            grantedToolProficiencies:
+                              speciesDetailExample.grantedToolProficiencies,
+                            grantedLanguageProficiencies:
+                              speciesDetailExample.grantedLanguageProficiencies,
                             specialTraits: speciesDetailExample.specialTraits,
+                            speciesChoices: speciesDetailExample.speciesChoices,
                             subspecies: speciesDetailExample.subspecies,
                           },
                           null,

@@ -7,12 +7,14 @@ import type {
   CharacterAbilityModifiers,
   CharacterAbilityScores,
   CharacterEquipmentItem,
+  CharacterUpdateRequestBody,
   CharacterResponseBody,
   CharacterSelectedSpellDetail,
   CharacterWeaponAttack,
   CharacterWeaponAttackMode,
 } from '@/app/types/character';
 import type { EquipmentRange } from '@/app/types/equipment';
+import type { SkillName } from '@/app/types/skill';
 
 type CharacterPreviewResponse = CharacterResponseBody & {
   equipment?: CharacterEquipmentItem[];
@@ -93,6 +95,8 @@ const pendingChoiceLabels: Partial<
 > = {
   backgroundEquipmentSelection: 'Choose background equipment',
   classEquipmentSelection: 'Choose class equipment',
+  speciesChoiceSelection: 'Choose species lineage',
+  speciesSkillSelection: 'Choose species skills',
 };
 
 function formatFallback(value: unknown, fallback = 'Not returned') {
@@ -380,6 +384,70 @@ function formatCountedStep(count: number, singular: string, plural: string) {
   return `${count} more ${count === 1 ? singular : plural}`;
 }
 
+function formatSelectionLabel(value: string) {
+  return value
+    .split(/[-_\s]+/g)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function getSelectedSpeciesChoiceLabel(
+  character: CharacterPreviewResponse,
+  choiceKey: string,
+) {
+  const selectedSlug = character.selectedSpeciesChoices[choiceKey];
+  const selectedOption = character.speciesDetails?.speciesChoices
+    .find((choice) => choice.key === choiceKey)
+    ?.options.find((option) => option.slug === selectedSlug);
+
+  return selectedOption?.name ?? (selectedSlug ? formatSelectionLabel(selectedSlug) : null);
+}
+
+function getSelectedSpeciesChoiceOption(
+  character: CharacterPreviewResponse,
+  choiceKey: string,
+) {
+  const selectedSlug = character.selectedSpeciesChoices[choiceKey];
+
+  return character.speciesDetails?.speciesChoices
+    .find((choice) => choice.key === choiceKey)
+    ?.options.find((option) => option.slug === selectedSlug) ?? null;
+}
+
+function getSelectedSpeciesChoiceBenefits(
+  character: CharacterPreviewResponse,
+  choiceKey: string,
+) {
+  const selectedOption = getSelectedSpeciesChoiceOption(character, choiceKey);
+  const selectedSlug = character.selectedSpeciesChoices[choiceKey];
+  const selectedSubspecies = character.speciesDetails?.subspecies.find(
+    (subspecies) => subspecies.slug === selectedSlug,
+  );
+  const optionBenefits = [
+    selectedOption?.rulesText,
+    selectedOption?.benefit,
+    ...(selectedOption?.benefits ?? []),
+  ].filter((benefit): benefit is string => Boolean(benefit));
+  const traitBenefits =
+    selectedSubspecies?.specialTraits.map((trait) => ({
+      description: trait.description,
+      name: trait.name,
+    })) ?? [];
+
+  return [
+    ...optionBenefits.map((benefit) => ({
+      description: benefit,
+      name: 'Benefit',
+    })),
+    ...traitBenefits,
+  ];
+}
+
+function normalizeFeatureName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 function isNumberRecord(value: unknown): value is Record<string, number> {
   return (
     typeof value === 'object' &&
@@ -574,8 +642,12 @@ function getCharacterCompletionSteps(
   const backgroundSkillSet = new Set(
     character.backgroundDetails?.skillProficiencies ?? [],
   );
+  const speciesSkillSet = new Set([
+    ...(character.speciesDetails?.grantedSkillProficiencies ?? []),
+    ...character.selectedSpeciesSkillProficiencies,
+  ]);
   const classSelectedSkills = character.skillProficiencies.filter(
-    (skill) => !backgroundSkillSet.has(skill),
+    (skill) => !backgroundSkillSet.has(skill) && !speciesSkillSet.has(skill),
   );
   const requiredClassSkills =
     character.classDetails?.skillProficiencyChoices.choose ?? 0;
@@ -601,6 +673,43 @@ function getCharacterCompletionSteps(
         ]
       : [];
   const pendingChoiceSet = new Set(character.pendingChoices);
+  const speciesSkillChoice = character.speciesDetails?.speciesSkillProficiencyChoices;
+  const requiredSpeciesSkills = speciesSkillChoice?.choose ?? 0;
+  const selectedSpeciesSkills = character.selectedSpeciesSkillProficiencies.length;
+  const missingSpeciesSkills = Math.max(
+    requiredSpeciesSkills - selectedSpeciesSkills,
+    0,
+  );
+  const speciesSkillSteps =
+    character.speciesDetails && requiredSpeciesSkills > 0
+      ? [
+          {
+            isComplete:
+              !pendingChoiceSet.has('speciesSkillSelection') &&
+              missingSpeciesSkills === 0,
+            key: 'pending-choice-speciesSkillSelection',
+            label:
+              pendingChoiceSet.has('speciesSkillSelection') &&
+              missingSpeciesSkills > 0
+                ? `Choose ${formatCountedStep(
+                    missingSpeciesSkills,
+                    'species skill',
+                    'species skills',
+                  )}`
+                : 'Choose species skills',
+          },
+        ]
+      : [];
+  const speciesChoiceSteps =
+    character.speciesDetails?.speciesChoices.map((choice) => ({
+      isComplete:
+        !pendingChoiceSet.has('speciesChoiceSelection') &&
+        Boolean(character.selectedSpeciesChoices[choice.key]),
+      key: `pending-choice-speciesChoiceSelection-${choice.key}`,
+      label: character.selectedSpeciesChoices[choice.key]
+        ? `${choice.label}: ${getSelectedSpeciesChoiceLabel(character, choice.key)}`
+        : `Choose ${choice.label.toLowerCase()}`,
+    })) ?? [];
   const equipmentChoiceSteps: PendingStep[] = [
     character.classDetails
       ? {
@@ -622,6 +731,8 @@ function getCharacterCompletionSteps(
     ...missingFieldSteps,
     ...abilityScoreSteps,
     ...classSkillSteps,
+    ...speciesSkillSteps,
+    ...speciesChoiceSteps,
     ...equipmentChoiceSteps,
     ...getPendingSpellSteps(character),
   ];
@@ -768,6 +879,11 @@ function renderAbilityScores(
 }
 
 function getCharacterFeatures(character: CharacterPreviewResponse) {
+  const speciesChoiceLabelSet = new Set(
+    character.speciesDetails?.speciesChoices.map((choice) =>
+      normalizeFeatureName(choice.label),
+    ) ?? [],
+  );
   const classFeatures =
     character.classDetails?.featuresByLevel
       .filter((progression) => progression.level <= character.level)
@@ -779,11 +895,16 @@ function getCharacterFeatures(character: CharacterPreviewResponse) {
         })),
       ) ?? [];
   const speciesFeatures =
-    character.speciesDetails?.specialTraits.map((trait) => ({
-      description: trait.description,
-      name: trait.name,
-      source: 'Species',
-    })) ?? [];
+    character.speciesDetails?.specialTraits
+      .filter(
+        (trait) =>
+          !speciesChoiceLabelSet.has(normalizeFeatureName(trait.name)),
+      )
+      .map((trait) => ({
+        description: trait.description,
+        name: trait.name,
+        source: 'Species',
+      })) ?? [];
   const backgroundFeatures = [
     character.backgroundDetails?.feat
       ? {
@@ -865,6 +986,234 @@ function ProficiencyChecklist({
   );
 }
 
+function SpeciesSelectionPanel({
+  character,
+  onCharacterChange,
+}: {
+  character: CharacterPreviewResponse;
+  onCharacterChange: (character: CharacterPreviewResponse) => void;
+}) {
+  const speciesSkillChoice =
+    character.speciesDetails?.speciesSkillProficiencyChoices ?? null;
+  const speciesChoices = character.speciesDetails?.speciesChoices ?? [];
+  const pendingChoiceSet = new Set(character.pendingChoices);
+  const hasSpeciesSkillSelection = pendingChoiceSet.has('speciesSkillSelection');
+  const hasSpeciesChoiceSelection = pendingChoiceSet.has('speciesChoiceSelection');
+  const shouldRender =
+    Boolean(speciesSkillChoice && speciesSkillChoice.choose > 0) ||
+    speciesChoices.length > 0 ||
+    character.selectedSpeciesSkillProficiencies.length > 0 ||
+    Object.keys(character.selectedSpeciesChoices).length > 0;
+  const [selectedSkills, setSelectedSkills] = useState<SkillName[]>(
+    character.selectedSpeciesSkillProficiencies,
+  );
+  const [selectedChoices, setSelectedChoices] = useState<Record<string, string>>(
+    character.selectedSpeciesChoices,
+  );
+  const [saveState, setSaveState] = useState<
+    { status: 'idle' } | { status: 'saving' } | { status: 'success' } | { status: 'error'; message: string }
+  >({ status: 'idle' });
+
+  if (!shouldRender) {
+    return null;
+  }
+
+  const skillLimit = speciesSkillChoice?.choose ?? 0;
+  const canSave =
+    (!hasSpeciesSkillSelection || selectedSkills.length === skillLimit) &&
+    (!hasSpeciesChoiceSelection ||
+      speciesChoices.every((choice) => Boolean(selectedChoices[choice.key])));
+
+  function toggleSkill(skill: SkillName) {
+    setSaveState({ status: 'idle' });
+    setSelectedSkills((currentSkills) => {
+      if (currentSkills.includes(skill)) {
+        return currentSkills.filter((currentSkill) => currentSkill !== skill);
+      }
+
+      if (skillLimit > 0 && currentSkills.length >= skillLimit) {
+        return [...currentSkills.slice(1), skill];
+      }
+
+      return [...currentSkills, skill];
+    });
+  }
+
+  async function saveSpeciesSelections() {
+    const payload: CharacterUpdateRequestBody = {
+      selectedSpeciesSkillProficiencies: selectedSkills,
+      selectedSpeciesChoices: selectedChoices,
+    };
+
+    setSaveState({ status: 'saving' });
+
+    try {
+      const response = await fetch(`/api/characters/${character.id}`, {
+        body: JSON.stringify(payload),
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'PATCH',
+      });
+
+      if (!response.ok) {
+        setSaveState({
+          status: 'error',
+          message:
+            response.status === 401
+              ? 'Sign in before saving species selections.'
+              : 'Species selections could not be saved.',
+        });
+        return;
+      }
+
+      const updatedCharacter = (await response.json()) as CharacterPreviewResponse;
+      onCharacterChange(updatedCharacter);
+      setSaveState({ status: 'success' });
+    } catch {
+      setSaveState({
+        status: 'error',
+        message: 'The save request failed before the character was updated.',
+      });
+    }
+  }
+
+  return (
+    <div className="character-species-trait-selection">
+      {character.selectedSpeciesSkillProficiencies.length > 0 ? (
+        <article className="character-feature-item">
+          <strong>Species skill proficiencies</strong>
+          <p>{character.selectedSpeciesSkillProficiencies.join(', ')}</p>
+        </article>
+      ) : null}
+
+      {speciesChoices
+        .filter((choice) => Boolean(selectedChoices[choice.key]))
+        .map((choice) => {
+          const selectedOption = getSelectedSpeciesChoiceOption(
+            character,
+            choice.key,
+          );
+          const selectedBenefits = getSelectedSpeciesChoiceBenefits(
+            character,
+            choice.key,
+          );
+
+          return (
+            <article
+              className="character-feature-item character-feature-item--species-choice"
+              key={choice.key}
+            >
+              <strong>{choice.label}</strong>
+              <p>{choice.description}</p>
+              <div className="character-species-choice-benefit">
+                <span>{selectedOption?.name ?? getSelectedSpeciesChoiceLabel(character, choice.key)}</span>
+                {selectedOption?.description ? (
+                  <small>{selectedOption.description}</small>
+                ) : null}
+                {selectedBenefits.length > 0 ? (
+                  <div className="character-species-choice-benefit-list">
+                    {selectedBenefits.map((benefit) => (
+                      <section key={`${choice.key}-${benefit.name}`}>
+                        <strong>{benefit.name}</strong>
+                        <small>{benefit.description}</small>
+                      </section>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </article>
+          );
+        })}
+
+      {hasSpeciesSkillSelection || hasSpeciesChoiceSelection ? (
+        <article className="character-feature-item character-species-selection-editor">
+          <strong>Species choices</strong>
+          <div className="character-species-selection-grid">
+        {speciesSkillChoice && speciesSkillChoice.choose > 0 ? (
+          <section className="character-species-selection-group">
+            <header>
+              <h3>Skill proficiencies</h3>
+              <span>
+                {selectedSkills.length}/{speciesSkillChoice.choose}
+              </span>
+            </header>
+            <div className="character-species-selection-options">
+              {speciesSkillChoice.options.map((skill) => (
+                <label
+                  className="character-species-selection-option"
+                  key={skill}
+                >
+                  <input
+                    checked={selectedSkills.includes(skill)}
+                    onChange={() => toggleSkill(skill)}
+                    type="checkbox"
+                  />
+                  <span>{skill}</span>
+                </label>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {speciesChoices.map((choice) => (
+          <section className="character-species-selection-group" key={choice.key}>
+            <header>
+              <h3>{choice.label}</h3>
+              <span>
+                {selectedChoices[choice.key]
+                  ? formatSelectionLabel(selectedChoices[choice.key])
+                  : 'Pending'}
+              </span>
+            </header>
+            <div className="character-species-selection-options">
+              {choice.options.map((option) => (
+                <label
+                  className="character-species-selection-option character-species-selection-option--radio"
+                  key={option.slug}
+                >
+                  <input
+                    checked={selectedChoices[choice.key] === option.slug}
+                    name={`species-choice-${character.id}-${choice.key}`}
+                    onChange={() => {
+                      setSaveState({ status: 'idle' });
+                      setSelectedChoices((currentChoices) => ({
+                        ...currentChoices,
+                        [choice.key]: option.slug,
+                      }));
+                    }}
+                    type="radio"
+                  />
+                  <span>
+                    <strong>{option.name}</strong>
+                    <small>{option.description}</small>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </section>
+        ))}
+          </div>
+
+          <div className="character-species-selection-actions">
+          <button
+            className="button button--primary"
+            disabled={!canSave || saveState.status === 'saving'}
+            onClick={saveSpeciesSelections}
+            type="button"
+          >
+            {saveState.status === 'saving' ? 'Saving...' : 'Save selections'}
+          </button>
+          {saveState.status === 'success' ? <p>Species selections saved.</p> : null}
+          {saveState.status === 'error' ? <p role="alert">{saveState.message}</p> : null}
+          </div>
+        </article>
+      ) : null}
+    </div>
+  );
+}
+
 function getReturnedProficiencyBonus(character: CharacterPreviewResponse) {
   const returnedBonuses = [
     ...character.savingThrows.map(
@@ -879,8 +1228,10 @@ function getReturnedProficiencyBonus(character: CharacterPreviewResponse) {
 
 function CharacterSheet({
   character,
+  onCharacterChange,
 }: {
   character: CharacterPreviewResponse;
+  onCharacterChange: (character: CharacterPreviewResponse) => void;
 }) {
   const [expandedProperties, setExpandedProperties] = useState<Set<string>>(
     () => new Set(),
@@ -1223,6 +1574,13 @@ function CharacterSheet({
                 {featureGroups.map((group) => (
                   <section className="character-feature-group" key={group.name}>
                     <h3>{group.name}</h3>
+                    {group.name === 'Species' ? (
+                      <SpeciesSelectionPanel
+                        key={`${character.id}:${character.selectedSpeciesSkillProficiencies.join(',')}:${JSON.stringify(character.selectedSpeciesChoices)}`}
+                        character={character}
+                        onCharacterChange={onCharacterChange}
+                      />
+                    ) : null}
                     {group.features.map((feature) => (
                       <article
                         className="character-feature-item"
@@ -1784,7 +2142,12 @@ export function CharacterPreviewClient() {
       ) : null}
 
       {previewState.status === 'success' ? (
-        <CharacterSheet character={previewState.character} />
+        <CharacterSheet
+          character={previewState.character}
+          onCharacterChange={(character) =>
+            setPreviewState({ status: 'success', character })
+          }
+        />
       ) : null}
     </div>
   );
