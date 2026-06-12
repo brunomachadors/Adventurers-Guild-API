@@ -173,3 +173,78 @@ export async function getCharacterSpellSelectionContext(
     selectedSpells,
   };
 }
+
+export async function getCharacterSpellSelectionContextByCharacterId(
+  characterId: number,
+) {
+  const sql = getSql();
+  const characterRows = await sql`
+    SELECT
+      characters.id,
+      characters.level,
+      characters.classid,
+      classes.name AS classname,
+      classes.spellcasting
+    FROM characters
+    LEFT JOIN classes ON classes.id = characters.classid
+    WHERE characters.id = ${characterId}
+    LIMIT 1
+  `;
+
+  if (!characterRows || characterRows.length === 0) {
+    return null;
+  }
+
+  const character = characterRows[0];
+  const parsedCharacterId = toNumber(character.id);
+  const classId = character.classid === null ? null : toNumber(character.classid);
+  const level = toNumber(character.level);
+  const selectionRules = getSpellSelectionRule(character.spellcasting, level);
+
+  let availableSpells: CharacterSpellOptionItem[] = [];
+
+  if (classId !== null) {
+    const spellRows = await sql`
+      SELECT spells.id, spells.name, spells.level, spells.levellabel
+      FROM spellclasses
+      INNER JOIN spells ON spells.id = spellclasses.spellid
+      WHERE spellclasses.classid = ${classId}
+      ORDER BY spells.level, spells.id
+    `;
+
+    availableSpells = spellRows.map((spell) => ({
+      id: toNumber(spell.id),
+      name: spell.name,
+      level: toNumber(spell.level),
+      levelLabel: spell.levellabel,
+    }));
+  }
+
+  const selectedSpellRows = await sql`
+    SELECT spells.id, spells.name, spells.level, spells.levellabel, characterspells.selectiontype
+    FROM characterspells
+    INNER JOIN spells ON spells.id = characterspells.spellid
+    WHERE characterspells.characterid = ${parsedCharacterId}
+    ORDER BY spells.level, spells.id
+  `;
+
+  const selectedSpells: CharacterSelectedSpellItem[] = selectedSpellRows
+    .filter((spell) => isCharacterSpellSelectionType(spell.selectiontype))
+    .map((spell) => ({
+      id: toNumber(spell.id),
+      name: spell.name,
+      level: toNumber(spell.level),
+      levelLabel: spell.levellabel,
+      selectionType: spell.selectiontype,
+    }));
+
+  return {
+    characterId: parsedCharacterId,
+    classId,
+    className: character.classname ?? null,
+    level,
+    selectionRules,
+    availableSpells,
+    selectedSpells,
+  };
+}

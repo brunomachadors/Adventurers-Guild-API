@@ -292,7 +292,8 @@ function createCollection(baseUrl) {
   "classId": {{classId}},
   "speciesId": {{speciesId}},
   "backgroundId": {{backgroundId}},
-  "level": 1
+  "level": 1,
+  "selectedSpeciesSkillProficiencies": ["Medicine"]
 }`),
             tests: [
               "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
@@ -300,6 +301,7 @@ function createCollection(baseUrl) {
               "pm.expect(body.classId).to.eql(Number(pm.environment.get('classId')));",
               "pm.expect(body.speciesId).to.eql(Number(pm.environment.get('speciesId')));",
               "pm.expect(body.backgroundId).to.eql(Number(pm.environment.get('backgroundId')));",
+              "pm.expect(body.selectedSpeciesSkillProficiencies).to.eql(['Medicine']);",
               'pm.expect(Array.isArray(body.pendingChoices)).to.eql(true);',
             ],
           }),
@@ -377,7 +379,7 @@ function createCollection(baseUrl) {
             tests: [
               "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
               'const body = pm.response.json();',
-              'pm.expect(body.skillProficiencies).to.include.members([\'Athletics\', \'Perception\']);',
+              'pm.expect(body.skillProficiencies).to.include.members([\'Athletics\', \'Medicine\', \'Perception\']);',
             ],
           }),
           createRequest({

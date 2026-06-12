@@ -377,6 +377,56 @@ export interface CharacterSpellSelectionResponseBody {
   availableSpells: CharacterSpellOptionItem[];
 }
 
+export interface CharacterChoicesSkillSelection {
+  pending: boolean;
+  choose: number;
+  selected: SkillName[];
+  options: SkillName[];
+}
+
+export interface CharacterChoicesSpeciesChoiceSelection {
+  pending: boolean;
+  selected: Record<string, string>;
+  choices: import('./species').SpeciesChoice[];
+}
+
+export interface CharacterChoicesEquipmentOption {
+  optionIndex: number;
+  label: string | null;
+  items: string[];
+}
+
+export interface CharacterChoicesEquipmentSelection {
+  pending: boolean;
+  options: CharacterChoicesEquipmentOption[];
+}
+
+export interface CharacterChoicesSpellSelection {
+  pending: boolean;
+  selectionRules: CharacterSpellSelectionRule;
+  selectedSpells: CharacterSelectedSpellItem[];
+  availableSpells: CharacterSpellOptionItem[];
+  remainingCantrips: number;
+  remainingSpells: number;
+}
+
+export interface CharacterChoicesResponseBody {
+  characterId: number;
+  status: CharacterStatus;
+  classId: number | null;
+  speciesId: number | null;
+  backgroundId: number | null;
+  level: number;
+  missingFields: CharacterMissingField[];
+  pendingChoices: CharacterPendingChoice[];
+  classSkillSelection: CharacterChoicesSkillSelection | null;
+  speciesSkillSelection: CharacterChoicesSkillSelection | null;
+  speciesChoiceSelection: CharacterChoicesSpeciesChoiceSelection | null;
+  classEquipmentSelection: CharacterChoicesEquipmentSelection | null;
+  backgroundEquipmentSelection: CharacterChoicesEquipmentSelection | null;
+  spellSelection: CharacterChoicesSpellSelection | null;
+}
+
 export interface CharacterSpellSelectionUpdateRequestBody {
   spellIds: number[];
 }
